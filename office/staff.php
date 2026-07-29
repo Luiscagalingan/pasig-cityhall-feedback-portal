@@ -7,16 +7,16 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  try{
   if($action==='create'){
    $name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)$_POST['password'];
-   if($name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8)throw new RuntimeException('Complete all fields. Password must be at least 8 characters.');
-   $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id) VALUES(?,?,?,?,?,'office_staff','active',?)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$head['id']]);audit((int)$head['id'],'staff_create',"Created {$username}");set_flash('success','Staff account created for '.$head['office_code'].'.');
+   if($name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8||!preg_match('/[A-Za-z]/',$password)||!preg_match('/\d/',$password))throw new RuntimeException('Complete all fields. Password must be at least 8 characters with a letter and a number.');
+   $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,'office_staff','active',?,1)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$head['id']]);audit((int)$head['id'],'staff_create',"Created {$username}");set_flash('success','Staff account created for '.$head['office_code'].'.');
   }elseif($action==='edit'){
    $id=post_int('user_id');$name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)($_POST['password']??'');
-   $sql=$password!==''?"UPDATE users SET full_name=?,username=?,email=?,password_hash=? WHERE id=? AND office_id=? AND role='office_staff'":"UPDATE users SET full_name=?,username=?,email=? WHERE id=? AND office_id=? AND role='office_staff'";
-   $params=$password!==''?[$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id,$officeId]:[$name,$username,$email,$id,$officeId];db()->prepare($sql)->execute($params);set_flash('success','Staff account updated.');
+   $sql=$password!==''?"UPDATE users SET full_name=?,username=?,email=?,password_hash=?,must_change_password=1 WHERE id=? AND office_id=? AND role='office_staff'":"UPDATE users SET full_name=?,username=?,email=? WHERE id=? AND office_id=? AND role='office_staff'";
+   $params=$password!==''?[$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id,$officeId]:[$name,$username,$email,$id,$officeId];db()->prepare($sql)->execute($params);audit((int)$head['id'],'staff_edit',"Updated staff #{$id}; password_reset=".($password!==''?'yes':'no'));set_flash('success','Staff account updated.');
   }elseif($action==='status'){
-   $id=post_int('user_id');$status=(string)$_POST['status'];if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid status.');db()->prepare("UPDATE users SET status=? WHERE id=? AND office_id=? AND role='office_staff'")->execute([$status,$id,$officeId]);set_flash('success','Staff status updated.');
+   $id=post_int('user_id');$status=(string)$_POST['status'];if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid status.');db()->prepare("UPDATE users SET status=? WHERE id=? AND office_id=? AND role='office_staff'")->execute([$status,$id,$officeId]);audit((int)$head['id'],'staff_status',"Staff #{$id} -> {$status}");set_flash('success','Staff status updated.');
   }elseif($action==='delete'){
-   $id=post_int('user_id');db()->prepare("DELETE FROM users WHERE id=? AND office_id=? AND role='office_staff'")->execute([$id,$officeId]);set_flash('success','Staff account deleted.');
+   $id=post_int('user_id');db()->prepare("DELETE FROM users WHERE id=? AND office_id=? AND role='office_staff'")->execute([$id,$officeId]);audit((int)$head['id'],'staff_delete',"Deleted staff #{$id}");set_flash('success','Staff account deleted.');
   }
  }catch(Throwable $e){set_flash('error','Unable to complete action: '.$e->getMessage());}
  redirect('office/staff.php');

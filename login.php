@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash('success', 'Successfully logged in as ' . ($user['full_name'] ?? 'user') . '.');
         redirect(dashboard_path($user));
     } else {
-        $error = 'Invalid credentials, archived account, or inactive office.';
+        $error = login_error_message();
     }
 }
 render_public_start('Authorized Login', 'login-body');

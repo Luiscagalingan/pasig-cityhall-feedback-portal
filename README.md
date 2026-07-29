@@ -1,43 +1,41 @@
 # Pasig City Hall Service Satisfaction Monitoring System
 
-A PHP + MySQL/XAMPP-ready feedback portal for the City Health Department, with expandable office management, office-scoped dashboards, CSV historical-data import, TF-IDF + Linear SVM sentiment analysis, and 60/40 weighted scoring.
+PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scoped dashboards, CSV historical-data import, TF-IDF + Linear SVM sentiment analysis, human review, notifications, action approval, and 60/40 weighted scoring.
 
-## Main modules
+## Major modules
 
-- Separate public survey (`index.php` and `survey.php`) and authorized login (`login.php`)
-- Initial City Health Department office with code `CHO`; no HRDO module
-- Administrator consolidated dashboard and office comparison
-- Add Office + initial Office Head in one transaction
-- Manage Heads: create, edit, archive, reactivate, delete
-- Manage Staff: separated by office buttons, with full account actions
-- Office-specific dashboards: heads and staff never see another office's records
-- Office Head-only CSV upload and Manage Staff navigation
-- Required English/Filipino/Taglish comment with SVM classification
-- 60% structured ratings + 40% comment sentiment final score
-- Automatic action items for negative feedback or final scores below 60%
-- Feedback filters, demographics, print/PDF layout, detailed CSV exports
-- Administrator system-health page and audit-log viewer
-- CSRF protection, password hashing, self-service password changes, prepared statements, audit logs, archived-account blocking
+- Separate public survey and authorized login
+- CHD/CHO as the initial active office; no HRDO module
+- Automatic survey/dashboard support for offices created by the administrator
+- Administrator all-active-office overview; Office Head/Staff office-only scope
+- Administrator Manage Heads and Manage Staff by office
+- Office Head-only Manage Staff, CSV preview/import, rollback, and Sentiment Review
+- Required English/Filipino/Taglish comments with shorthand/slang normalization
+- TF-IDF word/character features + LinearSVC
+- 60% structured ratings + 40% comment sentiment
+- Low-confidence/fallback review queue, manual correction, original-label preservation
+- Reviewed training-candidate export for controlled retraining
+- Needs Action → In Progress → Pending Approval → Completed workflow
+- Staff completion request and Office Head approval
+- Notifications, pagination, search, date-filtered reports, demographics, services, concern terms
+- Login lockout, inactivity timeout, temporary-password change, CSRF, prepared statements, audit logs
+- CSV duplicate/MIME validation, rejected-row download, formula-injection-safe export
+- Feedback void/restore and full SQL backup download
 
-## Quick setup
+## Fresh installation
 
-Read `INSTALL.txt`, import `database/schema.sql`, then install/retrain the Python model using `ml/install_and_train.bat`.
+Import `database/schema.sql`.
 
-## Folder structure
+## Upgrade from the earlier supplied version
 
-```text
-pasig-cityhall-feedback-portal/
-├── admin/        Administrator modules
-├── office/       Office Head and Staff modules
-├── assets/       CSS, JavaScript, CSV guide image
-├── config/       Application and database settings
-├── database/     Main schema and optional demo data
-├── docs/         Scope, methodology, and upload guide
-├── includes/     Security, layout, dashboard, and SVM bridge
-├── ml/           Dataset, model, training, and prediction scripts
-├── index.php     Public feedback landing page
-├── survey.php    Public office feedback form
-└── login.php     Authorized account login
-```
+Replace the files, then import once:
 
-The included model is a functional development/demo model, not the final research model.
+`database/migrations/002_workflow_security_upgrade.sql`
+
+Read `UPGRADE_INSTRUCTIONS.txt` before opening the updated site.
+
+## Verification
+
+Run `tests/run_smoke_test.bat`. Administrator → System & Audit must show **SVM Bridge: Working**.
+
+The included 300-comment model is a functional development/demo model. Final research evaluation still requires an approved, de-identified, manually labeled CHD dataset.

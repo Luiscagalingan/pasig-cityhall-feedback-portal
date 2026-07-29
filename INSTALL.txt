@@ -1,55 +1,33 @@
 PASIG CITY HALL SERVICE SATISFACTION MONITORING SYSTEM
-CHO-ONLY INITIAL VERSION WITH EXPANDABLE OFFICE MANAGEMENT
 
-1. COPY THE COMPLETE FOLDER
-   Copy "pasig-cityhall-feedback-portal" to:
-   C:\xampp\htdocs\pasig-cityhall-feedback-portal
+FRESH INSTALL
+1. Copy the folder to C:\xampp\htdocs\pasig-cityhall-feedback-portal
+2. Start Apache and MySQL.
+3. Import database\schema.sql through phpMyAdmin.
+4. Confirm config\app.php uses:
+   C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe
+5. Open http://localhost/pasig-cityhall-feedback-portal/
 
-2. START XAMPP
-   Start Apache and MySQL.
+UPGRADE FROM THE PREVIOUS PORTAL
+1. Back up the existing folder/database.
+2. Replace all project files.
+3. Import database\migrations\002_workflow_security_upgrade.sql ONCE.
+4. Restart Apache.
+5. Run tests\run_smoke_test.bat.
 
-3. IMPORT THE DATABASE
-   Open http://localhost/phpmyadmin/
-   Import:
-   database\schema.sql
+DEMO ACCOUNTS
+Administrator: admin / Admin123!
+CHO Office Head: cho_head / Head123!
+CHO Staff: cho_staff / Staff123!
 
-   Optional dashboard sample records:
-   database\demo_data.sql
+SVM
+The model is already included. To retrain after changing the approved dataset:
+cd /d C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
+"%LocalAppData%\Programs\Python\Python312\python.exe" train.py
 
-4. OPEN THE SYSTEM
-   Public feedback portal:
-   http://localhost/pasig-cityhall-feedback-portal/
+BACKUP/RESTORE
+Download a full SQL backup from Administrator > System & Audit.
+Restore through phpMyAdmin Import.
 
-   Authorized login:
-   http://localhost/pasig-cityhall-feedback-portal/login.php
-
-5. DEMO ACCOUNTS
-   Administrator: admin / Admin123!
-   CHO Office Head: cho_head / Head123!
-   CHO Staff: cho_staff / Staff123!
-
-6. INSTALL THE SVM REQUIREMENTS
-   Install Python 3, then double-click:
-   ml\install_and_train.bat
-
-   Or run in Command Prompt:
-   cd C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
-   python -m pip install -r requirements.txt
-   python train.py
-
-7. CSV IMPORT
-   Sign in as the Office Head.
-   Open Dataset & CSV Upload.
-   Download the template and follow the visual instructions.
-
-8. IMPORTANT CONFIGURATION
-   Database: pasig_feedback_portal
-   MySQL user: root
-   MySQL password: blank
-   Base URL: /pasig-cityhall-feedback-portal
-
-   Edit config\database.php or config\app.php when your environment is different.
-
-9. RESEARCH WARNING
-   The included SVM data/model is a demonstration component only.
-   Replace it with the approved, de-identified, manually labeled CHO dataset before final model evaluation and deployment.
+RESEARCH WARNING
+The 300-comment model is for development verification. Use an approved, de-identified, manually labeled CHD dataset for final evaluation.

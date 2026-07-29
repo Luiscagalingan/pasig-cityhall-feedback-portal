@@ -9,10 +9,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     if ($action==='create') {
       $name=trim((string)$_POST['name']); $code=strtoupper(trim((string)$_POST['code'])); $description=trim((string)($_POST['description']??''));
       $headName=trim((string)$_POST['head_name']); $username=trim((string)$_POST['username']); $email=trim((string)$_POST['email']); $password=(string)$_POST['password'];
-      if ($name===''||$code===''||$headName===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8) throw new RuntimeException('Complete all office and head fields. Password must contain at least 8 characters.');
+      if ($name===''||$code===''||$headName===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8||!preg_match('/[A-Za-z]/',$password)||!preg_match('/\d/',$password)) throw new RuntimeException('Complete all office and head fields. Password must contain at least 8 characters with a letter and a number.');
       db()->beginTransaction();
       $stmt=db()->prepare('INSERT INTO offices(name,code,description,status) VALUES(?,?,?,\'active\')'); $stmt->execute([$name,$code,$description]); $officeId=(int)db()->lastInsertId();
-      $stmt=db()->prepare('INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id) VALUES(?,?,?,?,?,\'office_head\',\'active\',?)');
+      $stmt=db()->prepare('INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,\'office_head\',\'active\',?,1)');
       $stmt->execute([$officeId,$headName,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$user['id']]);
       db()->commit(); audit((int)$user['id'],'office_create',"Created {$code} with office head {$username}");
       set_flash('success','Office and Office Head created. Their dashboard is available immediately.');
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $stmt=db()->prepare('UPDATE offices SET status=? WHERE id=?'); $stmt->execute([$status,$id]); audit((int)$user['id'],'office_status',"Office #{$id} -> {$status}"); set_flash('success','Office status updated.');
     } elseif ($action==='edit') {
       $id=post_int('office_id'); $name=trim((string)$_POST['name']); $code=strtoupper(trim((string)$_POST['code'])); $description=trim((string)$_POST['description']);
-      $stmt=db()->prepare('UPDATE offices SET name=?,code=?,description=? WHERE id=?'); $stmt->execute([$name,$code,$description,$id]); set_flash('success','Office details updated.');
+      $stmt=db()->prepare('UPDATE offices SET name=?,code=?,description=? WHERE id=?'); $stmt->execute([$name,$code,$description,$id]); audit((int)$user['id'],'office_edit',"Office #{$id} updated to {$code} / {$name}"); set_flash('success','Office details updated.');
     }
   } catch(Throwable $e){ if(db()->inTransaction())db()->rollBack(); set_flash('error',$e->getMessage()); }
   redirect('admin/offices.php');

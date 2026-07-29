@@ -7,21 +7,21 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  try{
   if($action==='create'){
    $officeId=post_int('office_id');$name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)$_POST['password'];
-   if(!$officeId||$name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8)throw new RuntimeException('Complete all fields. Password must be at least 8 characters.');
+   if(!$officeId||$name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8||!preg_match('/[A-Za-z]/',$password)||!preg_match('/\d/',$password))throw new RuntimeException('Complete all fields. Password must be at least 8 characters with a letter and a number.');
    $check=db()->prepare("SELECT COUNT(*) FROM users WHERE office_id=? AND role='office_head' AND status='active'");$check->execute([$officeId]);if((int)$check->fetchColumn()>0)throw new RuntimeException('This office already has an active Office Head. Archive the current head before creating a replacement.');
-   $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id) VALUES(?,?,?,?,?,'office_head','active',?)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$admin['id']]);
+   $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,'office_head','active',?,1)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$admin['id']]);
    audit((int)$admin['id'],'head_create',"Created head {$username} for office #{$officeId}");set_flash('success','Office Head account created. The office dashboard is available immediately.');
   }elseif($action==='edit'){
    $id=post_int('user_id');$officeId=post_int('office_id');$name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)($_POST['password']??'');
    $currentStmt=db()->prepare("SELECT status FROM users WHERE id=? AND role='office_head'");$currentStmt->execute([$id]);$current=$currentStmt->fetch();if(!$current)throw new RuntimeException('Office Head account not found.');if($current['status']==='active'){$check=db()->prepare("SELECT COUNT(*) FROM users WHERE office_id=? AND role='office_head' AND status='active' AND id<>?");$check->execute([$officeId,$id]);if((int)$check->fetchColumn()>0)throw new RuntimeException('The selected office already has another active Office Head.');}
-   if($password!==''){$stmt=db()->prepare("UPDATE users SET office_id=?,full_name=?,username=?,email=?,password_hash=? WHERE id=? AND role='office_head'");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id]);}
+   if($password!==''){$stmt=db()->prepare("UPDATE users SET office_id=?,full_name=?,username=?,email=?,password_hash=?,must_change_password=1 WHERE id=? AND role='office_head'");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id]);}
    else{$stmt=db()->prepare("UPDATE users SET office_id=?,full_name=?,username=?,email=? WHERE id=? AND role='office_head'");$stmt->execute([$officeId,$name,$username,$email,$id]);}
-   set_flash('success','Office Head account updated.');
+   audit((int)$admin['id'],'head_edit',"Updated Office Head #{$id}; office={$officeId}; password_reset=".($password!==''?'yes':'no'));set_flash('success','Office Head account updated.');
   }elseif($action==='status'){
    $id=post_int('user_id');$status=(string)$_POST['status'];if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid account status.');if($status==='active'){$officeStmt=db()->prepare("SELECT office_id FROM users WHERE id=? AND role='office_head'");$officeStmt->execute([$id]);$targetOffice=(int)$officeStmt->fetchColumn();$check=db()->prepare("SELECT COUNT(*) FROM users WHERE office_id=? AND role='office_head' AND status='active' AND id<>?");$check->execute([$targetOffice,$id]);if((int)$check->fetchColumn()>0)throw new RuntimeException('This office already has another active Office Head.');}
-   $stmt=db()->prepare("UPDATE users SET status=? WHERE id=? AND role='office_head'");$stmt->execute([$status,$id]);set_flash('success','Office Head status updated.');
+   $stmt=db()->prepare("UPDATE users SET status=? WHERE id=? AND role='office_head'");$stmt->execute([$status,$id]);audit((int)$admin['id'],'head_status',"Office Head #{$id} -> {$status}");set_flash('success','Office Head status updated.');
   }elseif($action==='delete'){
-   $id=post_int('user_id');$stmt=db()->prepare("DELETE FROM users WHERE id=? AND role='office_head'");$stmt->execute([$id]);set_flash('success','Office Head account permanently deleted.');
+   $id=post_int('user_id');$stmt=db()->prepare("DELETE FROM users WHERE id=? AND role='office_head'");$stmt->execute([$id]);audit((int)$admin['id'],'head_delete',"Deleted Office Head #{$id}");set_flash('success','Office Head account permanently deleted.');
   }
  }catch(Throwable $e){set_flash('error','Unable to complete action: '.$e->getMessage());}
  redirect('admin/heads.php');
