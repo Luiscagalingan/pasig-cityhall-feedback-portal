@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 render_public_start('Feedback Survey');
 ?>
-<nav class="public-nav"><a class="public-brand" href="<?= e(app_url()) ?>"><span class="seal">P</span><div><strong>City Government of Pasig</strong><small>Public Feedback Survey</small></div></a><div class="public-actions"><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button><a class="btn secondary text-link" href="<?= e(app_url('login.php')) ?>">Authorized Login</a></div></nav>
+<nav class="public-nav"><a class="public-brand" href="<?= e(app_url()) ?>"><img class="seal" src="<?= e(app_url('241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>City Government of Pasig</strong><small>Public Feedback Survey</small></div></a><div class="public-actions"><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button><a class="btn secondary text-link" href="<?= e(app_url('login.php')) ?>">Authorized Login</a></div></nav>
 <div class="survey-shell"><div class="survey-banner"><span class="eyebrow"><?= e($office['code']) ?> FEEDBACK FORM</span><h1><?= e($office['name']) ?></h1><p class="muted">Rate the service you received. Your written comment is required and will be classified by the trained SVM sentiment model.</p></div>
 <form method="post" class="survey-form"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="office_code" value="<?= e($office['code']) ?>">
 <?php if ($errors): ?><div class="error-box"><strong>Please correct the following:</strong><br><?= implode('<br>', array_map('e',$errors)) ?></div><?php endif; ?>

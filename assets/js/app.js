@@ -2,7 +2,13 @@
   const root = document.documentElement;
   const stored = localStorage.getItem('pasig-theme') || 'dark';
   root.dataset.theme = stored;
-  const updateThemeLabels = () => document.querySelectorAll('[data-theme-toggle] span').forEach(s => s.textContent = root.dataset.theme === 'dark' ? 'Light' : 'Dark');
+  const updateThemeLabels = () => document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
+    const nextTheme = root.dataset.theme === 'dark' ? 'Light' : 'Dark';
+    const label = btn.querySelector('span');
+    if (label) label.textContent = nextTheme;
+    btn.setAttribute('aria-label', `Switch to ${nextTheme.toLowerCase()} mode`);
+    btn.title = `Switch to ${nextTheme.toLowerCase()} mode`;
+  });
   updateThemeLabels();
   document.querySelectorAll('[data-theme-toggle]').forEach(btn => btn.addEventListener('click', () => {
     root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -16,11 +22,65 @@
   document.querySelector('[data-sidebar-open]')?.addEventListener('click', () => {sidebar?.classList.add('open'); overlay?.classList.add('open');});
   overlay?.addEventListener('click', () => {sidebar?.classList.remove('open'); overlay.classList.remove('open');});
 
+  const confirmOverlay = document.createElement('div');
+  confirmOverlay.className = 'confirm-overlay';
+  confirmOverlay.setAttribute('aria-hidden', 'true');
+  confirmOverlay.innerHTML = `
+    <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <div class="confirm-icon" aria-hidden="true">!</div>
+      <h2 id="confirm-title">Please confirm</h2>
+      <p id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button type="button" class="btn secondary" data-confirm-cancel>Cancel</button>
+        <button type="button" class="btn danger" data-confirm-accept>Confirm</button>
+      </div>
+    </section>`;
+  document.body.appendChild(confirmOverlay);
+
+  const confirmMessage = confirmOverlay.querySelector('#confirm-message');
+  const confirmAccept = confirmOverlay.querySelector('[data-confirm-accept]');
+  const confirmCancel = confirmOverlay.querySelector('[data-confirm-cancel]');
+  let confirmAction = null;
+
+  const closeConfirm = () => {
+    confirmOverlay.classList.remove('open');
+    confirmOverlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    confirmAction = null;
+  };
+  const openConfirm = (message, action, destructive = true) => {
+    confirmMessage.textContent = message;
+    confirmAction = action;
+    confirmAccept.textContent = destructive ? 'Yes, continue' : 'Log out';
+    confirmAccept.classList.toggle('danger', destructive);
+    confirmOverlay.classList.add('open');
+    confirmOverlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    requestAnimationFrame(() => confirmCancel.focus());
+  };
+
+  confirmCancel.addEventListener('click', closeConfirm);
+  confirmAccept.addEventListener('click', () => {
+    const action = confirmAction;
+    closeConfirm();
+    action?.();
+  });
+  confirmOverlay.addEventListener('click', e => {
+    if (e.target === confirmOverlay) closeConfirm();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && confirmOverlay.classList.contains('open')) closeConfirm();
+  });
+
   document.querySelectorAll('[data-confirm-delete]').forEach(el => el.addEventListener('click', e => {
-    if (!confirm(el.dataset.confirmDelete || 'Delete this record permanently?')) e.preventDefault();
+    if (!e.target.closest('button, input[type="submit"]')) return;
+    e.preventDefault();
+    openConfirm(el.dataset.confirmDelete || 'Delete this record permanently?', () => el.requestSubmit());
   }));
   document.querySelector('[data-confirm-logout]')?.addEventListener('click', e => {
-    if (!confirm('Log out of the system?')) e.preventDefault();
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    openConfirm('Are you sure you want to log out of the system?', () => window.location.assign(href), false);
   });
   const toast = document.querySelector('[data-toast]');
   if (toast) setTimeout(() => toast.remove(), 4500);

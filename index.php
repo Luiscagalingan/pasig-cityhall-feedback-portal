@@ -5,7 +5,7 @@ $offices = active_offices();
 render_public_start('Public Feedback Portal');
 ?>
 <nav class="public-nav">
-  <a class="public-brand" href="<?= e(app_url()) ?>"><span class="seal">P</span><div><strong>City Government of Pasig</strong><small>Public Service Feedback Portal</small></div></a>
+  <a class="public-brand" href="<?= e(app_url()) ?>"><img class="seal" src="<?= e(app_url('241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>City Government of Pasig</strong><small>Public Service Feedback Portal</small></div></a>
   <div class="public-actions"><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button><a class="btn secondary text-link" href="<?= e(app_url('login.php')) ?>">Authorized Login</a></div>
 </nav>
 <section class="hero">
