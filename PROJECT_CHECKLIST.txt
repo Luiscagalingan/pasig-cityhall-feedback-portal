@@ -1,0 +1,52 @@
+IMPLEMENTED PROJECT CHECKLIST
+
+[Public Access]
+[x] Separate public feedback landing page
+[x] Separate authorized login page
+[x] Active office surveys appear automatically
+[x] Required demographic, service, four ratings, and comment fields
+[x] English, Filipino, and Taglish comment support
+
+[Access Control]
+[x] Administrator: all-office consolidated access
+[x] Office Head: assigned office only
+[x] Office Staff: assigned office only
+[x] Office Head-only CSV Upload and Manage Staff
+[x] Archived account and archived office login blocking
+[x] One active Office Head per office rule
+
+[Administrator]
+[x] Consolidated dashboard
+[x] Add Office + first Office Head
+[x] Manage Heads: add, edit, archive, reactivate, delete
+[x] Manage Staff separated by office buttons
+[x] Feedback and action monitoring
+[x] Reports and CSV export
+[x] System health and audit log
+
+[Office]
+[x] Office-scoped dashboard and demographics
+[x] Feedback records and filters
+[x] Needs Action / In Progress / Completed workflow
+[x] Required review/resolution notes
+[x] Office Head CSV import with visual instructions
+[x] Manual historical entry
+[x] Office Head staff CRUD
+[x] Office-scoped reports and export
+
+[Analytics and ML]
+[x] TF-IDF word and character features
+[x] Linear Support Vector Machine classifier
+[x] Single and batch prediction scripts
+[x] 60% ratings + 40% comment sentiment computation
+[x] Automatic action item for negative or low-score feedback
+[x] Demo dataset, trained model, metrics file, retraining scripts
+
+[Security]
+[x] Password hashing and password change page
+[x] CSRF tokens
+[x] Prepared SQL statements
+[x] Session regeneration
+[x] Output escaping
+[x] Audit logs
+[x] Protected config/model/storage folders

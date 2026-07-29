@@ -1,0 +1,4 @@
+visit_date,sex,age,client_type,service_received,timeliness,client_handling,quality_of_service,overall_satisfaction,comment
+2026-07-01,Female,29,Pasigueño,Medical consultation,4,4,4,4,"Mabilis at maayos ang serbisyo. Very accommodating ang staff."
+2026-07-02,Male,41,Non-Pasigueño,Medical certificate,3,3,3,3,"Okay lang naman ang naging transaction."
+2026-07-03,Female,35,City Government Employee,Laboratory request,2,2,2,2,"Sobrang tagal bago ako naasikaso at hindi malinaw ang instructions."

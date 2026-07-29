@@ -1,0 +1,31 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/includes/bootstrap.php';
+$offices = active_offices();
+render_public_start('Public Feedback Portal');
+?>
+<nav class="public-nav">
+  <a class="public-brand" href="<?= e(app_url()) ?>"><span class="seal">P</span><div><strong>City Government of Pasig</strong><small>Public Service Feedback Portal</small></div></a>
+  <div class="public-actions"><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button><a class="btn secondary text-link" href="<?= e(app_url('login.php')) ?>">Authorized Login</a></div>
+</nav>
+<section class="hero">
+  <div>
+    <span class="eyebrow">UGNAYAN SA PASIG OFFICE FEEDBACK</span>
+    <h1>Your feedback helps improve public service.</h1>
+    <p>Share your experience after receiving a service. The survey records demographic information, transaction details, four service ratings, and a required written comment. No account is required.</p>
+    <a class="btn" href="#offices">Open Feedback Survey</a>
+  </div>
+  <div class="hero-card" id="offices">
+    <h2>Select the office you visited</h2>
+    <p class="muted">Only active offices created by the administrator appear here.</p>
+    <div class="office-grid">
+      <?php foreach ($offices as $office): ?>
+      <a class="office-card" href="<?= e(app_url('survey.php?office=' . urlencode($office['code']))) ?>">
+        <div><b><?= e($office['name']) ?></b><small><?= e($office['code']) ?> · Public survey</small></div><span>→</span>
+      </a>
+      <?php endforeach; ?>
+      <?php if (!$offices): ?><div class="empty-state">No active office survey is available.</div><?php endif; ?>
+    </div>
+  </div>
+</section>
+<?php render_public_end(); ?>

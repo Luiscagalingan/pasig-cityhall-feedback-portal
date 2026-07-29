@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "^(\.env|composer\.(json|lock))$">
+  Require all denied
+</FilesMatch>

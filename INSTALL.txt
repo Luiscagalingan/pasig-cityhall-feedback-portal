@@ -1,0 +1,55 @@
+PASIG CITY HALL SERVICE SATISFACTION MONITORING SYSTEM
+CHO-ONLY INITIAL VERSION WITH EXPANDABLE OFFICE MANAGEMENT
+
+1. COPY THE COMPLETE FOLDER
+   Copy "pasig-cityhall-feedback-portal" to:
+   C:\xampp\htdocs\pasig-cityhall-feedback-portal
+
+2. START XAMPP
+   Start Apache and MySQL.
+
+3. IMPORT THE DATABASE
+   Open http://localhost/phpmyadmin/
+   Import:
+   database\schema.sql
+
+   Optional dashboard sample records:
+   database\demo_data.sql
+
+4. OPEN THE SYSTEM
+   Public feedback portal:
+   http://localhost/pasig-cityhall-feedback-portal/
+
+   Authorized login:
+   http://localhost/pasig-cityhall-feedback-portal/login.php
+
+5. DEMO ACCOUNTS
+   Administrator: admin / Admin123!
+   CHO Office Head: cho_head / Head123!
+   CHO Staff: cho_staff / Staff123!
+
+6. INSTALL THE SVM REQUIREMENTS
+   Install Python 3, then double-click:
+   ml\install_and_train.bat
+
+   Or run in Command Prompt:
+   cd C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
+   python -m pip install -r requirements.txt
+   python train.py
+
+7. CSV IMPORT
+   Sign in as the Office Head.
+   Open Dataset & CSV Upload.
+   Download the template and follow the visual instructions.
+
+8. IMPORTANT CONFIGURATION
+   Database: pasig_feedback_portal
+   MySQL user: root
+   MySQL password: blank
+   Base URL: /pasig-cityhall-feedback-portal
+
+   Edit config\database.php or config\app.php when your environment is different.
+
+9. RESEARCH WARNING
+   The included SVM data/model is a demonstration component only.
+   Replace it with the approved, de-identified, manually labeled CHO dataset before final model evaluation and deployment.

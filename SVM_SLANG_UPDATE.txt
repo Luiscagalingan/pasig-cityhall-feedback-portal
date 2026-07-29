@@ -1,0 +1,29 @@
+SVM TAGALOG/TAGLISH UPDATE
+===========================
+
+Updated demo dataset:
+- 300 total labeled comments
+- 100 positive
+- 100 neutral
+- 100 negative
+
+Added support for common shorthand/slang and informal spellings, including:
+nmn, dba, db, di, ndi, hndi, kc, kse, lng, kht, aq, q, sna,
+tnx, thx, ty, tyvm, pls, plz, oks, goods, solid, angas, ambait,
+ambilis, ambagal, waley, badtrip, dedma, keri, meh, mid, hassle,
+bagaaal, tagaaal, and related complete-sentence examples.
+
+Files:
+- ml/data/sample_training.csv
+- ml/data/tagalog_slang_dictionary.csv
+- ml/normalize_text.py
+- ml/SLANG_AND_SHORTCUTS.md
+- ml/models/model_metrics.json
+
+Demo holdout result after retraining:
+- Accuracy: 81.67%
+- Macro F1: 81.58%
+
+IMPORTANT: These are development/demo results. Final research metrics must use
+an approved, de-identified, manually labeled CHD dataset and a documented,
+separate evaluation set.
