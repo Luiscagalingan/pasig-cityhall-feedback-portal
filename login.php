@@ -23,7 +23,7 @@ render_public_start('Authorized Login', 'login-body');
   <section class="login-info">
     <div class="login-orb login-orb-one"></div><div class="login-orb login-orb-two"></div>
     <div class="login-brand">
-      <img class="login-seal" src="<?= e(app_url('241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo">
+      <img class="login-seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo">
       <span>CITY GOVERNMENT OF PASIG</span>
       <h1>Pasig City Hall</h1>
       <h2>Service Feedback System</h2>
