@@ -54,7 +54,7 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'dark';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=9"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'light';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=11"></head><body class="<?= e($bodyClass) ?>">
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
 
@@ -73,7 +73,7 @@ function render_dashboard_start(string $title, string $active): array
     $unread = unread_notification_count((int)$user['id']);
     $review = in_array($user['role'], ['admin','office_head'], true) ? review_count($user) : 0;
     ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'dark';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=9"></head><body class="dashboard-body">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'light';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=11"></head><body class="dashboard-body">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
 <?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $unread > 0): ?><b><?= $unread ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>

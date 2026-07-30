@@ -1,6 +1,6 @@
 (() => {
   const root = document.documentElement;
-  const stored = localStorage.getItem('pasig-theme') || 'dark';
+  const stored = localStorage.getItem('pasig-theme') || 'light';
   root.dataset.theme = stored;
   const updateThemeLabels = () => document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
     const nextTheme = root.dataset.theme === 'dark' ? 'Light' : 'Dark';

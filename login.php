@@ -20,8 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 render_public_start('Authorized Login', 'login-body');
 ?>
 <div class="login-wrap">
-  <section class="login-info"><span class="eyebrow">SECURE OFFICE ACCESS</span><h1>Service Satisfaction Monitoring System</h1><p>Role-based access keeps every office limited to its own feedback. The administrator can view consolidated citywide results.</p><div class="formula-box"><strong>60/40 computation</strong><br>60% structured ratings + 40% SVM-classified required comment.</div></section>
-  <section class="login-form"><a class="back-link" href="<?= e(app_url()) ?>">← Return to public survey</a><h2>Authorized Login</h2><p class="muted">Administrator, Office Head, and Office Staff</p>
+  <section class="login-info">
+    <div class="login-orb login-orb-one"></div><div class="login-orb login-orb-two"></div>
+    <div class="login-brand">
+      <img class="login-seal" src="<?= e(app_url('241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo">
+      <span>CITY GOVERNMENT OF PASIG</span>
+      <h1>Pasig City Hall</h1>
+      <h2>Service Feedback System</h2>
+      <i aria-hidden="true"></i>
+      <p>Your feedback helps us build a better, more responsive Pasig City.</p>
+    </div>
+    <div class="city-silhouette" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </section>
+  <section class="login-form"><a class="back-link" href="<?= e(app_url()) ?>">&larr; Return to public survey</a><span class="eyebrow">SECURE OFFICE ACCESS</span><h2>Authorized Login</h2><p class="muted">Administrator, Office Head, and Office Staff</p>
     <?php if ($error): ?><div class="error-box"><?= e($error) ?></div><?php endif; ?>
     <form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
       <div class="form-group"><label>Username or Email</label><input name="identity" autocomplete="username" required></div>
@@ -31,5 +42,5 @@ render_public_start('Authorized Login', 'login-body');
     <p class="help">Archived users cannot sign in. Staff and heads can access only their assigned active office.</p>
   </section>
 </div>
-<button class="theme-toggle" data-theme-toggle style="position:fixed;right:20px;top:20px"><?= icon('sun') ?><span>Light</span></button>
+<button class="theme-toggle login-theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button>
 <?php render_public_end(); ?>
