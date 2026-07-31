@@ -82,6 +82,31 @@
     const href = e.currentTarget.href;
     openConfirm('Are you sure you want to log out of the system?', () => window.location.assign(href), false);
   });
+  const closeModal = modal => {
+    modal?.classList.remove('open');
+    modal?.setAttribute('aria-hidden', 'true');
+    if (!document.querySelector('.app-modal.open,.confirm-overlay.open')) document.body.classList.remove('modal-open');
+  };
+  document.querySelectorAll('[data-modal-open]').forEach(button => button.addEventListener('click', () => {
+    const modal = document.getElementById(button.dataset.modalOpen);
+    if (!modal) return;
+    modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open');
+    requestAnimationFrame(() => modal.querySelector('input,select,textarea,button')?.focus());
+  }));
+  document.querySelectorAll('.app-modal').forEach(modal => {
+    modal.querySelectorAll('[data-modal-close]').forEach(button => button.addEventListener('click', () => closeModal(modal)));
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal); });
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.app-modal.open').forEach(closeModal); });
+
+  document.querySelectorAll('form.filters[method="get"]').forEach(form => {
+    let timer;
+    const submit = () => { form.querySelectorAll('input[name="page"]').forEach(input => input.remove()); form.requestSubmit(); };
+    form.querySelectorAll('select,input[type="date"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
+    form.querySelectorAll('input:not([type]),input[type="text"],input[type="search"]').forEach(input => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(submit, 450); }));
+    form.querySelectorAll('button:not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
+  });
+
   const toast = document.querySelector('[data-toast]');
   if (toast) setTimeout(() => toast.remove(), 4500);
 

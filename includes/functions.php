@@ -80,7 +80,11 @@ function pagination_links(array $p): string
     if (($p['pages'] ?? 1) <= 1) return '';
     $query = $_GET;
     unset($query['page']);
-    $html = '<div class="pagination">';
+    $html = '<nav class="pagination" aria-label="Page navigation">';
+    if ((int)$p['page'] > 1) {
+        $query['page'] = (int)$p['page'] - 1;
+        $html .= '<a class="page-direction" href="?' . e(http_build_query($query)) . '">&larr; Previous</a>';
+    }
     for ($i = 1; $i <= (int)$p['pages']; $i++) {
         if ($i > 2 && $i < (int)$p['pages'] - 1 && abs($i - (int)$p['page']) > 2) {
             if ($i === 3 || $i === (int)$p['pages'] - 2) $html .= '<span>…</span>';
@@ -89,7 +93,11 @@ function pagination_links(array $p): string
         $query['page'] = $i;
         $html .= '<a class="' . ($i === (int)$p['page'] ? 'active' : '') . '" href="?' . e(http_build_query($query)) . '">' . $i . '</a>';
     }
-    return $html . '</div>';
+    if ((int)$p['page'] < (int)$p['pages']) {
+        $query['page'] = (int)$p['page'] + 1;
+        $html .= '<a class="page-direction" href="?' . e(http_build_query($query)) . '">Next &rarr;</a>';
+    }
+    return $html . '</nav>';
 }
 
 function rating_average(array $ratings): float
@@ -245,7 +253,7 @@ function notify_office_heads(int $officeId, string $type, string $title, string 
 function unread_notification_count(int $userId): int
 {
     try {
-        $stmt = db()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id=? AND read_at IS NULL');
+        $stmt = db()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id=? AND read_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())');
         $stmt->execute([$userId]);
         return (int)$stmt->fetchColumn();
     } catch (Throwable) {

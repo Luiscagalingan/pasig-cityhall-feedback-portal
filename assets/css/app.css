@@ -1439,6 +1439,19 @@ html[data-theme="light"] .void-row {
   min-width:120px;
   justify-content:center
 }
+.app-modal {position:fixed;inset:0;z-index:990;display:grid;place-items:center;padding:20px;background:rgba(2,8,18,.72);backdrop-filter:blur(7px);opacity:0;visibility:hidden;transition:.18s ease}
+.app-modal.open {opacity:1;visibility:visible}
+.app-modal-dialog {position:relative;width:min(560px,100%);max-height:90vh;overflow:auto;padding:28px;border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:0 28px 80px rgba(0,0,0,.45)}
+.app-modal-dialog h2 {margin:0 36px 8px 0}
+.modal-close {position:absolute;right:18px;top:14px;border:0;background:transparent;color:var(--muted);font-size:30px;cursor:pointer}
+.modal-form {display:grid;gap:15px;margin-top:20px}
+.modal-form label {display:grid;gap:7px;font-size:12px;font-weight:800;color:var(--muted)}
+.scope-options {display:grid;gap:10px;margin:18px 0}
+.scope-option {display:flex!important;gap:10px!important;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.scope-option input {width:auto;margin-top:3px}
+.page-range {display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.filter-submit-fallback {position:absolute!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.pagination .page-direction {width:auto;padding:0 13px}
 /* Branded office and administrator login */
 .login-body {
   padding:34px;

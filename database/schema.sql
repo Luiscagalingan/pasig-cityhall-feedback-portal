@@ -161,15 +161,19 @@ CREATE TABLE notifications (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   office_id INT UNSIGNED NULL,
+  sender_user_id INT UNSIGNED NULL,
   type VARCHAR(40) NOT NULL,
   title VARCHAR(180) NOT NULL,
   message TEXT NOT NULL,
   link_url VARCHAR(255) NULL,
   read_at DATETIME NULL,
+  expires_at DATETIME NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_notification_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE,
-  INDEX idx_notification_unread (user_id, read_at, created_at)
+  CONSTRAINT fk_notification_sender FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_notification_unread (user_id, read_at, created_at),
+  INDEX idx_notification_expiry (expires_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE login_attempts (

@@ -1,5 +1,12 @@
 PASIG CITY HALL PORTAL — REPLACEMENT FILE UPGRADE
 
+ROLE ANNOUNCEMENTS UPGRADE
+--------------------------
+For an existing installation, run this migration in phpMyAdmin before opening the upgraded portal:
+
+  database/migrations/003_announcements_and_retention.sql
+
+It adds announcement sender and expiry fields to notifications. Fresh installations already receive these fields from database/schema.sql.
 FOR YOUR EXISTING PORTAL/DATABASE (preserves current data)
 
 1. Back up first:
