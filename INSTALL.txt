@@ -1,33 +1,246 @@
 PASIG CITY HALL SERVICE SATISFACTION MONITORING SYSTEM
+COMPLETE WINDOWS/XAMPP INSTALLATION ALGORITHM
 
-FRESH INSTALL
-1. Copy the folder to C:\xampp\htdocs\pasig-cityhall-feedback-portal
-2. Start Apache and MySQL.
-3. Import database\schema.sql through phpMyAdmin.
-4. Confirm config\app.php uses:
-   C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe
-5. Open http://localhost/pasig-cityhall-feedback-portal/
+============================================================
+A. REQUIRED SOFTWARE
+============================================================
 
-UPGRADE FROM THE PREVIOUS PORTAL
-1. Back up the existing folder/database.
-2. Replace all project files.
-3. Import database\migrations\002_workflow_security_upgrade.sql ONCE.
-4. Restart Apache.
-5. Run tests\run_smoke_test.bat.
+1. Install XAMPP for Windows.
+   Download: https://www.apachefriends.org/
+   Install it in the default folder: C:\xampp
 
-DEMO ACCOUNTS
+2. Install Python 3.12 (64-bit).
+   Download: https://www.python.org/downloads/windows/
+
+3. In the Python installer:
+   [x] Check "Add python.exe to PATH"
+   [x] Check "Install launcher for all users"
+   Click "Customize installation" or "Install Now."
+   Keep pip enabled, then complete the installation.
+
+4. Open a NEW Command Prompt and verify:
+
+   python --version
+   python -m pip --version
+
+   Expected Python result: Python 3.12.x
+
+5. If "python is not recognized" appears, close and reopen Command
+   Prompt. If it still fails, reinstall Python and check
+   "Add python.exe to PATH."
+
+============================================================
+B. COPY AND PREPARE THE SYSTEM
+============================================================
+
+1. Copy the complete project folder to:
+
+   C:\xampp\htdocs\pasig-cityhall-feedback-portal
+
+2. Start the XAMPP Control Panel.
+
+3. Start these services:
+   - Apache
+   - MySQL
+
+4. Open phpMyAdmin:
+
+   http://localhost/phpmyadmin/
+
+5. For a FRESH INSTALLATION:
+   - Create or select database: pasig_feedback_portal
+   - Open the Import tab.
+   - Import: database\schema.sql
+   - Import database\demo_data.sql only when demo records are needed.
+
+6. For an EXISTING DATABASE:
+   - Back up the database first through phpMyAdmin Export.
+   - Do NOT import schema.sql because it recreates the tables.
+   - Import only migration files that have not previously been applied.
+   - Never run the same migration twice.
+
+============================================================
+C. INSTALL THE PYTHON/SVM REQUIREMENTS
+============================================================
+
+1. Open Command Prompt.
+
+2. Go to the machine-learning folder:
+
+   cd /d C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
+
+3. Upgrade pip:
+
+   python -m pip install --upgrade pip
+
+4. Install the exact project requirements:
+
+   python -m pip install -r requirements.txt
+
+   This installs:
+   - scikit-learn
+   - joblib
+   - numpy
+
+5. Verify the packages:
+
+   python -c "import sklearn, joblib, numpy; print('Python SVM packages: OK')"
+
+   Expected result:
+
+   Python SVM packages: OK
+
+6. The trained model is already included in ml\models. Retraining is not
+   required for ordinary installation. Retrain only after replacing the
+   dataset with an approved and manually labeled research dataset:
+
+   python train.py
+
+============================================================
+D. CONNECT PHP TO THE CORRECT PYTHON.EXE
+============================================================
+
+1. Find the exact Python executable path:
+
+   py -0p
+
+   If the Python launcher is unavailable, use:
+
+   where python
+
+2. Copy the complete path ending in python.exe. Example:
+
+   C:\Users\Juan\AppData\Local\Programs\Python\Python312\python.exe
+
+3. Open this project file in a text editor:
+
+   config\app.php
+
+4. Find PYTHON_BIN and replace only the example computer path with the
+   Python path from Step D-2. Use forward slashes. Example:
+
+   define('PYTHON_BIN', getenv('PASIG_PYTHON_BIN') ?: 'C:/Users/Juan/AppData/Local/Programs/Python/Python312/python.exe');
+
+5. Save config\app.php.
+
+6. Stop and restart Apache in XAMPP after changing the path.
+
+IMPORTANT:
+The username and Python installation folder can differ on every computer.
+Do not blindly copy C:/Users/PC/... if the new Windows account has another
+name. Always obtain the correct path using py -0p or where python.
+
+============================================================
+E. TEST THE SVM OUTSIDE THE WEBSITE
+============================================================
+
+1. In Command Prompt, remain inside the ml folder.
+
+2. Run a positive test:
+
+   echo Mabilis at maayos ang serbisyo. | python predict.py
+
+3. Run a negative test:
+
+   echo Ambagal ng pila at hindi malinaw ang proseso. | python predict.py
+
+4. A successful result is JSON containing:
+   - label: positive, neutral, or negative
+   - confidence: decimal confidence value
+   - model_version
+
+5. If "Model not found" appears, confirm that the trained files exist in
+   ml\models. If necessary, run python train.py once.
+
+============================================================
+F. TEST THE COMPLETE PHP-TO-PYTHON CONNECTION
+============================================================
+
+1. Open the system:
+
+   http://localhost/pasig-cityhall-feedback-portal/
+
+2. Sign in as Administrator.
+
+3. Open: System & Audit
+
+4. Check the SVM Bridge card. It must show "Working."
+
+5. Optional command-line system test:
+
+   cd /d C:\xampp\htdocs\pasig-cityhall-feedback-portal
+   C:\xampp\php\php.exe tests\smoke_test.php
+
+6. Submit one public survey with a required written comment.
+
+7. In Feedback Records, verify that Sentiment Source displays "SVM" and
+   not "Fallback."
+
+8. Low-confidence predictions automatically enter Sentiment Review.
+   This is expected behavior and is not a Python error.
+
+============================================================
+G. HOW THE SENTIMENT PROCESS WORKS
+============================================================
+
+1. The client submits ratings and a written comment.
+2. PHP sends the complete comment to ml\predict.py.
+3. normalize_text.py normalizes Filipino, English, Taglish, slang, and
+   elongated spellings while preserving useful context.
+4. The trained Linear SVM returns a sentiment label and confidence.
+5. PHP stores the prediction, confidence, model version, and source.
+6. If confidence is below 60%, or Python cannot be reached, the record is
+   placed in Sentiment Review for human verification.
+7. The final score uses 60% normalized service rating and 40% verified
+   comment sentiment.
+
+============================================================
+H. COMMON ERRORS AND SOLUTIONS
+============================================================
+
+ERROR: Python executable not found
+SOLUTION: Run py -0p and correct PYTHON_BIN in config\app.php.
+
+ERROR: No module named sklearn, joblib, or numpy
+SOLUTION:
+  cd /d C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
+  python -m pip install -r requirements.txt
+
+ERROR: Sentiment Source always shows Fallback
+SOLUTION:
+  - Verify PYTHON_BIN.
+  - Test predict.py in Command Prompt.
+  - Restart Apache.
+  - Confirm proc_open is not disabled in the active XAMPP php.ini.
+
+ERROR: Model not found
+SOLUTION:
+  - Confirm the ml\models files were copied.
+  - If missing, run python train.py.
+
+ERROR: Access denied or Apache cannot run Python
+SOLUTION:
+  - Install Python for the current Windows user or all users.
+  - Confirm Apache can read python.exe and the complete project folder.
+  - Restart Apache after correcting the path.
+
+============================================================
+I. DEMO ACCOUNTS
+============================================================
+
 Administrator: admin / Admin123!
 CHO Office Head: cho_head / Head123!
 CHO Staff: cho_staff / Staff123!
 
-SVM
-The model is already included. To retrain after changing the approved dataset:
-cd /d C:\xampp\htdocs\pasig-cityhall-feedback-portal\ml
-"%LocalAppData%\Programs\Python\Python312\python.exe" train.py
+Change all demo passwords before actual deployment.
 
-BACKUP/RESTORE
-Download a full SQL backup from Administrator > System & Audit.
-Restore through phpMyAdmin Import.
+============================================================
+J. BACKUP, PRIVACY, AND RESEARCH REMINDERS
+============================================================
 
-RESEARCH WARNING
-The 300-comment model is for development verification. Use an approved, de-identified, manually labeled CHD dataset for final evaluation.
+1. Download SQL backups through Administrator > System & Audit.
+2. Restore backups through phpMyAdmin Import.
+3. Never use identifiable client information for model training.
+4. The included 300-comment dataset/model is for development verification.
+5. Final research evaluation requires an approved, de-identified,
+   independently labeled CHD dataset and documented evaluation procedure.

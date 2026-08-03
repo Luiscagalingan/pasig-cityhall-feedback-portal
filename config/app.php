@@ -15,7 +15,8 @@ const SVM_PREDICT_SCRIPT = __DIR__ . '/../ml/predict.py';
 // Final weighted score = 60% structured ratings + 40% comment sentiment.
 const RATING_WEIGHT = 0.60;
 const COMMENT_WEIGHT = 0.40;
-const ACTION_SCORE_THRESHOLD = 60.0;
+// Equivalent 0..100 presentation of the Chapter 2 normalized index.
+const ACTION_SCORE_THRESHOLD = 33.5;
 
 // Predictions below this value, and every fallback prediction, require human review.
 const LOW_CONFIDENCE_THRESHOLD = 0.60;

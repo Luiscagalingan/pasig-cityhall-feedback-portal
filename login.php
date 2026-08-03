@@ -42,5 +42,4 @@ render_public_start('Authorized Login', 'login-body');
     <p class="help">Archived users cannot sign in. Staff and heads can access only their assigned active office.</p>
   </section>
 </div>
-<button class="theme-toggle login-theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button>
 <?php render_public_end(); ?>

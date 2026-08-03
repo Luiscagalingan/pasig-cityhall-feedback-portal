@@ -12,3 +12,14 @@ INSERT INTO feedback (office_id,visit_date,sex,age,client_type,service_received,
 INSERT INTO actions (feedback_id,office_id,title,details,status,created_at) VALUES
 (3,1,'Review client feedback #3','Sobrang tagal bago ako naasikaso at hindi malinaw ang instructions.','in_progress',NOW()-INTERVAL 29 DAY),
 (6,1,'Review client feedback #6','Mabagal ang queue at kulang ang upuan para sa senior citizens.','needs_action',NOW()-INTERVAL 7 DAY);
+
+-- Align the demonstration rows with the Chapter 2 normalized 60/40 formula.
+UPDATE feedback
+SET rating_percent = ROUND(((average_rating - 1) / 3) * 100, 2),
+    comment_score = CASE sentiment WHEN 'positive' THEN 100 WHEN 'negative' THEN 0 ELSE 50 END,
+    final_score = ROUND(
+      ((((average_rating - 1) / 3) * 100) * 0.60) +
+      ((CASE sentiment WHEN 'positive' THEN 100 WHEN 'negative' THEN 0 ELSE 50 END) * 0.40),
+      2
+    )
+WHERE office_id = 1 AND source = 'csv_import';

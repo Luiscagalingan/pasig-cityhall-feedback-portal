@@ -12,7 +12,7 @@ PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scope
 - Office Head-only Manage Staff, CSV preview/import, rollback, and Sentiment Review
 - Required English/Filipino/Taglish comments with shorthand/slang normalization
 - TF-IDF word/character features + LinearSVC
-- 60% structured ratings + 40% comment sentiment
+- Chapter 2 normalized score presented on an equivalent 0–100 scale: 60% structured ratings + 40% comment sentiment, with 33.5 and 66.5 classification thresholds
 - Low-confidence/fallback review queue, manual correction, original-label preservation
 - Reviewed training-candidate export for controlled retraining
 - Needs Action → In Progress → Pending Approval → Completed workflow
@@ -30,9 +30,9 @@ Import `database/schema.sql`.
 
 Replace the files, then import once:
 
-`database/migrations/002_workflow_security_upgrade.sql`
+Run the applicable migrations in numerical order through
+`database/migrations/005_align_chapter2_weighted_formula.sql`.
 
-Read `UPGRADE_INSTRUCTIONS.txt` before opening the updated site.
 
 ## Verification
 

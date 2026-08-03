@@ -118,22 +118,23 @@ function sentiment_numeric_score(string $sentiment): float
 function compute_feedback_scores(array $ratings, string $sentiment): array
 {
     $average = rating_average($ratings);
-    $ratingPercent = round(($average / 4) * 100, 2);
+    // Chapter 2's -1..+1 index expressed on an equivalent 0..100 scale.
+    $normalizedRating = round((($average - 1) / 3) * 100, 2);
     $commentScore = sentiment_numeric_score($sentiment);
     return [
         'average_rating' => $average,
-        'rating_percent' => $ratingPercent,
+        // Kept under the legacy database column name for migration compatibility.
+        'rating_percent' => $normalizedRating,
         'comment_score' => $commentScore,
-        'final_score' => round(($ratingPercent * RATING_WEIGHT) + ($commentScore * COMMENT_WEIGHT), 2),
+        'final_score' => round(($normalizedRating * RATING_WEIGHT) + ($commentScore * COMMENT_WEIGHT), 2),
     ];
 }
 
 function final_interpretation(float $score): string
 {
-    if ($score >= 85) return 'Highly Satisfied';
-    if ($score >= 70) return 'Satisfied';
-    if ($score >= 55) return 'Needs Improvement';
-    return 'Critical Concern';
+    if ($score >= 66.5) return 'Positive';
+    if ($score >= 33.5) return 'Neutral';
+    return 'Negative';
 }
 
 function active_offices(): array
@@ -250,6 +251,15 @@ function notify_office_heads(int $officeId, string $type, string $title, string 
     } catch (Throwable) {}
 }
 
+function notify_office_users(int $officeId, string $type, string $title, string $message, ?string $link = null): void
+{
+    try {
+        $stmt = db()->prepare("SELECT id FROM users WHERE office_id=? AND role IN ('office_head','office_staff') AND status='active'");
+        $stmt->execute([$officeId]);
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $id) send_notification((int)$id, $officeId, $type, $title, $message, $link);
+    } catch (Throwable) {}
+}
+
 function unread_notification_count(int $userId): int
 {
     try {
@@ -295,7 +305,7 @@ function create_action_if_needed(int $feedbackId, int $officeId, string $sentime
     $stmt->execute([$feedbackId, $officeId, 'Review client feedback #' . $feedbackId, mb_substr($comment, 0, 1000), 'needs_action']);
     $id = (int)db()->lastInsertId();
     if ($notify) {
-        notify_office_heads($officeId, 'action', 'New feedback requires action', 'Feedback #' . $feedbackId . ' generated a new action item.', 'office/actions.php');
+        notify_office_users($officeId, 'action', 'New feedback requires action', 'Feedback #' . $feedbackId . ' generated a new action item.', 'office/actions.php');
         notify_admins('action', 'New action item', 'Feedback #' . $feedbackId . ' requires office action.', 'admin/actions.php');
     }
     return $id;

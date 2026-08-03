@@ -29,7 +29,7 @@ function admin_nav(): array
         ['review','Sentiment Review','review.php','shield'],['actions','Action Management','admin/actions.php','check'],
         ['offices','Offices','admin/offices.php','building'],['heads','Manage Heads','admin/heads.php','users'],
         ['staff','Manage Staff','admin/staff.php','users'],['reports','Reports & Export','admin/reports.php','report'],
-        ['notifications','Notifications','notifications.php','bell'],['account','My Account','account.php','users'],
+        ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
         ['system','System & Audit','admin/system.php','database'],
     ];
 }
@@ -46,7 +46,7 @@ function office_nav(array $user): array
         $nav[] = ['staff','Manage Staff','office/staff.php','users'];
     }
     $nav[] = ['reports','Reports & Export','office/reports.php','report'];
-    $nav[] = ['notifications','Notifications','notifications.php','bell'];
+    $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
     $nav[] = ['account','My Account','account.php','users'];
     return $nav;
 }
@@ -54,13 +54,13 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'light';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=12"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=24"></head><body class="<?= e($bodyClass) ?>">
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
 
 function render_public_end(): void
 { ?>
-<script src="<?= e(app_url('assets/js/app.js')) ?>?v=10"></script></body></html>
+<script src="<?= e(app_url('assets/js/app.js')) ?>?v=16"></script></body></html>
 <?php }
 
 function render_dashboard_start(string $title, string $active): array
@@ -71,20 +71,29 @@ function render_dashboard_start(string $title, string $active): array
     $officeId = $user['role'] === 'admin' ? null : (int)$user['office_id'];
     $metrics = dashboard_metrics($officeId);
     $unread = unread_notification_count((int)$user['id']);
+    $notificationPreview = [];
+    try {
+        $previewStmt = db()->prepare('SELECT title,message,type,read_at,created_at FROM notifications WHERE user_id=? AND (expires_at IS NULL OR expires_at>NOW()) ORDER BY read_at IS NULL DESC,created_at DESC LIMIT 5');
+        $previewStmt->execute([(int)$user['id']]);
+        $notificationPreview = $previewStmt->fetchAll();
+    } catch (Throwable) {}
     $review = in_array($user['role'], ['admin','office_head'], true) ? review_count($user) : 0;
+    $workAlerts = (int)$metrics['needs_action'] + (int)$metrics['in_progress'] + (int)$metrics['pending_approval'] + $review;
+    $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
-<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><script>document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||'light';</script><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=12"></head><body class="dashboard-body">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=24"></head><body class="dashboard-body">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
-<?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $unread > 0): ?><b><?= $unread ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
+<?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $workAlerts > 0): ?><b title="Unresolved work items"><?= $workAlerts ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>
-<div class="app-shell"><header class="topbar"><button class="icon-btn mobile-only" data-sidebar-open aria-label="Open menu"><?= icon('menu') ?></button><div><small><?= $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATION' : 'OFFICE WORKSPACE' ?></small><strong><?= e($user['role'] === 'admin' ? 'Administrator Console' : $user['office_name']) ?></strong></div><div class="topbar-actions"><a class="icon-btn notification-link" href="<?= e(app_url('notifications.php')) ?>" aria-label="Notifications"><?= icon('bell') ?><?php if($unread): ?><b><?= $unread ?></b><?php endif; ?></a><span class="scope-pill"><?= e($user['role'] === 'admin' ? 'ALL ACTIVE OFFICES' : $user['office_code']) ?></span><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button></div></header><main class="page-content">
+<div class="app-shell"><header class="topbar"><button class="icon-btn mobile-only" data-sidebar-open aria-label="Open menu"><?= icon('menu') ?></button><div><small><?= $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATION' : 'OFFICE WORKSPACE' ?></small><strong><?= e($user['role'] === 'admin' ? 'Administrator Console' : $user['office_name']) ?></strong></div><div class="topbar-actions"><div class="notification-menu"><button type="button" class="icon-btn notification-link" data-notification-toggle aria-label="Open notifications" aria-expanded="false"><?= icon('bell') ?><?php if($unread): ?><b><?= $unread ?></b><?php endif; ?></button><section class="notification-preview" data-notification-preview aria-hidden="true"><div class="notification-preview-head"><div><strong>Notifications</strong><small><?= $unread ?> unread</small></div><a href="<?= e(app_url('notifications.php')) ?>">View all</a></div><div class="notification-preview-list"><?php foreach($notificationPreview as $item): ?><a class="notification-preview-item <?= $item['read_at']?'':'unread' ?>" href="<?= e(app_url('notifications.php')) ?>"><span><?= e($item['title']) ?></span><p><?= e(mb_strimwidth($item['message'],0,90,'…')) ?></p><small><?= e(date('M d, h:i A',strtotime($item['created_at']))) ?></small></a><?php endforeach; ?><?php if(!$notificationPreview): ?><div class="empty-state">No notifications yet.</div><?php endif; ?></div></section></div><span class="scope-pill"><?= e($scopeLabel) ?></span><button class="theme-toggle" data-theme-toggle><?= icon('sun') ?><span>Light</span></button></div></header><main class="page-content">
+<div hidden data-notification-read-config data-url="<?= e(app_url('notification-read.php')) ?>" data-csrf="<?= e(csrf_token()) ?>"></div>
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
     return $user;
 }
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=10"></script></body></html>
+</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=16"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

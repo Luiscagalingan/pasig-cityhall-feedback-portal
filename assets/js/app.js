@@ -1,26 +1,141 @@
 (() => {
   const root = document.documentElement;
-  const stored = localStorage.getItem('pasig-theme') || 'light';
-  root.dataset.theme = stored;
-  const updateThemeLabels = () => document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
-    const nextTheme = root.dataset.theme === 'dark' ? 'Light' : 'Dark';
-    const label = btn.querySelector('span');
-    if (label) label.textContent = nextTheme;
-    btn.setAttribute('aria-label', `Switch to ${nextTheme.toLowerCase()} mode`);
-    btn.title = `Switch to ${nextTheme.toLowerCase()} mode`;
+  root.dataset.theme = 'dark';
+  localStorage.removeItem('pasig-theme');
+
+  const enhanceSelect = select => {
+    if (select.multiple || select.dataset.nativeSelect !== undefined || select.closest('.custom-select')) return;
+    const shell = document.createElement('div');
+    shell.className = 'custom-select';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    const menu = document.createElement('div');
+    menu.className = 'custom-select-menu';
+    menu.setAttribute('role', 'listbox');
+    const refresh = () => {
+      const selected = select.options[select.selectedIndex];
+      trigger.textContent = selected?.textContent || 'Select an option';
+      menu.querySelectorAll('[data-value]').forEach(item => {
+        const active = item.dataset.value === select.value;
+        item.classList.toggle('selected', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+    };
+    [...select.options].forEach(option => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'custom-select-option';
+      item.dataset.value = option.value;
+      item.textContent = option.textContent;
+      item.disabled = option.disabled;
+      item.setAttribute('role', 'option');
+      item.addEventListener('click', () => {
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', {bubbles:true}));
+        shell.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        refresh();
+        trigger.focus();
+      });
+      menu.appendChild(item);
+    });
+    trigger.addEventListener('click', () => {
+      document.querySelectorAll('.custom-select.open').forEach(open => {if (open !== shell) open.classList.remove('open');});
+      const open = shell.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(open));
+      if (open) (menu.querySelector('.selected:not(:disabled)') || menu.querySelector('.custom-select-option:not(:disabled)'))?.focus();
+    });
+    shell.addEventListener('keydown', event => {
+      const enabled = [...menu.querySelectorAll('.custom-select-option:not(:disabled)')];
+      const current = enabled.indexOf(document.activeElement);
+      if (event.key === 'ArrowDown') {event.preventDefault();enabled[Math.min(current + 1,enabled.length - 1)]?.focus();}
+      if (event.key === 'ArrowUp') {event.preventDefault();enabled[Math.max(current - 1,0)]?.focus();}
+      if (event.key === 'Escape') {shell.classList.remove('open');trigger.setAttribute('aria-expanded','false');trigger.focus();}
+    });
+    select.parentNode.insertBefore(shell, select);
+    shell.append(select, trigger, menu);
+    select.classList.add('custom-select-native');
+    select.addEventListener('change', refresh);
+    refresh();
+  };
+  document.querySelectorAll('select').forEach(enhanceSelect);
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.custom-select')) document.querySelectorAll('.custom-select.open').forEach(select => {select.classList.remove('open');select.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded','false');});
   });
-  updateThemeLabels();
-  document.querySelectorAll('[data-theme-toggle]').forEach(btn => btn.addEventListener('click', () => {
-    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('pasig-theme', root.dataset.theme);
-    updateThemeLabels();
-    window.dispatchEvent(new Event('resize'));
-  }));
 
   const sidebar = document.querySelector('.sidebar');
   const overlay = document.querySelector('.sidebar-overlay');
   document.querySelector('[data-sidebar-open]')?.addEventListener('click', () => {sidebar?.classList.add('open'); overlay?.classList.add('open');});
   overlay?.addEventListener('click', () => {sidebar?.classList.remove('open'); overlay.classList.remove('open');});
+
+  const scopePill = document.querySelector('.scope-pill');
+  if (scopePill) {
+    const profileMenu = document.createElement('div');
+    profileMenu.className = 'top-profile-menu';
+    const profileTrigger = document.createElement('button');
+    profileTrigger.type = 'button';
+    profileTrigger.className = 'scope-pill top-profile-trigger';
+    profileTrigger.setAttribute('aria-expanded', 'false');
+    profileTrigger.innerHTML = `<span>${scopePill.textContent.trim()}</span><i aria-hidden="true">⌄</i>`;
+    const accountHref = document.querySelector('.nav-link[href*="account.php"]')?.href || 'account.php';
+    const logoutHref = document.querySelector('[data-confirm-logout]')?.href || 'logout.php';
+    const menu = document.createElement('div');
+    menu.className = 'top-profile-dropdown';
+    menu.innerHTML = `<small>ACCOUNT</small><a href="${accountHref}">My Profile</a><a class="profile-logout" href="${logoutHref}" data-confirm-logout>Logout</a>`;
+    scopePill.replaceWith(profileMenu);
+    profileMenu.append(profileTrigger, menu);
+    profileTrigger.addEventListener('click', event => {
+      event.stopPropagation();
+      const open = profileMenu.classList.toggle('open');
+      profileTrigger.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.top-profile-menu')) {
+        profileMenu.classList.remove('open');
+        profileTrigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  const notificationToggle = document.querySelector('[data-notification-toggle]');
+  const notificationPreview = document.querySelector('[data-notification-preview]');
+  const notificationReadConfig = document.querySelector('[data-notification-read-config]');
+  let notificationsMarkedRead = false;
+  const markVisibleNotificationsRead = async () => {
+    if (notificationsMarkedRead || !notificationReadConfig || !notificationToggle?.querySelector('b')) return;
+    notificationsMarkedRead = true;
+    const body = new FormData();
+    body.append('csrf_token', notificationReadConfig.dataset.csrf || '');
+    try {
+      const response = await fetch(notificationReadConfig.dataset.url || '', {
+        method: 'POST', body, headers: {'X-Requested-With': 'XMLHttpRequest'}
+      });
+      if (!response.ok || !(await response.json()).ok) throw new Error('Unable to mark notifications read');
+      notificationToggle.querySelector('b')?.remove();
+      notificationPreview?.querySelectorAll('.notification-preview-item.unread').forEach(item => item.classList.remove('unread'));
+      const unreadLabel = notificationPreview?.querySelector('.notification-preview-head small');
+      if (unreadLabel) unreadLabel.textContent = '0 unread';
+    } catch (error) {
+      notificationsMarkedRead = false;
+    }
+  };
+  notificationToggle?.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = notificationPreview?.classList.toggle('open') || false;
+    notificationPreview?.setAttribute('aria-hidden', String(!open));
+    notificationToggle.setAttribute('aria-expanded', String(open));
+    if (open) markVisibleNotificationsRead();
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.notification-menu')) {
+      notificationPreview?.classList.remove('open');
+      notificationPreview?.setAttribute('aria-hidden', 'true');
+      notificationToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
 
   const confirmOverlay = document.createElement('div');
   confirmOverlay.className = 'confirm-overlay';
@@ -77,11 +192,11 @@
     e.preventDefault();
     openConfirm(el.dataset.confirmDelete || 'Delete this record permanently?', () => el.requestSubmit());
   }));
-  document.querySelector('[data-confirm-logout]')?.addEventListener('click', e => {
+  document.querySelectorAll('[data-confirm-logout]').forEach(link => link.addEventListener('click', e => {
     e.preventDefault();
     const href = e.currentTarget.href;
     openConfirm('Are you sure you want to log out of the system?', () => window.location.assign(href), false);
-  });
+  }));
   const closeModal = modal => {
     modal?.classList.remove('open');
     modal?.setAttribute('aria-hidden', 'true');
@@ -105,6 +220,51 @@
     form.querySelectorAll('select,input[type="date"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
     form.querySelectorAll('input:not([type]),input[type="text"],input[type="search"]').forEach(input => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(submit, 450); }));
     form.querySelectorAll('button:not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
+  });
+
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'system-loading';
+  loadingOverlay.setAttribute('aria-hidden', 'true');
+  loadingOverlay.innerHTML = '<div class="system-loading-card"><span class="system-loader" aria-hidden="true"></span><strong>Loading</strong><small>Please wait a moment...</small></div>';
+  document.body.appendChild(loadingOverlay);
+  const showLoading = () => {
+    loadingOverlay.classList.add('show');
+    loadingOverlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('system-is-loading');
+  };
+  const hideLoading = () => {
+    loadingOverlay.classList.remove('show');
+    loadingOverlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('system-is-loading');
+  };
+  window.addEventListener('pageshow', hideLoading);
+
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (link.target === '_blank' || link.hasAttribute('download')) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin || url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+    if (url.searchParams.get('export') === 'pdf' || url.searchParams.get('export') === 'csv') {
+      showLoading();
+      setTimeout(hideLoading, 1400);
+      return;
+    }
+    event.preventDefault();
+    showLoading();
+    setTimeout(() => window.location.assign(url.href), 1000);
+  });
+
+  document.addEventListener('submit', event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || form.dataset.loadingProceed === '1') return;
+    event.preventDefault();
+    showLoading();
+    const submitter = event.submitter;
+    setTimeout(() => {
+      form.dataset.loadingProceed = '1';
+      form.requestSubmit(submitter || undefined);
+    }, 1000);
   });
 
   const toast = document.querySelector('[data-toast]');
