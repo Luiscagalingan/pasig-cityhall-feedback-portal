@@ -4,24 +4,25 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 $admin=require_login(['admin']);
 $offices=db()->query("SELECT * FROM offices ORDER BY status='active' DESC,name")->fetchAll();
 $selected=request_int('office_id');
-$viewStatus=in_array(($_GET['status']??'active'),['active','archived'],true)?(string)$_GET['status']:'active';
+$requestedViewStatus=(string)($_GET['status']??'active');
+$viewStatus=in_array($requestedViewStatus,['active','archived'],true)?$requestedViewStatus:'active';
 if($_SERVER['REQUEST_METHOD']==='POST'){
  verify_csrf();$action=(string)($_POST['action']??'');$returnOffice=post_int('return_office');
  $requestedReturnStatus=$_POST['return_status']??$_GET['status']??'active';
  $returnStatus=in_array($requestedReturnStatus,['active','archived'],true)?(string)$requestedReturnStatus:'active';
  try{
   if($action==='create'){
-   $officeId=post_int('office_id');$name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)$_POST['password'];
+   $officeId=post_int('office_id');$name=trim((string)($_POST['full_name']??''));$username=trim((string)($_POST['username']??''));$email=trim((string)($_POST['email']??''));$password=(string)($_POST['password']??'');
    if(!$officeId||$name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8||!preg_match('/[A-Za-z]/',$password)||!preg_match('/\d/',$password))throw new RuntimeException('Complete all fields. Password must be at least 8 characters with a letter and a number.');
    $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,'office_staff','active',?,1)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$admin['id']]);audit((int)$admin['id'],'admin_staff_create',"Created staff {$username} for office #{$officeId}");set_flash('success','Staff account created and restricted to the selected office.');
   }elseif($action==='edit'){
-   $id=post_int('user_id');$officeId=post_int('office_id');$name=trim((string)$_POST['full_name']);$username=trim((string)$_POST['username']);$email=trim((string)$_POST['email']);$password=(string)($_POST['password']??'');
+   $id=post_int('user_id');$officeId=post_int('office_id');$name=trim((string)($_POST['full_name']??''));$username=trim((string)($_POST['username']??''));$email=trim((string)($_POST['email']??''));$password=(string)($_POST['password']??'');
    $sql=$password!==''?"UPDATE users SET office_id=?,full_name=?,username=?,email=?,password_hash=?,must_change_password=1 WHERE id=? AND role='office_staff'":"UPDATE users SET office_id=?,full_name=?,username=?,email=? WHERE id=? AND role='office_staff'";
    $params=$password!==''?[$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id]:[$officeId,$name,$username,$email,$id];db()->prepare($sql)->execute($params);audit((int)$admin['id'],'admin_staff_edit',"Updated staff #{$id}; office={$officeId}; password_reset=".($password!==''?'yes':'no'));set_flash('success','Staff account updated.');
   }elseif($action==='status'){
-   $id=post_int('user_id');$status=(string)$_POST['status'];if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid status.');db()->prepare("UPDATE users SET status=? WHERE id=? AND role='office_staff'")->execute([$status,$id]);audit((int)$admin['id'],'admin_staff_status',"Staff #{$id} -> {$status}");set_flash('success','Staff account status updated.');
+   $id=post_int('user_id');$status=(string)($_POST['status']??'');if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid status.');db()->prepare("UPDATE users SET status=? WHERE id=? AND role='office_staff'")->execute([$status,$id]);audit((int)$admin['id'],'admin_staff_status',"Staff #{$id} -> {$status}");set_flash('success','Staff account status updated.');
   }elseif($action==='delete'){
-   $id=post_int('user_id');db()->prepare("DELETE FROM users WHERE id=? AND role='office_staff'")->execute([$id]);audit((int)$admin['id'],'admin_staff_delete',"Deleted staff #{$id}");set_flash('success','Staff account deleted.');
+   $id=post_int('user_id');db()->prepare("UPDATE users SET status='archived' WHERE id=? AND role='office_staff'")->execute([$id]);audit((int)$admin['id'],'admin_staff_status',"Staff #{$id} -> archived (legacy delete request)");set_flash('success','Staff account archived.');
   }
  }catch(Throwable $e){set_flash('error','Unable to complete action: '.$e->getMessage());}
  $returnQuery=['status'=>$returnStatus];if($returnOffice)$returnQuery['office_id']=$returnOffice;

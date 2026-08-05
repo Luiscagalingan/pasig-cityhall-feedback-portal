@@ -31,7 +31,15 @@ Import `database/schema.sql`.
 Replace the files, then import once:
 
 Run the applicable migrations in numerical order through
-`database/migrations/005_align_chapter2_weighted_formula.sql`.
+`database/migrations/006_submission_security_and_retention.sql`.
+
+## Security and retention operations
+
+- Public submissions use exact-duplicate blocking, a 60-second cooldown, and a three-submission hourly limit based on a one-way client hash.
+- Retention periods are declared in `config/app.php` and are applied by an administrator from **System & Audit > Retention Policy**.
+- Backups are downloaded only as AES-256-GCM encrypted `.pasigbak` files and are not stored by the portal.
+- Decrypt an authorized backup from the project directory with `C:\xampp\php\php.exe tools\decrypt_backup.php backup.pasigbak restored.sql`, then import the SQL through an authorized database administrator.
+- Keep backup passphrases separate from backup files. The configured recommended backup retention is 30 days.
 
 
 ## Verification
@@ -39,3 +47,7 @@ Run the applicable migrations in numerical order through
 Run `tests/run_smoke_test.bat`. Administrator → System & Audit must show **SVM Bridge: Working**.
 
 The included 300-comment model is a functional development/demo model. Final research evaluation still requires an approved, de-identified, manually labeled CHD dataset.
+
+## Research completion kit
+
+Use `research/README.md` for the prepared dataset, reviewer, Cohen's Kappa, final-model training, UAT, ISO/IEC 25010, diagrams, and defense workflow. Templates are intentionally blank and must be completed only with actual approved data and evaluators.

@@ -1,7 +1,41 @@
 (() => {
   const root = document.documentElement;
-  root.dataset.theme = 'dark';
-  localStorage.removeItem('pasig-theme');
+  const themeButtons = [...document.querySelectorAll('[data-theme-toggle]')];
+  const themeIcon = theme => theme === 'dark'
+    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  const applyTheme = theme => {
+    const selected = theme === 'dark' ? 'dark' : 'light';
+    root.dataset.theme = selected;
+    root.style.colorScheme = selected;
+    themeButtons.forEach(button => {
+      const next = selected === 'dark' ? 'Light mode' : 'Dark mode';
+      button.setAttribute('aria-label', `Switch to ${next.toLowerCase()}`);
+      button.setAttribute('title', `Switch to ${next.toLowerCase()}`);
+      const svg = button.querySelector('svg');
+      if (svg) svg.innerHTML = themeIcon(selected);
+      const label = button.querySelector('span');
+      if (label) label.textContent = next;
+    });
+    if (document.querySelector('[data-chart]')) window.dispatchEvent(new Event('resize'));
+  };
+  applyTheme(root.dataset.theme);
+  themeButtons.forEach(button => button.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('pasig-theme', next); } catch (_) {}
+    applyTheme(next);
+  }));
+
+  document.querySelectorAll('input[name="age"][min="18"]').forEach(input => {
+    const validateAge = () => {
+      const age = Number(input.value);
+      input.setCustomValidity(input.value !== '' && age < 18
+        ? 'Hindi ka pa maaaring sumagot. Ang survey na ito ay para lamang sa edad 18 pataas.'
+        : '');
+    };
+    input.addEventListener('input', validateAge);
+    input.addEventListener('invalid', validateAge);
+  });
 
   const enhanceSelect = select => {
     if (select.multiple || select.dataset.nativeSelect !== undefined || select.closest('.custom-select')) return;
@@ -187,11 +221,17 @@
     if (e.key === 'Escape' && confirmOverlay.classList.contains('open')) closeConfirm();
   });
 
-  document.querySelectorAll('[data-confirm-delete]').forEach(el => el.addEventListener('click', e => {
-    if (!e.target.closest('button, input[type="submit"]')) return;
-    e.preventDefault();
-    openConfirm(el.dataset.confirmDelete || 'Delete this record permanently?', () => el.requestSubmit());
-  }));
+  document.querySelectorAll('[data-confirm-delete]').forEach(el => {
+    if ((el.dataset.confirmDelete || '').startsWith('Permanently delete')) {
+      el.remove();
+      return;
+    }
+    el.addEventListener('click', e => {
+      if (!e.target.closest('button, input[type="submit"]')) return;
+      e.preventDefault();
+      openConfirm(el.dataset.confirmDelete || 'Continue with this action?', () => el.requestSubmit());
+    });
+  });
   document.querySelectorAll('[data-confirm-logout]').forEach(link => link.addEventListener('click', e => {
     e.preventDefault();
     const href = e.currentTarget.href;
@@ -220,51 +260,6 @@
     form.querySelectorAll('select,input[type="date"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
     form.querySelectorAll('input:not([type]),input[type="text"],input[type="search"]').forEach(input => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(submit, 450); }));
     form.querySelectorAll('button:not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
-  });
-
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.className = 'system-loading';
-  loadingOverlay.setAttribute('aria-hidden', 'true');
-  loadingOverlay.innerHTML = '<div class="system-loading-card"><span class="system-loader" aria-hidden="true"></span><strong>Loading</strong><small>Please wait a moment...</small></div>';
-  document.body.appendChild(loadingOverlay);
-  const showLoading = () => {
-    loadingOverlay.classList.add('show');
-    loadingOverlay.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('system-is-loading');
-  };
-  const hideLoading = () => {
-    loadingOverlay.classList.remove('show');
-    loadingOverlay.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('system-is-loading');
-  };
-  window.addEventListener('pageshow', hideLoading);
-
-  document.addEventListener('click', event => {
-    const link = event.target.closest('a[href]');
-    if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-    if (link.target === '_blank' || link.hasAttribute('download')) return;
-    const url = new URL(link.href, window.location.href);
-    if (url.origin !== window.location.origin || url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
-    if (url.searchParams.get('export') === 'pdf' || url.searchParams.get('export') === 'csv') {
-      showLoading();
-      setTimeout(hideLoading, 1400);
-      return;
-    }
-    event.preventDefault();
-    showLoading();
-    setTimeout(() => window.location.assign(url.href), 1000);
-  });
-
-  document.addEventListener('submit', event => {
-    const form = event.target;
-    if (!(form instanceof HTMLFormElement) || form.dataset.loadingProceed === '1') return;
-    event.preventDefault();
-    showLoading();
-    const submitter = event.submitter;
-    setTimeout(() => {
-      form.dataset.loadingProceed = '1';
-      form.requestSubmit(submitter || undefined);
-    }, 1000);
   });
 
   const toast = document.querySelector('[data-toast]');

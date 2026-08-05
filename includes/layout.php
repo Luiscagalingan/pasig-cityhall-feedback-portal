@@ -15,6 +15,7 @@ function icon(string $name): string
         'logout'=>'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
         'menu'=>'<path d="M4 6h16M4 12h16M4 18h16"/>',
         'sun'=>'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>',
+        'moon'=>'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
         'upload'=>'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
         'bell'=>'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>',
         'shield'=>'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>',
@@ -54,13 +55,14 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=24"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>try{document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||((matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light')}catch(e){}</script><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=29"></head><body class="<?= e($bodyClass) ?>">
+<button class="theme-toggle public-theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><?= icon('moon') ?><span>Dark mode</span></button>
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
 
 function render_public_end(): void
 { ?>
-<script src="<?= e(app_url('assets/js/app.js')) ?>?v=16"></script></body></html>
+<script src="<?= e(app_url('assets/js/app.js')) ?>?v=21"></script></body></html>
 <?php }
 
 function render_dashboard_start(string $title, string $active): array
@@ -81,7 +83,7 @@ function render_dashboard_start(string $title, string $active): array
     $workAlerts = (int)$metrics['needs_action'] + (int)$metrics['in_progress'] + (int)$metrics['pending_approval'] + $review;
     $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=24"></head><body class="dashboard-body">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>try{document.documentElement.dataset.theme=localStorage.getItem('pasig-theme')||((matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light')}catch(e){}</script><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=29"></head><body class="dashboard-body">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
 <?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $workAlerts > 0): ?><b title="Unresolved work items"><?= $workAlerts ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>
@@ -93,7 +95,7 @@ function render_dashboard_start(string $title, string $active): array
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=16"></script></body></html>
+</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=21"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

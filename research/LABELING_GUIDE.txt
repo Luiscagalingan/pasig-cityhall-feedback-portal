@@ -1,0 +1,31 @@
+SENTIMENT LABELING GUIDE
+========================
+
+Allowed labels: positive, neutral, negative
+
+POSITIVE
+- Clear satisfaction, praise, gratitude, or approval of the service.
+- Example: "Mabilis at magalang ang staff. Salamat."
+
+NEGATIVE
+- Clear complaint, dissatisfaction, harmful delay, discourtesy, error, or unresolved problem.
+- Example: "Sobrang tagal at walang malinaw na instruction."
+
+NEUTRAL
+- Factual statement without clear emotion, unclear sentiment, or genuinely balanced mixed experience.
+- Example: "Nakuha ko ang dokumento pagkatapos ng normal na proseso."
+
+MIXED COMMENTS
+- Label the dominant overall evaluation.
+- If praise and complaint are equally strong and neither dominates, use neutral.
+- Do not label based on a single word without reading the whole comment.
+
+NEGATION
+- "Hindi mabilis" is negative, while "hindi naman mabagal" may be positive or neutral depending on context.
+
+REVIEW RULES
+1. Reviewers label independently.
+2. Reviewers must not see each other's first label.
+3. Do not include personal identifiers in the labeling file.
+4. Disagreements must be resolved only after Cohen's Kappa is calculated.
+5. Record the final label and a short resolution note.

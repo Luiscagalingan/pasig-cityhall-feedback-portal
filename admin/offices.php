@@ -6,17 +6,18 @@ $user = require_login(['admin']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $action = (string)($_POST['action'] ?? 'create');
-    $returnStatus = in_array(($_POST['return_status'] ?? 'active'), ['active','archived'], true)
-        ? (string)$_POST['return_status'] : 'active';
+    $requestedReturnStatus = (string)($_POST['return_status'] ?? 'active');
+    $returnStatus = in_array($requestedReturnStatus, ['active','archived'], true)
+        ? $requestedReturnStatus : 'active';
     try {
         if ($action === 'create') {
-            $name = trim((string)$_POST['name']);
-            $code = strtoupper(trim((string)$_POST['code']));
+            $name = trim((string)($_POST['name'] ?? ''));
+            $code = strtoupper(trim((string)($_POST['code'] ?? '')));
             $description = trim((string)($_POST['description'] ?? ''));
-            $headName = trim((string)$_POST['head_name']);
-            $username = trim((string)$_POST['username']);
-            $email = trim((string)$_POST['email']);
-            $password = (string)$_POST['password'];
+            $headName = trim((string)($_POST['head_name'] ?? ''));
+            $username = trim((string)($_POST['username'] ?? ''));
+            $email = trim((string)($_POST['email'] ?? ''));
+            $password = (string)($_POST['password'] ?? '');
             if ($name === '' || $code === '' || $headName === '' || $username === '' ||
                 !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8 ||
                 !preg_match('/[A-Za-z]/', $password) || !preg_match('/\d/', $password)) {
@@ -33,16 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash('success','Office and Office Head created. Their dashboard is available immediately.');
         } elseif ($action === 'toggle') {
             $id = post_int('office_id');
-            $newStatus = (string)$_POST['status'];
+            $newStatus = (string)($_POST['status'] ?? '');
             if (!in_array($newStatus,['active','archived'],true)) throw new RuntimeException('Invalid status.');
             db()->prepare('UPDATE offices SET status=? WHERE id=?')->execute([$newStatus,$id]);
             audit((int)$user['id'],'office_status',"Office #{$id} -> {$newStatus}");
             set_flash('success',$newStatus === 'archived' ? 'Office archived and removed from public surveys.' : 'Office reactivated and restored to public surveys.');
         } elseif ($action === 'edit') {
             $id = post_int('office_id');
-            $name = trim((string)$_POST['name']);
-            $code = strtoupper(trim((string)$_POST['code']));
-            $description = trim((string)$_POST['description']);
+            $name = trim((string)($_POST['name'] ?? ''));
+            $code = strtoupper(trim((string)($_POST['code'] ?? '')));
+            $description = trim((string)($_POST['description'] ?? ''));
             if ($name === '' || $code === '') throw new RuntimeException('Office name and code are required.');
             db()->prepare('UPDATE offices SET name=?,code=?,description=? WHERE id=?')->execute([$name,$code,$description,$id]);
             audit((int)$user['id'],'office_edit',"Office #{$id} updated to {$code} / {$name}");
@@ -55,8 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('admin/offices.php?status=' . urlencode($returnStatus));
 }
 
-$status = in_array(($_GET['status'] ?? 'active'), ['active','archived'], true)
-    ? (string)$_GET['status'] : 'active';
+$requestedStatus = (string)($_GET['status'] ?? 'active');
+$status = in_array($requestedStatus, ['active','archived'], true)
+    ? $requestedStatus : 'active';
 $counts = ['active'=>0,'archived'=>0];
 foreach (db()->query('SELECT status,COUNT(*) total FROM offices GROUP BY status')->fetchAll() as $countRow) {
     $counts[$countRow['status']] = (int)$countRow['total'];

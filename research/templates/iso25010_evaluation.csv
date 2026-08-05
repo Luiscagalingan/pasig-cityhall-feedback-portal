@@ -1,0 +1,12 @@
+evaluation_id,evaluator_role,category,item,score_1_to_5,comments
+E001,,Functional Suitability,The system provides the functions required for feedback collection and monitoring,,
+E001,,Functional Suitability,Dashboard calculations and reports are correct,,
+E001,,Performance Efficiency,Pages and reports respond within an acceptable time,,
+E001,,Compatibility,The portal works on the required browsers and devices,,
+E001,,Usability,Survey instructions and controls are easy to understand,,
+E001,,Usability,Navigation and light/dark modes support comfortable use,,
+E001,,Reliability,Validation and recovery behavior are dependable,,
+E001,,Security,Role and office access restrictions protect records,,
+E001,,Security,Privacy retention and encrypted backup controls are understandable,,
+E001,,Maintainability,Modules configuration and documentation support future updates,,
+E001,,Portability,Deployment requirements for PHP MySQL and Python are documented,,

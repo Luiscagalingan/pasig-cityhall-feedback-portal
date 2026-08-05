@@ -176,6 +176,40 @@ function feedback_fingerprint(int $officeId, array $record): string
     return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
 }
 
+function survey_client_hash(): string
+{
+    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $agent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? 'unknown'), 0, 255);
+    return hash('sha256', $ip . '|' . $agent);
+}
+
+function survey_submission_limit(): array
+{
+    $sessionLast = (int)($_SESSION['last_public_submission'] ?? 0);
+    $wait = max(0, SURVEY_SUBMISSION_COOLDOWN_SECONDS - (time() - $sessionLast));
+    try {
+        $stmt = db()->prepare('SELECT MAX(submitted_at) last_submit, COUNT(*) hourly_count FROM public_submission_log WHERE client_hash=? AND submitted_at>=DATE_SUB(NOW(),INTERVAL 1 HOUR)');
+        $stmt->execute([survey_client_hash()]);
+        $row = $stmt->fetch() ?: [];
+        if (!empty($row['last_submit'])) {
+            $wait = max($wait, SURVEY_SUBMISSION_COOLDOWN_SECONDS - (time() - strtotime((string)$row['last_submit'])));
+        }
+        $hourly = (int)($row['hourly_count'] ?? 0);
+        return ['allowed' => $wait <= 0 && $hourly < SURVEY_SUBMISSION_HOURLY_LIMIT, 'wait_seconds' => max(0, $wait), 'hourly_count' => $hourly];
+    } catch (Throwable) {
+        return ['allowed' => $wait <= 0, 'wait_seconds' => max(0, $wait), 'hourly_count' => 0];
+    }
+}
+
+function record_public_submission(int $officeId, int $feedbackId): void
+{
+    $_SESSION['last_public_submission'] = time();
+    try {
+        $stmt = db()->prepare('INSERT INTO public_submission_log(client_hash,office_id,feedback_id) VALUES(?,?,?)');
+        $stmt->execute([survey_client_hash(), $officeId, $feedbackId]);
+    } catch (Throwable) {}
+}
+
 function backfill_office_feedback_fingerprints(int $officeId): int
 {
     $stmt = db()->prepare(

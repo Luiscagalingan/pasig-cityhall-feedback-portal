@@ -1,0 +1,42 @@
+DEFENSE LIVE DEMO — RECOMMENDED 8–10 MINUTES
+============================================
+
+Before starting:
+[ ] Run tests\run_smoke_test.bat
+[ ] Prepare Admin, Office Head, and Office Staff accounts
+[ ] Prepare one unused valid survey response
+[ ] Keep screenshots/video ready in case local services fail
+
+1. PUBLIC PORTAL (1 minute)
+- Show office selection, privacy policy, light/dark mode, and mobile layout.
+- Show that age 17 is blocked and only 18+ is accepted.
+
+2. FEEDBACK PROCESSING (1 minute)
+- Submit valid ratings and Filipino/English/Taglish comment.
+- Explain SVM label, confidence indicator, source, and weighted score.
+- Repeat the same data to show exact-duplicate protection.
+
+3. OFFICE WORKSPACE (2 minutes)
+- Sign in as Office Staff and show assigned-office-only feedback.
+- Update an action and request completion.
+- Explain why Staff cannot approve final completion.
+
+4. OFFICE HEAD (2 minutes)
+- Approve the pending action.
+- Show sentiment-review queue and original-label preservation.
+- Show CSV preview/rejected rows without importing unreviewed data.
+
+5. ADMINISTRATOR (2 minutes)
+- Show consolidated dashboard, office management, archived accounts, and audit log.
+- Show encrypted backup modal and retention policy without exposing a passphrase.
+
+6. RESEARCH EVIDENCE (1–2 minutes)
+- Show final dataset counts, Cohen's Kappa, cross-validation result,
+  independent test metrics, confusion matrix, and error analysis.
+- End with limitations and human-oversight statement.
+
+Do not claim:
+- Demo samples are actual respondents
+- Operational confidence is a calibrated probability
+- Fallback output is SVM output
+- Institutional approvals exist unless documented

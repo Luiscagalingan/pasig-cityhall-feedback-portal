@@ -7,6 +7,7 @@ SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS trg_one_active_head_insert;
 DROP TRIGGER IF EXISTS trg_one_active_head_update;
 DROP TABLE IF EXISTS training_candidates;
+DROP TABLE IF EXISTS public_submission_log;
 DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS import_rejected_rows;
@@ -119,6 +120,18 @@ CREATE TABLE feedback (
   INDEX idx_feedback_review (office_id, review_status, is_void),
   INDEX idx_feedback_fingerprint (office_id, record_fingerprint),
   INDEX idx_feedback_import_batch (import_batch_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE public_submission_log (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  client_hash CHAR(64) NOT NULL,
+  office_id INT UNSIGNED NOT NULL,
+  feedback_id BIGINT UNSIGNED NULL,
+  submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_public_log_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE,
+  CONSTRAINT fk_public_log_feedback FOREIGN KEY (feedback_id) REFERENCES feedback(id) ON DELETE CASCADE,
+  INDEX idx_public_client_date (client_hash, submitted_at),
+  INDEX idx_public_date (submitted_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE actions (

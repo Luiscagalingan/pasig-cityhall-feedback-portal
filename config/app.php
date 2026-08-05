@@ -28,3 +28,16 @@ const LOGIN_LOCK_MINUTES = 15;
 const SESSION_IDLE_TIMEOUT = 1800; // 30 minutes
 
 const PRIVACY_NOTICE_VERSION = '2026-07-29';
+
+// Public survey abuse controls.
+const SURVEY_SUBMISSION_COOLDOWN_SECONDS = 60;
+const SURVEY_SUBMISSION_HOURLY_LIMIT = 3;
+
+// Institutional defaults; update these when the approved retention schedule changes.
+const FEEDBACK_RETENTION_MONTHS = 60;
+const AUDIT_RETENTION_MONTHS = 6;
+const LOGIN_ATTEMPT_RETENTION_DAYS = 90;
+const NOTIFICATION_RETENTION_DAYS = 365;
+const IMPORT_PREVIEW_RETENTION_HOURS = 24;
+const BACKUP_RETENTION_DAYS = 30;
+const PRIVACY_CONTACT = 'Pasig City Hall Data Protection / System Administrator';

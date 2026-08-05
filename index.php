@@ -12,7 +12,7 @@ render_public_start('Public Feedback Portal');
     <span class="eyebrow">UGNAYAN SA PASIG OFFICE FEEDBACK</span>
     <h1>Your feedback helps improve public service.</h1>
     <p>Share your experience after receiving a service. The survey records demographic information, transaction details, four service ratings, and a required written comment. No account is required.</p>
-    <a class="btn" href="#offices">Choose an Office</a>
+    <div class="public-actions"><a class="btn" href="#offices">Choose an Office</a><a class="btn secondary" href="<?= e(app_url('privacy.php')) ?>">Privacy Policy</a></div>
   </div>
   <div class="hero-card" id="offices">
     <h2>Select the office you visited</h2>
