@@ -1,0 +1,117 @@
+[Wed Aug  5 23:52:52 2026] PHP 8.2.12 Development Server (http://0.0.0.0:8080) started
+[Wed Aug  5 23:53:09 2026] 127.0.0.1:52577 Accepted
+[Wed Aug  5 23:53:09 2026] 127.0.0.1:52577 Closing
+[Wed Aug  5 23:53:09 2026] 127.0.0.1:52579 Accepted
+[Wed Aug  5 23:53:09 2026] 127.0.0.1:52579 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:09 2026] 127.0.0.1:52579 Closing
+[Wed Aug  5 23:53:14 2026] 127.0.0.1:52581 Accepted
+[Wed Aug  5 23:53:14 2026] 127.0.0.1:52581 Closing
+[Wed Aug  5 23:53:42 2026] 127.0.0.1:52590 Accepted
+[Wed Aug  5 23:53:42 2026] 127.0.0.1:52590 Closing
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52593 Accepted
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52595 Accepted
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52597 Accepted
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52593 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52593 Closing
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52595 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52597 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52595 Closing
+[Wed Aug  5 23:53:43 2026] 127.0.0.1:52597 Closing
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52598 Accepted
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52598 [200]: GET /pasig-cityhall-feedback-portal/survey.php?office=CHO
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52598 Closing
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52601 Accepted
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52603 Accepted
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52605 Accepted
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52601 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52603 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52601 Closing
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52603 Closing
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52605 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:48 2026] 127.0.0.1:52605 Closing
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52608 Accepted
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52608 [200]: GET /pasig-cityhall-feedback-portal/
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52608 Closing
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52611 Accepted
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52611 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52611 Closing
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52613 Accepted
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52615 Accepted
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52613 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52613 Closing
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52615 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:53:52 2026] 127.0.0.1:52615 Closing
+[Wed Aug  5 23:53:54 2026] 127.0.0.1:52619 Accepted
+[Wed Aug  5 23:53:54 2026] 127.0.0.1:52619 [200]: GET /pasig-cityhall-feedback-portal/privacy.php
+[Wed Aug  5 23:53:54 2026] 127.0.0.1:52619 Closing
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52621 Accepted
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52623 Accepted
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52623 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52621 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52623 Closing
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52621 Closing
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52625 Accepted
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52625 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:53:55 2026] 127.0.0.1:52625 Closing
+[Wed Aug  5 23:53:57 2026] 127.0.0.1:52627 Accepted
+[Wed Aug  5 23:53:57 2026] 127.0.0.1:52627 [200]: GET /pasig-cityhall-feedback-portal/
+[Wed Aug  5 23:53:57 2026] 127.0.0.1:52627 Closing
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52630 Accepted
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52632 Accepted
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52634 Accepted
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52634 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52630 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52632 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52634 Closing
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52632 Closing
+[Wed Aug  5 23:53:58 2026] 127.0.0.1:52630 Closing
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52636 Accepted
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52636 [200]: GET /pasig-cityhall-feedback-portal/
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52636 Closing
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52639 Accepted
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52641 Accepted
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52639 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52639 Closing
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52641 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52641 Closing
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52643 Accepted
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52643 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:54:01 2026] 127.0.0.1:52643 Closing
+[Wed Aug  5 23:55:04 2026] 127.0.0.1:52661 Accepted
+[Wed Aug  5 23:55:04 2026] 127.0.0.1:52661 Closing
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52686 Accepted
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52686 [200]: GET /pasig-cityhall-feedback-portal/
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52686 Closing
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52690 Accepted
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52692 Accepted
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52690 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52690 Closing
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52692 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52692 Closing
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52695 Accepted
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52695 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:55:28 2026] 127.0.0.1:52695 Closing
+[Wed Aug  5 23:55:29 2026] 127.0.0.1:52697 Accepted
+[Wed Aug  5 23:55:29 2026] 127.0.0.1:52697 [200]: GET /pasig-cityhall-feedback-portal/
+[Wed Aug  5 23:55:29 2026] 127.0.0.1:52697 Closing
+[Wed Aug  5 23:55:29 2026] 127.0.0.1:52700 Accepted
+[Wed Aug  5 23:55:29 2026] 127.0.0.1:52702 Accepted
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52700 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52702 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52700 Closing
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52702 Closing
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52704 Accepted
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52704 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:55:30 2026] 127.0.0.1:52704 Closing
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52708 Accepted
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52708 [200]: GET /pasig-cityhall-feedback-portal/login.php
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52708 Closing
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52710 Accepted
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52712 Accepted
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52712 [200]: GET /pasig-cityhall-feedback-portal/assets/js/app.js?v=21
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52710 [200]: GET /pasig-cityhall-feedback-portal/assets/images/241304413_194220316131017_8817860418863376271_n.jpg
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52712 Closing
+[Wed Aug  5 23:55:46 2026] 127.0.0.1:52710 Closing
+[Wed Aug  5 23:55:47 2026] 127.0.0.1:52714 Accepted
+[Wed Aug  5 23:55:47 2026] 127.0.0.1:52714 [200]: GET /pasig-cityhall-feedback-portal/assets/css/app.css?v=29
+[Wed Aug  5 23:55:47 2026] 127.0.0.1:52714 Closing

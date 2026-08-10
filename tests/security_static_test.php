@@ -41,6 +41,14 @@ foreach ($scopeChecks as $file => $needles) {
 $mutatingFiles = ['account.php','notifications.php','review.php','admin/actions.php','admin/heads.php','admin/offices.php','admin/staff.php','admin/system.php','office/actions.php','office/data.php','office/staff.php','survey.php'];
 foreach ($mutatingFiles as $file) $check('CSRF: '.$file, str_contains($source($file), 'verify_csrf()'));
 
+$officeActions = $source('office/actions.php');
+$adminActions = $source('admin/actions.php');
+$check('Action scope enforced', str_contains($officeActions, 'WHERE id=? AND office_id=?'));
+$check('Staff completion requires approval', str_contains($officeActions, "status='pending_approval'") && str_contains($officeActions, 'completion_requested_by_user_id'));
+$check('Head completion approval', str_contains($officeActions, "requested==='completed'") && str_contains($officeActions, 'approved_by_user_id'));
+$check('Head can return completion request', str_contains($officeActions, "requested==='reject_completion'") && str_contains($officeActions, "status='in_progress'"));
+$check('Admin action oversight guarded', str_contains($adminActions, "require_login(['admin'])") && str_contains($adminActions, 'verify_csrf()'));
+
 $allPhp = '';
 foreach (glob($root.'/{admin,office}/*.php', GLOB_BRACE) ?: [] as $file) $allPhp .= file_get_contents($file);
 $check('No permanent user deletion', !preg_match('/DELETE\s+FROM\s+users/i', $allPhp));
