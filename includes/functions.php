@@ -8,7 +8,20 @@ function e(mixed $value): string
 
 function app_url(string $path = ''): string
 {
+    // Build the base from the current document root when possible. This keeps
+    // assets working both in an XAMPP subfolder and when PHP serves this
+    // project directly (where the base URL is just "/").
     $base = rtrim(APP_BASE_URL, '/');
+    $projectRoot = realpath(__DIR__ . '/..');
+    $documentRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath((string)$_SERVER['DOCUMENT_ROOT']) : false;
+    if ($projectRoot && $documentRoot) {
+        $root = str_replace('\\', '/', rtrim($projectRoot, DIRECTORY_SEPARATOR));
+        $doc = str_replace('\\', '/', rtrim($documentRoot, DIRECTORY_SEPARATOR));
+        if (stripos($root, $doc) === 0) {
+            $relative = substr($root, strlen($doc));
+            $base = '/' . trim(str_replace('\\', '/', $relative), '/');
+        }
+    }
     return $base . ($path !== '' ? '/' . ltrim($path, '/') : '/');
 }
 

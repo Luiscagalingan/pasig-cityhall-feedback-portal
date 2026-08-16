@@ -9,7 +9,10 @@ const SESSION_NAME = 'pasig_feedback_session';
 
 // Python 3.12 installed on this XAMPP computer.
 // Override with PASIG_PYTHON_BIN environment variable when deployed elsewhere.
-define('PYTHON_BIN', getenv('PASIG_PYTHON_BIN') ?: 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe');
+$pythonLocalPath = getenv('LOCALAPPDATA')
+    ? rtrim((string)getenv('LOCALAPPDATA'), '\\/') . '/Programs/Python/Python312/python.exe'
+    : 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe';
+define('PYTHON_BIN', getenv('PASIG_PYTHON_BIN') ?: $pythonLocalPath);
 const SVM_PREDICT_SCRIPT = __DIR__ . '/../ml/predict.py';
 
 // Final weighted score = 60% structured ratings + 40% comment sentiment.
