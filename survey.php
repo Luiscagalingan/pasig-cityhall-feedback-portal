@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         audit(null, 'public_feedback_submit', 'Office ' . $office['code'] . ', feedback #' . $feedbackId . ', source=' . $prediction['source']);
         set_flash('success', 'Thank you. Your feedback was submitted successfully.');
-        redirect('survey.php?office=' . urlencode($office['code']));
+        redirect('');
     }
 }
 render_public_start('Feedback Survey');

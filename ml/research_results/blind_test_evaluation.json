@@ -1,0 +1,377 @@
+{
+  "dataset": "data\\blind_test_v2_90.csv",
+  "model": "research_results\\candidate_svm_sentiment.joblib",
+  "sample_count": 90,
+  "class_distribution": {
+    "negative": 30,
+    "neutral": 30,
+    "positive": 30
+  },
+  "accuracy": 0.9333,
+  "macro_f1": 0.9336,
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "classification_report": {
+    "negative": {
+      "precision": 0.875,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9032258064516129,
+      "support": 30.0
+    },
+    "neutral": {
+      "precision": 0.9666666666666667,
+      "recall": 0.9666666666666667,
+      "f1-score": 0.9666666666666667,
+      "support": 30.0
+    },
+    "positive": {
+      "precision": 0.9642857142857143,
+      "recall": 0.9,
+      "f1-score": 0.9310344827586207,
+      "support": 30.0
+    },
+    "accuracy": 0.9333333333333333,
+    "macro avg": {
+      "precision": 0.9353174603174604,
+      "recall": 0.9333333333333332,
+      "f1-score": 0.9336423186256334,
+      "support": 90.0
+    },
+    "weighted avg": {
+      "precision": 0.9353174603174603,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9336423186256334,
+      "support": 90.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      28,
+      1,
+      1
+    ],
+    [
+      1,
+      29,
+      0
+    ],
+    [
+      3,
+      0,
+      27
+    ]
+  ],
+  "misclassified_count": 6,
+  "misclassified": [
+    {
+      "row": 25,
+      "comment": "Mabilis yung isang step pero nasayang din yung oras ko dahil maling counter yung itinuro sa akin.",
+      "expected": "negative",
+      "predicted": "positive",
+      "confidence": 0.455
+    },
+    {
+      "row": 31,
+      "comment": "Sinabihan naman ako na may aberya, pero inabot pa rin nang napakatagal bago umusad ang simpleng request.",
+      "expected": "negative",
+      "predicted": "neutral",
+      "confidence": 0.3882
+    },
+    {
+      "row": 36,
+      "comment": "Manageable yung pila pero hindi ganoon kabilis yung usad nung dumami yung clients.",
+      "expected": "neutral",
+      "predicted": "negative",
+      "confidence": 0.5293
+    },
+    {
+      "row": 47,
+      "comment": "Hindi ako nahirapan mag-follow ng steps dahil malinaw yung instructions at visible yung directions.",
+      "expected": "positive",
+      "predicted": "negative",
+      "confidence": 0.5507
+    },
+    {
+      "row": 59,
+      "comment": "Nagkaroon ng minor delay pero na-update naman ako nang maayos kaya hindi naging hassle.",
+      "expected": "positive",
+      "predicted": "negative",
+      "confidence": 0.3703
+    },
+    {
+      "row": 68,
+      "comment": "Hindi ako pinasa-pasa sa iba't ibang counter at na-resolve agad yung concern ko.",
+      "expected": "positive",
+      "predicted": "negative",
+      "confidence": 0.6265
+    }
+  ],
+  "review_threshold": 0.6,
+  "low_confidence_count": 37,
+  "low_confidence_cases": [
+    {
+      "row": 8,
+      "comment": "First time kong mag-process dito pero naging madali dahil malinaw magpaliwanag yung naka-assist sa akin.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4258
+    },
+    {
+      "row": 13,
+      "comment": "Okay sana yung waiting time pero kulang yung instructions at napabalik pa ako para sa isang dokumento.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.4469
+    },
+    {
+      "row": 16,
+      "comment": "Quick yung initial encoding, pero halos lahat ng oras ko naubos sa paghihintay bago may tumingin sa concern ko.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5184
+    },
+    {
+      "row": 21,
+      "comment": "Sakto lang yung service para sa akin; may mabilis na part at may medyo mabagal din.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5459
+    },
+    {
+      "row": 22,
+      "comment": "Maikli lang ang pila, pero umuwi akong hindi pa rin naayos yung concern na ipinunta ko.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5437
+    },
+    {
+      "row": 23,
+      "comment": "May konting delay sa isang step pero sinabi agad yung dahilan at naayos naman kaagad.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4829
+    },
+    {
+      "row": 25,
+      "comment": "Mabilis yung isang step pero nasayang din yung oras ko dahil maling counter yung itinuro sa akin.",
+      "expected": "negative",
+      "predicted": "positive",
+      "confidence": 0.455
+    },
+    {
+      "row": 30,
+      "comment": "Hindi ako pinabalik, pero mas matagal yung release kaysa sa inaasahan ko.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.4091
+    },
+    {
+      "row": 31,
+      "comment": "Sinabihan naman ako na may aberya, pero inabot pa rin nang napakatagal bago umusad ang simpleng request.",
+      "expected": "negative",
+      "predicted": "neutral",
+      "confidence": 0.3882
+    },
+    {
+      "row": 35,
+      "comment": "Mabilis na-process yung request ko at respectful yung pakikitungo kahit maraming clients.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.539
+    },
+    {
+      "row": 36,
+      "comment": "Manageable yung pila pero hindi ganoon kabilis yung usad nung dumami yung clients.",
+      "expected": "neutral",
+      "predicted": "negative",
+      "confidence": 0.5293
+    },
+    {
+      "row": 38,
+      "comment": "May ilang tanong ako tungkol sa procedure pero patient silang sumagot at naging malinaw lahat sa akin.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4947
+    },
+    {
+      "row": 43,
+      "comment": "May konting magandang assistance pero overall hassle dahil inconsistent yung directions.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.4
+    },
+    {
+      "row": 44,
+      "comment": "Mas mabilis yung naging process kaysa sa expected ko at maayos din yung customer handling.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4479
+    },
+    {
+      "row": 47,
+      "comment": "Hindi ako nahirapan mag-follow ng steps dahil malinaw yung instructions at visible yung directions.",
+      "expected": "positive",
+      "predicted": "negative",
+      "confidence": 0.5507
+    },
+    {
+      "row": 53,
+      "comment": "Approachable yung staff at hindi ako minadali habang ine-explain yung concern ko.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4802
+    },
+    {
+      "row": 54,
+      "comment": "Naging okay yung process pagkatapos kong magtanong kung ano yung next step.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.3821
+    },
+    {
+      "row": 55,
+      "comment": "May signage pero kulang yung details kaya saka ko lang nalaman yung ibang requirement nung nasa counter na.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5797
+    },
+    {
+      "row": 57,
+      "comment": "Mabilis yung unang part pero medyo matagal yung second half ng transaction.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5493
+    },
+    {
+      "row": 58,
+      "comment": "Maayos yung unang kausap ko pero yung sumunod hindi professional at minadali yung explanation.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.555
+    },
+    {
+      "row": 59,
+      "comment": "Nagkaroon ng minor delay pero na-update naman ako nang maayos kaya hindi naging hassle.",
+      "expected": "positive",
+      "predicted": "negative",
+      "confidence": 0.3703
+    },
+    {
+      "row": 61,
+      "comment": "Hindi ako satisfied dahil mali yung initial advice at napahaba tuloy yung buong transaction.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5285
+    },
+    {
+      "row": 63,
+      "comment": "Hindi naman ako sobrang natagalan, pero hindi rin siya mabilis.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5202
+    },
+    {
+      "row": 64,
+      "comment": "Mabilis ang pagtawag ng number pero magulo naman yung actual processing sa loob.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.4062
+    },
+    {
+      "row": 65,
+      "comment": "Simple lang yung process at nakuha ko agad yung tamang information na kailangan ko.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.5124
+    },
+    {
+      "row": 66,
+      "comment": "Okay yung service overall, may konting inconvenience lang dahil sa waiting time.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.469
+    },
+    {
+      "row": 67,
+      "comment": "May staff na nag-assist pero hindi coordinated yung mga counter at iba-iba yung sagot nila.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.55
+    },
+    {
+      "row": 72,
+      "comment": "Fair naman yung experience ko, natapos din kahit hindi ganun kabilis.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.516
+    },
+    {
+      "row": 75,
+      "comment": "Maayos naman silang kausap; ang naging hassle lang ay kinailangan ko pang bumalik sa counter para tanungin kung available na yung result.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.4233
+    },
+    {
+      "row": 78,
+      "comment": "Mabilis akong na-check pero naghintay pa nang kaunti bago yung final step.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5884
+    },
+    {
+      "row": 80,
+      "comment": "Nasagot lahat ng clarification ko at maayos yung service from registration hanggang final step.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4962
+    },
+    {
+      "row": 81,
+      "comment": "Wala naman akong major complaint, pero may ilang part na pwede pang maging more organized.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5922
+    },
+    {
+      "row": 83,
+      "comment": "Good experience overall, malinaw ang instructions at hindi magulo ang queue.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.4548
+    },
+    {
+      "row": 85,
+      "comment": "Hindi naman lahat mabagal, pero maraming unnecessary na steps at paulit-ulit yung hinihinging information.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5773
+    },
+    {
+      "row": 88,
+      "comment": "May explanation tungkol sa process pero iba naman yung ginawa sa next counter kaya lalo akong nalito.",
+      "expected": "negative",
+      "predicted": "negative",
+      "confidence": 0.5963
+    },
+    {
+      "row": 89,
+      "comment": "Although medyo busy sila, consistent pa rin yung maayos na assistance hanggang matapos yung request ko.",
+      "expected": "positive",
+      "predicted": "positive",
+      "confidence": 0.5373
+    },
+    {
+      "row": 90,
+      "comment": "Professional naman yung staff, although mas okay sana kung mas mabilis yung queue.",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "confidence": 0.5772
+    }
+  ],
+  "confidence_note": "Confidence is derived from softmax over SVM decision scores. It is useful for ranking/review thresholds but is not a calibrated probability.",
+  "research_note": "Treat this as a separate blind-test result only if these comments were not used for training, tuning, or model selection before this evaluation."
+}

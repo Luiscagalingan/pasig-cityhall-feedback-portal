@@ -1,0 +1,4 @@
+﻿actual/predicted,negative,neutral,positive
+negative,48,1,0
+neutral,1,49,0
+positive,1,0,49

@@ -1,0 +1,4 @@
+﻿comment,actual_label,predicted_label,confidence,suggested_error_category,reviewer_notes
+Hindi instant yung service pero straightforward yung process at walang unnecessary na balik-balik.,positive,negative,0.4684,negation,
+Friendly yung nag-assist pero sana mas consistent yung information na binibigay sa bawat counter.,neutral,negative,0.4804,mixed_or_context,
+"Natapos din naman sa huli, pero hindi acceptable yung dami ng balik at inconsistent na instructions.",negative,neutral,0.5673,negation,

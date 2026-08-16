@@ -1,0 +1,150 @@
+﻿comment,actual_label,predicted_label,confidence
+"Neutral lang ako sa experience ko. Maayos naman yung actual service. Siguro ang pwede lang ayusin, kulang lang ng mas malinaw na signage. Pwede pang ayusin nang konti yung flow.",neutral,neutral,0.7981
+Maayos ang explanation kaya walang naging aberya. Professional kausap yung staff at mahinahon sumagot. Babalik ako nang hindi nag-aalala kung kailangan ulit.,positive,positive,0.8289
+Poor yung experience ko this time. Masyadong mahaba yung waiting time para sa simpleng transaction. Kulangan yung information tungkol sa requirements.,negative,negative,0.7628
+Poor yung experience ko this time. Halos walang movement yung pila for a long time. Kulang sa courtesy yung naging assistance. Hindi dapat ganito katagal yung simpleng transaction.,negative,negative,0.842
+"Para sa vaccine process, hindi consistent yung assistance at iba-iba yung sinasabi ng staff. Paulit-ulit akong naghintay sa magkakaibang counter. Kailangan talagang pagbutihin yung service.",negative,negative,0.8417
+"Sa part ng immunization, hindi maayos yung pakikitungo nung humingi ako ng clarification. Ang bagal ng usad ng pila at walang malinaw na update. I hope maayos ito sa susunod.",negative,negative,0.8111
+Mas matagal at mas magulo kaysa sa inaasahan ko. Hindi professional yung tono ng pakikipag-usap sa akin. Sana mabigyan ito ng action.,negative,negative,0.7863
+Hindi patient mag-explain yung staff. Kulangan yung information tungkol sa requirements. Sana magkaroon ng clearer instructions at mas maayos na pila.,negative,negative,0.8391
+Pleasant naman yung naging experience ko. Maayos naipaliwanag yung requirements bago ako pumila. Maayos yung pakikitungo sa akin mula umpisa hanggang matapos. Sana ma-maintain yung ganitong sistema.,positive,positive,0.7646
+"Hindi ako satisfied sa naging assistance. Mabagal na nga yung pila, ilang beses pa akong pinabalik sa ibang counter. Walang maayos na direction kung ano yung next step.",negative,negative,0.7034
+"Para sa certificate request, natapos naman nang maayos. Maayos naman yung actual service; pwede pang mas mabilis yung process lang. Nothing serious, pero noticeable lang.",neutral,neutral,0.8283
+"Yung maternal health consultation ko, okay naman. Malinaw naman yung basic instructions, although may ilang minuto na walang gumagalaw sa pila. May konting inconvenience pero natapos din naman.",neutral,neutral,0.8054
+Hindi instant yung service pero straightforward yung process at walang unnecessary na balik-balik.,positive,negative,0.4684
+Maayos yung naging experience ko today. Maayos ang explanation kaya walang naging aberya. Very accommodating yung nag-assist sa akin. Salamat sa maayos na assistance.,positive,positive,0.8095
+Nakuha ko naman yung kailangan ko pero may ilang sandali na hindi ko alam kung ano yung next step.,neutral,neutral,0.5257
+"Sa part ng DOTS consultation, hindi malinaw yung instructions kaya ilang beses akong nalito. Masyadong dismissive yung sagot sa concern ko.",negative,negative,0.8419
+Okay na okay yung serbisyo para sa akin. Maayos yung queue kaya hindi nakakainip yung paghihintay. Very accommodating yung nag-assist sa akin.,positive,positive,0.8958
+"Regarding sa pharmacy service, hindi ako nabigyan ng maayos na explanation nung may concern ako. Matagal bago may sumagot sa concern ko sa counter. Marami pang kailangang i-improve.",negative,negative,0.8028
+"Hindi naman bad, pero may pwede pang ayusin. Kulang lang ng mas malinaw na signage; malinaw naman yung basic instructions naman kapag ako na yung inaasikaso. Sakto lang, neither good nor bad.",neutral,neutral,0.864
+"Okay lang naman yung process. Hindi naman ako pinabalik para sa kulang na requirement, pero pwede pang mas mabilis yung process. Pwede pang ayusin nang konti yung flow.",neutral,neutral,0.8278
+Mas matagal at mas magulo kaysa sa inaasahan ko. Hindi patient mag-explain yung staff. Hindi dapat ganito katagal yung simpleng transaction.,negative,negative,0.7863
+Hindi ako nahirapan sa buong proseso. Maayos ang pila at mabilis yung galaw sa counter. Hindi minadali yung pag-assist sa akin.,positive,positive,0.7751
+"Yung dental consultation ko, hindi gaanong mahaba ang hintayan at mabilis natawag ang number ko. Nasagot nang maayos yung tanong ko tungkol sa requirements. Good job sa staff.",positive,positive,0.764
+Nahirapan ako sa naging proseso. Hindi organized yung queue kaya mas humaba yung paghihintay. Walang maayos na direction kung ano yung next step.,negative,negative,0.7642
+"Mabilis sana yung service, kaso hindi maayos yung client handling at parang ayaw sumagot sa follow-up.",negative,negative,0.6781
+"Fair naman yung experience ko. Straightforward naman yung requirements, pero medyo matagal yung checking ng requirements. Sakto lang, neither good nor bad.",neutral,neutral,0.8151
+"Nakuha ko naman agad yung tamang form at natapos naman yung kailangan ko. Ang napansin ko lang, may konting delay sa pila. Okay naman basta may konting improvement.",neutral,neutral,0.8654
+"Na-appreciate ko yung maayos na assistance. Maaga akong dumating at mabilis din akong natapos. Okay yung attitude ng staff, polite at helpful.",positive,positive,0.8517
+Okay lang naman yung process. Hindi agad malinaw kung saan kukunin yung form; Maayos kausap yung staff naman kapag ako na yung inaasikaso. Hindi naman siya malaking issue para sa akin.,neutral,neutral,0.8015
+"Naging convenient yung process para sa akin. Mabilis nila na-process yung request ko. Overall, satisfied ako.",positive,positive,0.8315
+"Nung nag-process ako ng vaccine process, madaling sundan yung steps na sinabi sa akin. Walang unnecessary delay sa naging transaction ko. Salamat sa maayos na assistance.",positive,positive,0.778
+Naging convenient yung process para sa akin. Within a reasonable time natapos yung kailangan ko. Very accommodating yung nag-assist sa akin.,positive,positive,0.8104
+"Nagawa naman yung kailangan ko. Regarding sa health clearance, hindi agad malinaw kung saan kukunin yung form, pero natapos din naman at friendly naman yung nag-assist. Fair lang yung rating ko.",neutral,neutral,0.8046
+Hindi okay para sa akin yung naging service. Matagal bago may sumagot sa concern ko sa counter. Hindi approachable yung nakausap ko sa counter. Hindi dapat ganito katagal yung simpleng transaction.,negative,negative,0.8633
+"Sa part ng maternal health service, Maayos kausap yung staff, kaso medyo matagal lang bago natawag yung number ko. May konting inconvenience pero natapos din naman.",neutral,neutral,0.8222
+Pleasant naman yung naging experience ko. Malinaw yung instructions kaya alam ko agad kung ano ang susunod. Professional kausap yung staff at mahinahon sumagot. Overall smooth at convenient.,positive,positive,0.8172
+"Okay naman overall, may ilang minor issue lang. Nakuha ko naman agad yung tamang form, pero kulang lang ng mas malinaw na signage. Overall okay pa rin naman.",neutral,neutral,0.8587
+"Sa lab request mismo, okay naman. Helpful naman yung nasa counter, although kulang lang ng mas malinaw na signage. Sana mas mabilis nang kaunti sa susunod.",neutral,neutral,0.8057
+"Nung nag-process ako ng family planning service, maganda yung customer handling nila. Dire-diretso yung process kaya hindi nasayang yung oras ko.",positive,positive,0.6811
+"Okay naman overall, may ilang minor issue lang. Maayos kausap yung staff. Siguro ang pwede lang ayusin, medyo masikip lang sa waiting area. Hindi naman siya malaking issue para sa akin.",neutral,neutral,0.8533
+"Nung nag-process ako ng treatment assistance, hindi visible yung process kaya kailangan pang magtanong nang paulit-ulit. Parang minamadali ako kahit hindi ko pa naiintindihan yung instruction.",negative,negative,0.7063
+Hindi naging maayos yung experience ko. May mga nauna kahit mas late silang dumating kaya nakakalito yung pila. Hindi maayos yung pakikitungo nung humingi ako ng clarification. Hindi dapat ganito katagal yung simpleng transaction.,negative,negative,0.8296
+Okay naman sila kausap pero medyo kulang yung explanation sa umpisa.,neutral,neutral,0.7615
+"Sa medicine request mismo, ang tagal ng checking kahit kumpleto naman yung dala ko. Naramdaman kong naiirita yung kausap ko nung nagtanong ulit ako. Sana ayusin yung system para hindi maulit sa ibang client.",negative,negative,0.7962
+"Sa consultation process mismo, okay naman. Friendly naman yung nag-assist, although medyo matagal yung checking ng requirements. Sakto lang, neither good nor bad.",neutral,neutral,0.8092
+Malinaw yung instructions kaya alam ko agad kung ano ang susunod. Professional kausap yung staff at mahinahon sumagot. Thank you sa maayos na pag-assist.,positive,positive,0.8441
+"Para sa vaccine process, maayos ang pila at mabilis yung galaw sa counter. Hindi ako kinailangang magtanong nang paulit-ulit. Sana ganito lagi yung serbisyo.",positive,positive,0.8075
+"Para sa medicine assistance, polite naman yung staff, kaso medyo matagal yung checking ng requirements. Sakto lang, neither good nor bad.",neutral,neutral,0.7736
+"Maayos kausap yung staff at natapos naman yung kailangan ko. Ang napansin ko lang, may konting delay pero manageable naman. Manageable naman kaya okay lang.",neutral,neutral,0.8873
+Stressful yung naging transaction ko. Hindi approachable yung nakausap ko sa counter. Sana ayusin yung system para hindi maulit sa ibang client.,negative,negative,0.8402
+Acceptable naman yung service para sa akin. Medyo matagal yung checking ng requirements; maayos naman yung actual service naman kapag ako na yung inaasikaso. Sana mas mabilis nang kaunti sa susunod.,neutral,neutral,0.776
+"Regarding sa health clearance, maayos yung signage at guide kaya madaling sundan. Mabilis nila na-process yung request ko. Good job sa staff.",positive,positive,0.8048
+"Hindi naman ako nahirapan nang sobra, pero kailangan ko pa ring magtanong para malaman yung next step.",neutral,neutral,0.5641
+Mabilis akong nakapag-asikaso nung pumunta ako. Efficient yung pila at hindi magulo yung tawagan. Sana ganito lagi yung serbisyo.,positive,positive,0.8348
+"Sakto lang yung naging experience ko today. Maayos naman yung pag-check ng documents. Siguro ang pwede lang ayusin, medyo masikip lang sa waiting area. Nothing serious, pero noticeable lang.",neutral,neutral,0.8546
+Maraming tao pero efficient yung staff kaya tuloy-tuloy naman yung queue at hindi ako sobrang natagalan.,positive,positive,0.3992
+"Sa part ng maternal health service, ang bagal ng usad ng pila at walang malinaw na update. Hindi consistent yung assistance at iba-iba yung sinasabi ng staff. Sana ma-review yung workflow at customer service.",negative,negative,0.8407
+Maayos yung signage at guide kaya madaling sundan. Very accommodating yung nag-assist sa akin. Keep up the good service.,positive,positive,0.8576
+Maayos at organized yung naging service. Straightforward yung process at walang confusing na instruction. Maayos sumagot yung staff sa mga tanong ko. Okay na okay para sa akin.,positive,positive,0.7927
+"May good parts naman yung service pero may konting inconvenience. Maayos naman yung pag-check ng documents. Siguro ang pwede lang ayusin, may konting delay pero manageable naman. Sana lang mas maging consistent next time.",neutral,neutral,0.9147
+"Regarding sa referral process, confusing yung sequence ng steps. Hindi maayos yung pakikitungo nung humingi ako ng clarification.",negative,negative,0.7422
+Hindi ako nahirapan sa buong proseso. Mabilis nila na-process yung request ko. Sana ganito lagi yung serbisyo.,positive,positive,0.798
+Mas maayos yung transaction ko kaysa sa inaasahan ko. Nasagot nang maayos yung tanong ko tungkol sa requirements. Maayos yung pakikitungo sa akin mula umpisa hanggang matapos. Okay na okay para sa akin.,positive,positive,0.7
+"Helpful naman yung nasa counter at natapos naman yung kailangan ko. Ang napansin ko lang, may konting delay pero manageable naman. May room for improvement pero acceptable naman.",neutral,neutral,0.8929
+"Mas okay sana kung mas visible yung instructions, pero straightforward naman yung requirements naman. Fair lang yung rating ko.",neutral,neutral,0.8019
+"Sa counseling session mismo, natapos naman nang maayos. Maayos naman yung actual service; may konting waiting time sa pagitan ng steps lang. May konting inconvenience pero natapos din naman.",neutral,neutral,0.8039
+Nagkaroon ng slight delay sa release pero sinabi naman agad yung reason at naibigay din within a reasonable time.,positive,positive,0.425
+"Neutral lang ako sa experience ko. Sa family planning consultation mismo, may ilang minuto na walang gumagalaw sa pila, pero natapos din naman at helpful naman yung nasa counter. May room for improvement pero acceptable naman.",neutral,neutral,0.7722
+"Yung animal bite service ko, friendly naman yung nasa counter at hindi nakaka-intimidate magtanong. Nasunod naman agad yung sequence ng pila.",positive,positive,0.7272
+Maayos yung naging experience ko today. Maaga akong dumating at mabilis din akong natapos. Hindi minadali yung pag-assist sa akin.,positive,positive,0.76
+Parang ayaw sumagot nung staff sa follow-up question ko. Hindi malinaw yung instructions na binigay sa akin sa simula. Sana ma-review yung workflow at customer service.,negative,negative,0.8414
+Magalang at approachable yung staff na nakausap ko. Kompleto yung information na binigay sa counter. Thank you sa maayos na pag-assist.,positive,positive,0.8279
+"Nung nag-process ako ng screening process, natapos naman nang maayos. Maayos kausap yung staff; medyo mahina yung boses sa pagtawag ng number lang. Manageable naman kaya okay lang.",neutral,neutral,0.7675
+Maayos ang explanation kaya walang naging aberya. Maayos yung pakikitungo sa akin mula umpisa hanggang matapos. Keep up the good service.,positive,positive,0.8016
+"Nung nag-process ako ng family planning service, responsive yung staff kapag may clarification. Konti lang yung waiting time nung pumunta ako.",positive,positive,0.7312
+Friendly yung nag-assist pero sana mas consistent yung information na binibigay sa bawat counter.,neutral,negative,0.4804
+"Okay lang naman yung process. Polite naman yung staff. Siguro ang pwede lang ayusin, may konting kalituhan sa sequence ng pila. Fair lang yung rating ko.",neutral,neutral,0.8637
+Friendly naman yung nasa counter at hindi nakaka-intimidate magtanong. Maayos ang explanation kaya walang naging aberya. Sana ganito lagi yung serbisyo.,positive,positive,0.8064
+"Yung pagpapatingin ko, okay naman. Friendly naman yung nag-assist, although medyo mahina yung boses sa pagtawag ng number. Sana lang mas maging consistent next time.",neutral,neutral,0.8512
+Hindi ako satisfied sa naging assistance. Mas maayos sana kung mas respectful yung pakikitungo sa clients. I hope maayos ito sa susunod.,negative,negative,0.6963
+Good experience overall. Clear yung directions at hindi ako nalito sa process. Ramdam na willing tumulong yung staff. Sana ganito lagi yung serbisyo.,positive,positive,0.8163
+Hindi naging maayos yung experience ko. Walang malinaw na update kung bakit delayed yung transaction. Sana ayusin yung system para hindi maulit sa ibang client.,negative,negative,0.8501
+Happy naman ako sa naging assistance. Hindi ako pinaghintay nang matagal bago maasikaso. Wala akong reklamo sa naging service.,positive,positive,0.7913
+Disappointed ako sa naging transaction. Ang daming idle time sa pagitan ng bawat step. Hindi helpful yung sagot at itinuro lang ako sa ibang counter. Sana mabigyan ito ng action.,negative,negative,0.8127
+Sulit yung pagpunta ko dahil mabilis natapos yung kailangan ko. Simple at understandable yung explanation ng process. Maayos yung pakikitungo sa akin mula umpisa hanggang matapos. Overall smooth at convenient.,positive,positive,0.8446
+"Nung nag-process ako ng animal bite service, okay naman. Organized naman yung pila, although kailangan ko pang ulitin yung tanong bago naging clear. Sakto lang, neither good nor bad.",neutral,neutral,0.7759
+"Para sa consultation process, natapos naman nang maayos. Okay naman yung customer handling; hindi agad malinaw kung saan kukunin yung form lang. Sana mas mabilis nang kaunti sa susunod.",neutral,neutral,0.8356
+"Wala namang major problem sa transaction. Hindi pare-pareho yung explanation na narinig ko sa dalawang counter; Maayos kausap yung staff naman kapag ako na yung inaasikaso. Nothing serious, pero noticeable lang.",neutral,neutral,0.7793
+Pleasant naman yung naging experience ko. Efficient yung pila at hindi magulo yung tawagan. Babalik ako nang hindi nag-aalala kung kailangan ulit.,positive,positive,0.7687
+"Medyo matagal yung checking ng requirements, pero straightforward naman yung requirements naman. Sana lang mas maging consistent next time.",neutral,neutral,0.811
+Hindi malinaw kung saan dapat pumila at saan magsisimula. Matagal bago may sumagot sa concern ko sa counter. Sana ma-review yung workflow at customer service.,negative,negative,0.8806
+"Sa health card process mismo, hindi organized yung queue kaya mas humaba yung paghihintay. Hindi patient mag-explain yung staff. Sana ma-review yung workflow at customer service.",negative,negative,0.7637
+Nahirapan ako sa naging proseso. Kulang yung explanation kaya napabalik pa ako. Needs improvement talaga.,negative,negative,0.828
+"Nung nag-process ako ng nutrition service, matagal akong nakaupo bago may nag-assist sa akin. Hindi helpful yung sagot at itinuro lang ako sa ibang counter. Needs improvement talaga.",negative,negative,0.7387
+"Natapos din naman sa huli, pero hindi acceptable yung dami ng balik at inconsistent na instructions.",negative,neutral,0.5673
+Hindi ako satisfied sa naging assistance. Masyadong dismissive yung sagot sa concern ko. Kailangan talagang pagbutihin yung service.,negative,negative,0.7589
+"Mabilis yung checking pero saka lang sinabi na may kulang pala, kahit na-check na raw yung requirements ko kanina.",negative,negative,0.4034
+"Hindi naman bad, pero may pwede pang ayusin. Friendly naman yung nag-assist. Siguro ang pwede lang ayusin, kailangan ko pang ulitin yung tanong bago naging clear. Fair lang yung rating ko.",neutral,neutral,0.8541
+"Nakuha ko naman yung kailangan ko. Malinaw naman yung basic instructions, pero may konting delay sa pila. May konting inconvenience pero natapos din naman.",neutral,neutral,0.895
+Maayos at organized yung naging service. Maayos naipaliwanag yung requirements bago ako pumila. Very accommodating yung nag-assist sa akin. Babalik ako nang hindi nag-aalala kung kailangan ulit.,positive,positive,0.8421
+"Nung nag-process ako ng certificate request, nasagot naman yung tanong ko, kaso hindi agad malinaw kung saan kukunin yung form. Pwede pang ayusin nang konti yung flow.",neutral,neutral,0.7076
+Medyo frustrating yung naging proseso. Parang walang clear system sa pagtawag kaya mabagal ang pila. Hindi consistent yung assistance at iba-iba yung sinasabi ng staff. Needs improvement talaga.,negative,negative,0.8639
+Maayos at organized yung naging service. Within a reasonable time natapos yung kailangan ko. Thank you sa maayos na pag-assist.,positive,positive,0.7865
+Hindi okay para sa akin yung naging service. Kulangan yung information tungkol sa requirements. Sana ayusin yung system para hindi maulit sa ibang client.,negative,negative,0.8098
+Akala ko malilito ako sa process pero maayos naman akong ginabayan kaya naging madali yung transaction.,positive,positive,0.5053
+"Sa part ng consultation, hindi maayos yung pakikitungo nung humingi ako ng clarification. Ang tagal ng checking kahit kumpleto naman yung dala ko. Mas okay sana kung may malinaw na queue at proper guidance.",negative,negative,0.7564
+"Nung nag-process ako ng referral request, courteous yung staff at malinaw makipag-usap. Walang unnecessary delay sa naging transaction ko.",positive,positive,0.7752
+Hindi gaanong mahaba yung pila pero hindi professional yung pakikitungo nung nagtanong ako.,negative,negative,0.5525
+"Okay lang naman yung process. Maayos kausap yung staff. Siguro ang pwede lang ayusin, kulang lang ng mas malinaw na signage. Sana mas mabilis nang kaunti sa susunod.",neutral,neutral,0.8139
+Hindi ako kinailangang magtanong nang paulit-ulit. Friendly naman yung nasa counter at hindi nakaka-intimidate magtanong. Salamat sa maayos na assistance.,positive,positive,0.7995
+"Sa part ng wound care, mabilis yung checking ng requirements at tuloy-tuloy yung process. Clear yung directions at hindi ako nalito sa process. Thank you sa maayos na pag-assist.",positive,positive,0.7934
+"Yung wound care ko, natapos naman nang maayos. Polite naman yung staff; medyo mahina yung boses sa pagtawag ng number lang. Sakto lang, neither good nor bad.",neutral,neutral,0.8174
+"Okay naman yung naging transaction ko. Yung maternal health service ko, pwede pang mas mabilis yung process, pero natapos din naman at Maayos kausap yung staff. Fair lang yung rating ko.",neutral,neutral,0.7508
+Okay na okay yung serbisyo para sa akin. Hindi gaanong mahaba ang hintayan at mabilis natawag ang number ko. Salamat sa maayos na assistance.,positive,positive,0.88
+Tinulungan ako agad nung hindi ko alam yung next step. Maayos naipaliwanag yung requirements bago ako pumila. Wala akong reklamo sa naging service.,positive,positive,0.8146
+"Para sa maternal health consultation, maayos naipaliwanag yung requirements bago ako pumila. Maayos ang pila at mabilis yung galaw sa counter. Overall smooth at convenient.",positive,positive,0.8216
+"Hindi naman bad, pero may pwede pang ayusin. Sa nutrition service mismo, medyo matagal lang bago natawag yung number ko, pero natapos din naman at helpful naman yung nasa counter. May konting inconvenience pero natapos din naman.",neutral,neutral,0.8849
+"Okay naman overall, may ilang minor issue lang. Okay naman yung customer handling. Siguro ang pwede lang ayusin, may ilang minuto na walang gumagalaw sa pila. Fair lang yung rating ko.",neutral,neutral,0.8584
+Hindi naging smooth yung pag-asikaso ko. Walang maayos na direction kung ano yung next step. I hope maayos ito sa susunod.,negative,negative,0.7544
+Professional kausap yung staff at mahinahon sumagot. Simple at understandable yung explanation ng process. Overall smooth at convenient.,positive,positive,0.8293
+Hindi ako satisfied sa naging assistance. Hindi patient mag-explain yung staff. Sana mabigyan ito ng action.,negative,negative,0.6831
+"Nagawa naman yung kailangan ko. May konting delay pero manageable naman; malinaw naman yung basic instructions naman kapag ako na yung inaasikaso. Sakto lang, neither good nor bad.",neutral,neutral,0.8662
+"Nung nag-process ako ng family planning consultation, hindi organized yung queue kaya mas humaba yung paghihintay. Hindi maayos yung pakikitungo nung humingi ako ng clarification. Marami pang kailangang i-improve.",negative,negative,0.725
+"Sa dental consultation mismo, magalang at approachable yung staff na nakausap ko. Walang unnecessary delay sa naging transaction ko.",positive,positive,0.7125
+"Sa treatment assistance mismo, walang malinaw na update kung bakit delayed yung transaction. Masyadong dismissive yung sagot sa concern ko.",negative,negative,0.7819
+"Para sa clearance request, natapos naman nang maayos. Polite naman yung staff; kailangan ko pang ulitin yung tanong bago naging clear lang. May room for improvement pero acceptable naman.",neutral,neutral,0.8387
+"Sa consultation mismo, ang daming idle time sa pagitan ng bawat step. Hindi consistent yung assistance at iba-iba yung sinasabi ng staff. Hindi dapat ganito katagal yung simpleng transaction.",negative,negative,0.8771
+Hindi ko nagustuhan yung naging flow ng service. Ang tagal ng checking kahit kumpleto naman yung dala ko. Hindi straightforward yung process at maraming unnecessary na tanong.,negative,negative,0.7552
+Hindi naging maayos yung experience ko. Sobrang tagal bago ako natawag kahit matagal na akong naghihintay. Parang minamadali ako kahit hindi ko pa naiintindihan yung instruction. Kailangan talagang pagbutihin yung service.,negative,negative,0.8008
+"Maayos naman yung flow kapag nasa counter ka na, pero matagal lang bago makarating yung turn mo.",neutral,neutral,0.6502
+Good experience overall. Dire-diretso yung process kaya hindi nasayang yung oras ko. Responsive yung staff kapag may clarification.,positive,positive,0.7934
+Hindi naging smooth yung pag-asikaso ko. Parang walang clear system sa pagtawag kaya mabagal ang pila. Kailangan pang pagbutihin yung client handling. Hindi dapat ganito katagal yung simpleng transaction.,negative,negative,0.8494
+"Para sa pharmacy service, may kulang na requirement na saka lang sinabi nung nasa counter na ako. Hindi approachable yung nakausap ko sa counter.",negative,negative,0.7528
+"Neutral lang ako sa experience ko. Sa health clearance mismo, pwede pang mas mabilis yung process, pero natapos din naman at organized naman yung pila. Hindi naman siya malaking issue para sa akin.",neutral,neutral,0.8049
+"Sa part ng screening process, kulangan yung information tungkol sa requirements. Hindi approachable yung nakausap ko sa counter.",negative,negative,0.7174
+Maraming naging aberya sa pag-process ko. Hindi malinaw yung instructions kaya ilang beses akong nalito. Please improve the process and client handling.,negative,negative,0.8462
+"Sa nutrition service mismo, hindi helpful yung sagot at itinuro lang ako sa ibang counter. Matagal bago may sumagot sa concern ko sa counter. Hindi dapat ganito katagal yung simpleng transaction.",negative,negative,0.8591
+"Yung immunization ko, sakto lang yung waiting time at mabilis yung actual transaction. Maayos naipaliwanag yung requirements bago ako pumila. Good job sa staff.",positive,positive,0.7695
+Medyo frustrating yung naging proseso. Hindi patient mag-explain yung staff. Sana mas organized at respectful next time.,negative,negative,0.7493
+Wala naman akong naging problema sa pag-process. Clear yung directions at hindi ako nalito sa process. Professional kausap yung staff at mahinahon sumagot. Okay na okay para sa akin.,positive,positive,0.8443
+Smooth naman yung naging punta ko sa health office. Mabilis nila na-process yung request ko. Maayos sumagot yung staff sa mga tanong ko.,positive,positive,0.8176
+Poor yung experience ko this time. Confusing yung sequence ng steps. Sana mas organized at respectful next time.,negative,negative,0.7427
+Hindi naging maayos yung experience ko. May kulang na requirement na saka lang sinabi nung nasa counter na ako. Please improve the process and client handling.,negative,negative,0.8147
+"Hindi naman bad, pero may pwede pang ayusin. Sa counseling session mismo, kailangan ko pang ulitin yung tanong bago naging clear, pero natapos din naman at nasagot naman yung tanong ko. Okay naman basta may konting improvement.",neutral,neutral,0.841
+"Sakto lang yung naging experience ko today. Okay naman yung flow kapag ikaw na yung nasa counter. Siguro ang pwede lang ayusin, may ilang minuto na walang gumagalaw sa pila. Nothing serious, pero noticeable lang.",neutral,neutral,0.8241
+"Fair naman yung experience ko. Yung pagpapatingin ko, may ilang minuto na walang gumagalaw sa pila, pero natapos din naman at organized naman yung pila. May room for improvement pero acceptable naman.",neutral,neutral,0.8133
+"Regarding sa vaccine process, okay yung attitude ng staff, polite at helpful. Mabilis nila na-process yung request ko.",positive,positive,0.8054
+Maganda yung naging proseso from start to finish. Hindi gaanong mahaba ang hintayan at mabilis natawag ang number ko. Thank you sa maayos na pag-assist.,positive,positive,0.8273
+"Okay naman yung customer handling at natapos naman yung kailangan ko. Ang napansin ko lang, medyo matagal lang bago natawag yung number ko. Overall okay pa rin naman.",neutral,neutral,0.8607
