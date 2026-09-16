@@ -56,7 +56,7 @@ SELECT
     'demo-v1',
     NOW()
 FROM offices o
-WHERE o.code = 'CHO'
+WHERE o.code = 'CSWDO'
   AND NOT EXISTS (
       SELECT 1
       FROM feedback f

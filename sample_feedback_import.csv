@@ -1,4 +1,4 @@
-visit_date,sex,age,client_type,service_received,timeliness,client_handling,quality_of_service,overall_satisfaction,comment
-2026-07-01,Female,29,Pasigueño,Medical consultation,4,4,4,4,"Mabilis at maayos ang serbisyo. Very accommodating ang staff."
-2026-07-02,Male,41,Non-Pasigueño,Medical certificate,3,3,3,3,"Okay lang naman ang naging transaction."
-2026-07-03,Female,35,City Government Employee,Laboratory request,2,2,2,2,"Sobrang tagal bago ako naasikaso at hindi malinaw ang instructions."
+Assisted By,Timestamp,Client number,Surname,Given Name,Middle Initial,Sex,Age,Types of Client,Transaction / Service,Bilis ng Serbisyo (Timeliness),Pakikitungo sa Kliyente (Client Handling),Kalidad ng Serbisyo (Quality of Service),Overall Satisfaction
+Staff A,2026-07-01 09:30:00,C-0001,Dela Cruz,Juan,Santos,Male,29,Pasigueño,Medical consultation,4,4,4,4
+Staff B,2026-07-02 10:15:00,C-0002,Reyes,Maria,Lopez,Female,41,Non-Pasigueño,Medical certificate,3,3,3,3
+Staff A,2026-07-03 14:00:00,C-0003,Santos,Ana,Garcia,Female,35,City Government Employee,Laboratory request,2,2,2,2

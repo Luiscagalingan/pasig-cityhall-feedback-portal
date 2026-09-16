@@ -212,3 +212,46 @@ function frequent_concern_terms(?int $officeId = null, int $limit = 18): array
     foreach(array_slice($counts,0,$limit,true) as $word=>$count)$out[]=['term'=>$word,'count'=>$count];
     return $out;
 }
+
+function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null, string $assistedBy = ''): array
+{
+    $where = ["f.is_void=0", "o.status='active'"];
+    $params = [];
+    if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
+    if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
+    if ($assistedBy !== '') { $where[] = 'f.assisted_by=?'; $params[] = $assistedBy; }
+    $sql = "SELECT f.visit_date,COUNT(*) client_count,ROUND(AVG(f.average_rating),2) avg_rating,
+                   COALESCE(NULLIF(MAX(f.assisted_by),''),'Unassigned') top_assisting_staff
+            FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) . "
+            GROUP BY f.visit_date ORDER BY f.visit_date DESC";
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function assisting_staff_options(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null): array
+{
+    $where = ["f.is_void=0", "o.status='active'", "NULLIF(f.assisted_by,'') IS NOT NULL"];
+    $params = [];
+    if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
+    if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
+    $stmt = db()->prepare("SELECT f.assisted_by label,COUNT(*) clients FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) . " GROUP BY f.assisted_by ORDER BY clients DESC,label");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function feedback_highlights(?int $officeId, ?string $month = null, int $limit = 5): array
+{
+    $where = ["f.is_void=0", "o.status='active'", "NULLIF(f.comment,'') IS NOT NULL"];
+    $params = [];
+    if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) { $where[] = "DATE_FORMAT(f.visit_date,'%Y-%m')=?"; $params[] = $month; }
+    $base = " FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where);
+    $good = db()->prepare("SELECT f.visit_date,f.comment,f.sentiment,f.assisted_by" . $base . " AND f.sentiment='positive' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
+    $good->execute($params);
+    $critical = db()->prepare("SELECT f.visit_date,f.comment,f.sentiment,f.assisted_by" . $base . " AND f.sentiment='negative' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
+    $critical->execute($params);
+    return ['good'=>$good->fetchAll(), 'critical'=>$critical->fetchAll()];
+}

@@ -229,8 +229,8 @@ I. DEMO ACCOUNTS
 ============================================================
 
 Administrator: admin / Admin123!
-CHO Office Head: cho_head / Head123!
-CHO Staff: cho_staff / Staff123!
+CSWDO Office Head: cswdo_head / Head123!
+CSWDO Staff: cswdo_staff / Staff123!
 
 Change all demo passwords before actual deployment.
 

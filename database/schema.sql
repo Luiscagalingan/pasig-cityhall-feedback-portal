@@ -37,7 +37,7 @@ CREATE TABLE users (
   username VARCHAR(80) NOT NULL UNIQUE,
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin','office_head','office_staff') NOT NULL,
+  role ENUM('admin','office_head','supervisor','office_staff') NOT NULL,
   status ENUM('active','archived') NOT NULL DEFAULT 'active',
   created_by_user_id INT UNSIGNED NULL,
   last_login_at DATETIME NULL,
@@ -85,10 +85,15 @@ CREATE TABLE feedback (
   quality_rating TINYINT UNSIGNED NOT NULL,
   overall_rating TINYINT UNSIGNED NOT NULL,
   comment TEXT NOT NULL,
+  assisted_by VARCHAR(255) NULL,
+  client_number VARCHAR(100) NULL,
+  surname VARCHAR(100) NULL,
+  given_name VARCHAR(100) NULL,
+  middle_initial CHAR(1) NULL,
   sentiment ENUM('positive','neutral','negative') NOT NULL,
   original_sentiment ENUM('positive','neutral','negative') NULL,
   sentiment_confidence DECIMAL(6,4) NOT NULL DEFAULT 0,
-  sentiment_source ENUM('svm','fallback','manual','empty') NOT NULL DEFAULT 'svm',
+  sentiment_source ENUM('svm','fallback','manual','empty','rating') NOT NULL DEFAULT 'svm',
   review_status ENUM('not_required','needs_review','reviewed') NOT NULL DEFAULT 'not_required',
   reviewed_by_user_id INT UNSIGNED NULL,
   reviewed_at DATETIME NULL,
@@ -119,6 +124,7 @@ CREATE TABLE feedback (
   INDEX idx_feedback_final_score (final_score),
   INDEX idx_feedback_review (office_id, review_status, is_void),
   INDEX idx_feedback_fingerprint (office_id, record_fingerprint),
+  INDEX idx_feedback_client_number (client_number),
   INDEX idx_feedback_import_batch (import_batch_id)
 ) ENGINE=InnoDB;
 
@@ -246,10 +252,17 @@ END$$
 DELIMITER ;
 
 INSERT INTO offices (id,name,code,description,status) VALUES
-(1,'City Health Department','CHO','City Health Department / City Health Office client feedback survey.','active');
+(1,'Pasig City Social Welfare and Development Office','CSWDO','Pasig City Social Welfare and Development Office client feedback survey.','active');
 
--- Demo credentials remain: admin/Admin123!, cho_head/Head123!, cho_staff/Staff123!
+-- Demo credentials remain: admin/Admin123!, cswdo_head/Head123!, cswdo_staff/Staff123!
 INSERT INTO users (id,office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES
 (1,NULL,'System Administrator','admin','admin@pasig.local','$2y$12$00agB687GSWTK8nVf42KAeeAYH48yHhVGd8o7a9JgZ1MXbB0UE5z6','admin','active',NULL,0),
-(2,1,'City Health Office Head','cho_head','cho.head@pasig.local','$2y$12$OV08K08m6fxl6pETw3fT2.w.Nib4nUkRd54qtjcEI5A0aHXNUXupy','office_head','active',1,0),
-(3,1,'City Health Office Staff','cho_staff','cho.staff@pasig.local','$2y$12$ITyXyYqirwuxnX8RLKtXquZQdPBbfCjJVXKbs1uoI/quuUwEyO6BS','office_staff','active',2,0);
+(2,1,'CSWDO Office Head','cswdo_head','cswdo.head@pasig.local','$2y$12$OV08K08m6fxl6pETw3fT2.w.Nib4nUkRd54qtjcEI5A0aHXNUXupy','office_head','active',1,0),
+(3,1,'CSWDO Office Staff','cswdo_staff','cswdo.staff@pasig.local','$2y$12$ITyXyYqirwuxnX8RLKtXquZQdPBbfCjJVXKbs1uoI/quuUwEyO6BS','office_staff','active',2,0),
+(4,1,'Cecil','cecil','cecil.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(5,1,'Rhea','rhea','rhea.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(6,1,'EMS','ems','ems.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(7,1,'John','john','john.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(8,1,'Kenneth','kenneth','kenneth.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(9,1,'Uno','uno','uno.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
+(10,1,'Alex','alex','alex.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1);

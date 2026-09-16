@@ -128,6 +128,20 @@ function sentiment_numeric_score(string $sentiment): float
     };
 }
 
+function rating_based_prediction(array $ratings): array
+{
+    $average = rating_average($ratings);
+    $label = $average >= 3 ? 'positive' : ($average >= 2 ? 'neutral' : 'negative');
+    return ['label' => $label, 'confidence' => 1.0, 'source' => 'rating'];
+}
+
+function feedback_sentiment_prediction(array $ratings, string $comment): array
+{
+    // A written comment adds the qualitative 40% component when supplied.
+    // Without one, derive that component from the completed service ratings.
+    return trim($comment) === '' ? rating_based_prediction($ratings) : predict_sentiment($comment);
+}
+
 function compute_feedback_scores(array $ratings, string $sentiment): array
 {
     $average = rating_average($ratings);
@@ -266,6 +280,7 @@ function model_version(): string
 
 function prediction_review_status(array $prediction): string
 {
+    if (($prediction['source'] ?? '') === 'rating') return 'not_required';
     return (($prediction['source'] ?? '') !== 'svm' || (float)($prediction['confidence'] ?? 0) < LOW_CONFIDENCE_THRESHOLD)
         ? 'needs_review'
         : 'not_required';

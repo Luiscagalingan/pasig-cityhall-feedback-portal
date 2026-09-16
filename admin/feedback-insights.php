@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../includes/bootstrap.php';
+$user=require_login(['admin']);$month=trim((string)($_GET['month']??''));$highlights=feedback_highlights(null,$month?:null);
+render_dashboard_start('Feedback Insights','feedback_insights');page_header('Feedback Insights','Positive feedback and areas for improvement across active offices.');
+?>
+<form class="filters compact" method="get"><label class="filter-field"><span>Month</span><input type="month" name="month" value="<?= e($month) ?>"></label><button class="btn">Apply</button><a class="btn secondary" href="<?= e(app_url('admin/feedback-insights.php')) ?>">All Months</a></form>
+<div class="content-grid"><section class="card"><div class="card-head"><div><h2>Top 5 Good Comments</h2><p>Most recent positive feedback<?= $month?' for '.e(date('F Y',strtotime($month.'-01'))):'' ?>.</p></div></div><div class="notification-list"><?php foreach($highlights['good'] as $item): ?><article class="notification-item"><div class="notification-dot"></div><div><strong><?= e(date('M d, Y',strtotime($item['visit_date']))) ?></strong><p><?= e($item['comment']) ?></p></div></article><?php endforeach; ?><?php if(!$highlights['good']): ?><div class="empty-state">No positive comments for this period.</div><?php endif; ?></div></section><section class="card"><div class="card-head"><div><h2>Top 5 Critical Feedback</h2><p>Recent negative feedback requiring attention.</p></div></div><div class="notification-list"><?php foreach($highlights['critical'] as $item): ?><article class="notification-item unread"><div class="notification-dot"></div><div><strong><?= e(date('M d, Y',strtotime($item['visit_date']))) ?></strong><p><?= e($item['comment']) ?></p></div></article><?php endforeach; ?><?php if(!$highlights['critical']): ?><div class="empty-state">No critical feedback for this period.</div><?php endif; ?></div></section></div>
+<?php render_dashboard_end(); ?>
