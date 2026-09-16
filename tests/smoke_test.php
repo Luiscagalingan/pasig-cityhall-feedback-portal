@@ -11,11 +11,11 @@ function check_result(array &$results,string $name,bool $ok,string $detail=''): 
 check_result($results,'PHP version',version_compare(PHP_VERSION,'8.1.0','>='),PHP_VERSION);
 check_result($results,'Python executable',is_file(PYTHON_BIN),PYTHON_BIN);
 check_result($results,'SVM model file',is_file(__DIR__.'/../ml/models/svm_sentiment.joblib'));
-$chapter2Example=compute_feedback_scores([4,3,4,4],'negative');
+$chapter2Example=compute_feedback_scores([4,3,4,4],'negative','Slow service');
 check_result(
     $results,
-    'Chapter 2 weighted formula',
-    abs((float)$chapter2Example['final_score'] - 55.0) < 0.01,
+    '90/10 weighted formula',
+    abs((float)$chapter2Example['final_score'] - 82.5) < 0.01,
     json_encode($chapter2Example)
 );
 $prediction=predict_sentiment('Mabilis at maayos ang serbisyo.');

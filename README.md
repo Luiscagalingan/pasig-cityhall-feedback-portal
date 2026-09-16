@@ -1,6 +1,6 @@
 # Pasig City Hall Service Satisfaction Monitoring System
 
-PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scoped dashboards, CSV historical-data import, TF-IDF + Linear SVM sentiment analysis, human review, notifications, action approval, and 60/40 weighted scoring.
+PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scoped dashboards, CSV historical-data import, TF-IDF + Linear SVM sentiment analysis, human review, notifications, action approval, and 90/10 scoring with comments and ratings-only scoring without comments.
 
 ## Major modules
 
@@ -12,7 +12,7 @@ PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scope
 - Office Head-only Manage Staff, CSV preview/import, rollback, and Sentiment Review
 - Optional English/Filipino/Taglish comments with shorthand/slang normalization; blank comments use rating-based sentiment
 - TF-IDF word/character features + LinearSVC
-- Chapter 2 normalized score presented on an equivalent 0–100 scale: 60% structured ratings + 40% comment sentiment, with 33.5 and 66.5 classification thresholds
+- Chapter 2 normalized score presented on an equivalent 0–100 scale: 90% structured ratings + 10% comment sentiment (100% ratings without comments), with 33.5 and 66.5 classification thresholds
 - Low-confidence/fallback review queue, manual correction, original-label preservation
 - Reviewed training-candidate export for controlled retraining
 - Needs Action → In Progress → Pending Approval → Completed workflow
@@ -51,3 +51,5 @@ The included 300-comment model is a functional development/demo model. Final res
 ## Research completion kit
 
 Use `research/README.md` for the prepared dataset, reviewer, Cohen's Kappa, final-model training, UAT, ISO/IEC 25010, diagrams, and defense workflow. Templates are intentionally blank and must be completed only with actual approved data and evaluators.
+
+After updating scoring, run `php tools/recalculate_feedback_scores.php` to recalculate existing feedback scores. Raw answers, sentiment reviews, and action history are preserved. Run `php tests/scoring_test.php` to verify both scoring paths.

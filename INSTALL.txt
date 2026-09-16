@@ -191,8 +191,8 @@ G. HOW THE SENTIMENT PROCESS WORKS
 5. PHP stores the prediction, confidence, model version, and source.
 6. If confidence is below 60%, or Python cannot be reached, the record is
    placed in Sentiment Review for human verification.
-7. The final score uses 60% normalized service rating and 40% verified
-   comment sentiment.
+7. The final score uses 90% normalized service rating and 10% verified
+   comment sentiment. Without a comment, use 100% normalized ratings.
 
 ============================================================
 H. COMMON ERRORS AND SOLUTIONS

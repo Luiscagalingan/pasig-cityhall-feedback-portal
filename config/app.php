@@ -7,18 +7,17 @@ const APP_BASE_URL = '/pasig-cityhall-feedback-portal';
 const APP_TIMEZONE = 'Asia/Manila';
 const SESSION_NAME = 'pasig_feedback_session';
 
-// Python 3.12 installed on this XAMPP computer.
-// Override with PASIG_PYTHON_BIN environment variable when deployed elsewhere.
-$pythonLocalPath = getenv('LOCALAPPDATA')
-    ? rtrim((string)getenv('LOCALAPPDATA'), '\\/') . '/Programs/Python/Python312/python.exe'
-    : 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe';
+// Use the project's Python environment so PHP and CLI share ML dependencies.
+// Override with PASIG_PYTHON_BIN when deployed with a different environment.
+$pythonLocalPath = __DIR__ . '/../.venv/'
+    . (PHP_OS_FAMILY === 'Windows' ? 'Scripts/python.exe' : 'bin/python');
 define('PYTHON_BIN', getenv('PASIG_PYTHON_BIN') ?: $pythonLocalPath);
 const SVM_PREDICT_SCRIPT = __DIR__ . '/../ml/predict.py';
 
-// Final weighted score = 60% structured ratings + 40% comment sentiment.
-// When no optional comment is supplied, the 40% sentiment component is derived from ratings.
-const RATING_WEIGHT = 0.60;
-const COMMENT_WEIGHT = 0.40;
+// With comments: 90% normalized ratings + 10% sentiment.
+// Without comments: 100% normalized ratings (25% per question).
+const RATING_WEIGHT = 0.90;
+const COMMENT_WEIGHT = 0.10;
 // Equivalent 0..100 presentation of the Chapter 2 normalized index.
 const ACTION_SCORE_THRESHOLD = 33.5;
 

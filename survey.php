@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         $prediction = feedback_sentiment_prediction($ratings, $comment);
-        $scores = compute_feedback_scores($ratings, $prediction['label']);
+        $scores = compute_feedback_scores($ratings, $prediction['label'], $comment);
         $reviewStatus = prediction_review_status($prediction);
         $stmt = db()->prepare("INSERT INTO feedback
             (office_id,visit_date,sex,age,client_type,service_received,timeliness_rating,client_handling_rating,quality_rating,overall_rating,comment,

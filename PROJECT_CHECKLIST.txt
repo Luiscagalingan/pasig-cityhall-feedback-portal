@@ -46,7 +46,7 @@ IMPLEMENTED PROJECT CHECKLIST — WORKFLOW & SECURITY UPGRADE
 [x] TF-IDF word and character features
 [x] Linear Support Vector Machine classifier
 [x] Single and batch prediction scripts
-[x] 60% ratings + 40% comment sentiment computation
+[x] 90% ratings + 10% comment sentiment; 100% ratings without comments
 [x] Automatic action item for negative or low-score feedback
 [x] Low-confidence/fallback human-review queue
 [x] Manual sentiment correction and automatic score recalculation

@@ -137,23 +137,26 @@ function rating_based_prediction(array $ratings): array
 
 function feedback_sentiment_prediction(array $ratings, string $comment): array
 {
-    // A written comment adds the qualitative 40% component when supplied.
-    // Without one, derive that component from the completed service ratings.
+    // Without a comment, retain a rating-derived label for summaries.
+    // The final score in that case uses normalized ratings alone.
     return trim($comment) === '' ? rating_based_prediction($ratings) : predict_sentiment($comment);
 }
 
-function compute_feedback_scores(array $ratings, string $sentiment): array
+function compute_feedback_scores(array $ratings, string $sentiment, string $comment): array
 {
     $average = rating_average($ratings);
     // Chapter 2's -1..+1 index expressed on an equivalent 0..100 scale.
     $normalizedRating = round((($average - 1) / 3) * 100, 2);
-    $commentScore = sentiment_numeric_score($sentiment);
+    $hasComment = trim($comment) !== '';
+    $commentScore = $hasComment ? sentiment_numeric_score($sentiment) : 0.0;
     return [
         'average_rating' => $average,
         // Kept under the legacy database column name for migration compatibility.
         'rating_percent' => $normalizedRating,
         'comment_score' => $commentScore,
-        'final_score' => round(($normalizedRating * RATING_WEIGHT) + ($commentScore * COMMENT_WEIGHT), 2),
+        'final_score' => $hasComment
+            ? round(($normalizedRating * RATING_WEIGHT) + ($commentScore * COMMENT_WEIGHT), 2)
+            : $normalizedRating,
     ];
 }
 

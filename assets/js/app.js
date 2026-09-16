@@ -1,31 +1,4 @@
 (() => {
-  const root = document.documentElement;
-  const themeButtons = [...document.querySelectorAll('[data-theme-toggle]')];
-  const themeIcon = theme => theme === 'dark'
-    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>'
-    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  const applyTheme = theme => {
-    const selected = theme === 'dark' ? 'dark' : 'light';
-    root.dataset.theme = selected;
-    root.style.colorScheme = selected;
-    themeButtons.forEach(button => {
-      const next = selected === 'dark' ? 'Light mode' : 'Dark mode';
-      button.setAttribute('aria-label', `Switch to ${next.toLowerCase()}`);
-      button.setAttribute('title', `Switch to ${next.toLowerCase()}`);
-      const svg = button.querySelector('svg');
-      if (svg) svg.innerHTML = themeIcon(selected);
-      const label = button.querySelector('span');
-      if (label) label.textContent = next;
-    });
-    if (document.querySelector('[data-chart]')) window.dispatchEvent(new Event('resize'));
-  };
-  applyTheme(root.dataset.theme);
-  themeButtons.forEach(button => button.addEventListener('click', () => {
-    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('pasig-theme', next); } catch (_) {}
-    applyTheme(next);
-  }));
-
   document.querySelectorAll('input[name="age"][min="18"]').forEach(input => {
     const validateAge = () => {
       const age = Number(input.value);
