@@ -103,7 +103,7 @@ CREATE TABLE feedback (
   rating_percent DECIMAL(6,2) NOT NULL COMMENT 'Chapter 2 normalized rating expressed from 0 to 100',
   comment_score DECIMAL(6,2) NOT NULL COMMENT 'Positive=100, neutral=50, negative=0',
   final_score DECIMAL(6,2) NOT NULL COMMENT '0 to 100 equivalent of the Chapter 2 weighted index',
-  source ENUM('public_survey','csv_import','manual_entry') NOT NULL DEFAULT 'public_survey',
+  source ENUM('public_survey','csv_import','manual_entry','assisted_survey') NOT NULL DEFAULT 'public_survey',
   is_void TINYINT(1) NOT NULL DEFAULT 0,
   void_reason TEXT NULL,
   voided_by_user_id INT UNSIGNED NULL,

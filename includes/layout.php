@@ -31,6 +31,7 @@ function admin_nav(): array
         ['offices','Offices','admin/offices.php','building'],['heads','Manage Heads','admin/heads.php','users'],
         ['staff','Manage Staff','admin/staff.php','users'],['reports','Reports & Export','admin/reports.php','report'],
         ['client_output','Client Output','admin/client-output.php','chart'],['feedback_insights','Feedback Insights','admin/feedback-insights.php','message'],
+        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
         ['system','System & Audit','admin/system.php','database'],
     ];
@@ -45,14 +46,16 @@ function office_nav(array $user): array
     if (($user['role'] ?? '') === 'office_head') {
         $nav[] = ['review','Sentiment Review','review.php','shield'];
         $nav[] = ['data','Dataset & CSV Upload','office/data.php','database'];
-        $nav[] = ['staff','Manage Staff','office/staff.php','users'];
+        $nav[] = ['staff','Manage Team','office/staff.php','users'];
     }
     if (($user['role'] ?? '') === 'supervisor') $nav[] = ['client_counts','Client Counts','office/client-counts.php','users'];
     if (in_array(($user['role'] ?? ''), ['office_head','supervisor','office_staff'], true)) {
         $nav[] = ['client_output','Client Output','office/client-output.php','chart'];
         $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
+        $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
     }
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count','office/client-count-request.php','message'];
+    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
     $nav[] = ['reports','Reports & Export','office/reports.php','report'];
     $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
     $nav[] = ['account','My Account','account.php','users'];

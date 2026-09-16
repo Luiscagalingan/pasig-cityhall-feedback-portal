@@ -255,3 +255,22 @@ function feedback_highlights(?int $officeId, ?string $month = null, int $limit =
     $critical->execute($params);
     return ['good'=>$good->fetchAll(), 'critical'=>$critical->fetchAll()];
 }
+
+function rating_distribution(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null): array
+{
+    [$where, $params] = feedback_where($officeId, $dateFrom, $dateTo, true, false);
+    $fields = [
+        'overall' => ['Overall Satisfaction', 'overall_rating'],
+        'timeliness' => ['Timeliness', 'timeliness_rating'],
+        'handling' => ['Client Handling', 'client_handling_rating'],
+        'quality' => ['Quality of Service', 'quality_rating'],
+    ];
+    $result = [];
+    foreach ($fields as $key => [$label, $column]) {
+        $stmt = db()->prepare("SELECT SUM(f.{$column}=4) r4,SUM(f.{$column}=3) r3,SUM(f.{$column}=2) r2,SUM(f.{$column}=1) r1,COUNT(*) total FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where));
+        $stmt->execute($params);
+        $row = $stmt->fetch() ?: [];
+        $result[$key] = ['label'=>$label, '4'=>(int)($row['r4'] ?? 0), '3'=>(int)($row['r3'] ?? 0), '2'=>(int)($row['r2'] ?? 0), '1'=>(int)($row['r1'] ?? 0), 'total'=>(int)($row['total'] ?? 0)];
+    }
+    return $result;
+}

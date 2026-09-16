@@ -14,24 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = trim((string)($_POST['name'] ?? ''));
             $code = strtoupper(trim((string)($_POST['code'] ?? '')));
             $description = trim((string)($_POST['description'] ?? ''));
-            $headName = trim((string)($_POST['head_name'] ?? ''));
-            $username = trim((string)($_POST['username'] ?? ''));
-            $email = trim((string)($_POST['email'] ?? ''));
-            $password = (string)($_POST['password'] ?? '');
-            if ($name === '' || $code === '' || $headName === '' || $username === '' ||
-                !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8 ||
-                !preg_match('/[A-Za-z]/', $password) || !preg_match('/\d/', $password)) {
-                throw new RuntimeException('Complete all office and head fields. Password must contain at least 8 characters with a letter and a number.');
+            if ($name === '' || $code === '') {
+                throw new RuntimeException('Office name and office code are required.');
             }
             db()->beginTransaction();
             $stmt = db()->prepare("INSERT INTO offices(name,code,description,status) VALUES(?,?,?,'active')");
             $stmt->execute([$name,$code,$description]);
-            $officeId = (int)db()->lastInsertId();
-            $stmt = db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,'office_head','active',?,1)");
-            $stmt->execute([$officeId,$headName,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$user['id']]);
             db()->commit();
-            audit((int)$user['id'],'office_create',"Created {$code} with office head {$username}");
-            set_flash('success','Office and Office Head created. Their dashboard is available immediately.');
+            audit((int)$user['id'],'office_create',"Created {$code}");
+            set_flash('success','Office created. You may now assign an Office Head from Manage Office Heads.');
         } elseif ($action === 'toggle') {
             $id = post_int('office_id');
             $newStatus = (string)($_POST['status'] ?? '');
@@ -83,8 +74,8 @@ page_header('Office Management','Create offices, view active registrations, and 
 <div class="app-modal" id="add-office-modal" aria-hidden="true">
   <section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="add-office-title">
     <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
-    <h2 id="add-office-title">Add Office & Office Head</h2>
-    <p class="muted">Create the office, public survey scope, and initial Office Head account in one step.</p>
+    <h2 id="add-office-title">Add Office</h2>
+    <p class="muted">Create an office and its public survey scope. Assign an Office Head separately from Manage Office Heads.</p>
     <form method="post" class="modal-form">
       <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="create">
@@ -92,14 +83,7 @@ page_header('Office Management','Create offices, view active registrations, and 
       <div class="form-group"><label>Office Name</label><input name="name" required placeholder="Example: Public Information Office"></div>
       <div class="form-group"><label>Office Code</label><input name="code" maxlength="20" required placeholder="PIO"></div>
       <div class="form-group"><label>Description</label><textarea name="description"></textarea></div>
-      <h3>Initial Office Head</h3>
-      <div class="form-group"><label>Full Name</label><input name="head_name" required></div>
-      <div class="form-row">
-        <div class="form-group"><label>Username</label><input name="username" required></div>
-        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
-      </div>
-      <div class="form-group"><label>Temporary Password</label><input type="password" name="password" minlength="8" required><div class="help">At least 8 characters with a letter and number. Share it securely.</div></div>
-      <div class="confirm-actions"><button type="button" class="btn secondary" data-modal-close>Cancel</button><button class="btn" type="submit">Create Office & Head</button></div>
+      <div class="confirm-actions"><button type="button" class="btn secondary" data-modal-close>Cancel</button><button class="btn" type="submit">Create Office</button></div>
     </form>
   </section>
 </div>

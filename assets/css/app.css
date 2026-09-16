@@ -1793,19 +1793,25 @@ html[data-theme="light"] .filter-field>span {background:#f7faff;color:#075da8}
 .public-nav .public-actions {margin-right:132px}
 html[data-theme="light"] .public-theme-toggle {background:#fff;border-color:#c9dbea;box-shadow:0 12px 30px rgba(15,63,108,.16)}
 
-/* Inclusive, easy-to-read public survey */
-.survey-intro {max-width:760px;font-size:16px;line-height:1.65}
-.survey-progress {display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.survey-progress span {padding:7px 11px;border:1px solid color-mix(in srgb,var(--blue2) 40%,var(--line));border-radius:999px;background:color-mix(in srgb,var(--blue) 9%,var(--panel));color:var(--text);font-size:12px;font-weight:750}
-.survey-form .section-title {font-size:20px;line-height:1.35}
+/* Clean, easy-to-read public survey */
+.survey-shell {width:min(940px,calc(100% - 32px));margin:28px auto 64px}
+.survey-banner {padding:24px 28px;margin-bottom:16px}
+.survey-banner h1 {margin:7px 0 5px;font-size:clamp(28px,4vw,38px);letter-spacing:-.03em}
+.survey-intro {max-width:620px;font-size:15px;line-height:1.55;margin:0}
+.survey-form {padding:30px}
+.survey-form .section-title {font-size:20px;line-height:1.3;margin:30px 0 16px;padding-bottom:12px}
+.survey-form .section-title:first-of-type {margin-top:0}
 .survey-form .form-group label {color:var(--text);font-size:14px;line-height:1.45}
 .survey-form input:not([type="checkbox"]):not([type="radio"]),.survey-form textarea,.survey-form .custom-select-trigger {min-height:50px;font-size:16px}
-.rating-guide {display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--blue) 6%,var(--panel2))}
-.rating-guide span {text-align:center;color:var(--muted);font-size:12px;line-height:1.4}.rating-guide b {display:block;color:var(--text);font-size:17px}
-.rating-question {font-size:15px;line-height:1.55}.rating-question small {display:block;margin-top:3px;color:var(--muted);font-weight:500}
-.rating-options span {min-height:48px;display:grid;place-items:center;font-size:13px;font-weight:750;line-height:1.25;cursor:pointer}
+.survey-instruction {margin:-6px 0 12px;font-size:14px}
+.rating-guide {display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--blue) 6%,var(--panel2))}
+.rating-guide span {text-align:center;color:var(--muted);font-size:11px;line-height:1.35}.rating-guide b {display:block;color:var(--text);font-size:16px}
+.rating-grid {gap:10px}.rating-item {padding:14px 16px}.rating-item>strong {margin-bottom:10px}
+.rating-question {font-size:15px;line-height:1.35}.rating-options {gap:6px}.rating-options span {min-height:42px;display:grid;place-items:center;padding:6px;font-size:15px;font-weight:800;line-height:1;cursor:pointer}
 .rating-options input:focus-visible+span {outline:3px solid color-mix(in srgb,var(--blue2) 45%,transparent);outline-offset:2px}
 .survey-submit {min-height:52px;padding-inline:24px;font-size:16px}
+.survey-form .privacy-notice {margin-top:18px;padding:13px 15px}
+.survey-form .privacy-notice summary {cursor:pointer;color:var(--text);font-size:13px;font-weight:800}
 .survey-form .checkbox-row {align-items:flex-start;gap:12px;margin:20px 0;padding:15px 16px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);font-size:14px;line-height:1.55}
 .survey-form .checkbox-row input[type="checkbox"] {width:22px;height:22px;min-width:22px;min-height:22px;flex:0 0 22px;margin:0;margin-top:1px}
 .survey-form .checkbox-row span {display:block;min-width:0}
@@ -1813,7 +1819,7 @@ html[data-theme="light"] .public-theme-toggle {background:#fff;border-color:#c9d
 html[data-theme="light"] .survey-form .checkbox-row {background:#f5f9fd;border-color:#cddfeb}
 html[data-theme="light"] .privacy-notice {background:#f2f8fe;border-color:#c8dff1;color:#254762}
 html[data-theme="light"] .rating-guide {background:#f3f8fd}
-@media(max-width:680px){.public-theme-toggle {right:14px;top:14px;bottom:auto}.public-theme-toggle span {display:none}.public-nav .public-actions {margin-right:48px}.rating-guide {grid-template-columns:repeat(2,1fr)}.survey-banner,.survey-form {padding:20px}.survey-form .section-title {font-size:18px}}
+@media(max-width:680px){.public-theme-toggle {right:14px;top:14px;bottom:auto}.public-theme-toggle span {display:none}.public-nav .public-actions {margin-right:48px}.rating-guide {grid-template-columns:repeat(2,1fr)}.survey-banner,.survey-form {padding:20px}.survey-form .section-title {font-size:18px}.rating-item {padding:13px}.survey-shell {width:min(100% - 20px,940px)}}
 @media(max-width:560px){.topbar .theme-toggle span {display:none}.topbar .theme-toggle {width:42px;padding:8px}}
 .policy-content {line-height:1.7}.policy-content h2 {margin:26px 0 6px;font-size:20px}.policy-content h2:first-child {margin-top:0}.policy-content p {margin:0;color:var(--muted)}
 
