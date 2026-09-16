@@ -48,8 +48,8 @@ Run `tests/run_smoke_test.bat`. Administrator → System & Audit must show **SVM
 
 The included 300-comment model is a functional development/demo model. Final research evaluation still requires an approved, de-identified, manually labeled CHD dataset.
 
-## Research completion kit
+## Distribution scope
 
-Use `research/README.md` for the prepared dataset, reviewer, Cohen's Kappa, final-model training, UAT, ISO/IEC 25010, diagrams, and defense workflow. Templates are intentionally blank and must be completed only with actual approved data and evaluators.
+Research documents and training/evaluation scripts were removed. Keep the supplied model and metrics for runtime predictions. See INSTALL.txt for setup.
 
 After updating scoring, run `php tools/recalculate_feedback_scores.php` to recalculate existing feedback scores. Raw answers, sentiment reviews, and action history are preserved. Run `php tests/scoring_test.php` to verify both scoring paths.

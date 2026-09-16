@@ -21,7 +21,7 @@ if not text:
     print(json.dumps({"label": "neutral", "confidence": 0.0}))
     raise SystemExit(0)
 if not MODEL.exists():
-    print("Model not found. Run python ml/train.py", file=sys.stderr)
+    print("Model not found. Restore ml/models/svm_sentiment.joblib from a trusted backup.", file=sys.stderr)
     raise SystemExit(2)
 artifact = joblib.load(MODEL)
 features = artifact["features"]
