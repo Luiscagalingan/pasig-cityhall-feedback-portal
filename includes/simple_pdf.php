@@ -60,6 +60,11 @@ final class SimplePdf
 
 function download_feedback_report_pdf(array $metrics, array $ages, array $services, array $rows, string $scope, string $range): never
 {
+    $viewer=current_user();
+    if(($viewer['role']??'')==='office_staff'){
+        http_response_code(403);
+        exit('Walang pahintulot ang Office Staff na mag-export ng report.');
+    }
     if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'dashboard.php') {
         global $trend, $indicators;
         $title = str_contains(strtolower($scope), 'active offices') ? 'ADMINISTRATOR OVERVIEW' : 'OFFICE OVERVIEW';

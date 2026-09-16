@@ -41,22 +41,22 @@ function office_nav(array $user): array
 {
     $nav = [
         ['overview','Overview','office/dashboard.php','grid'],['feedback','Feedback Records','office/feedback.php','message'],
-        ['actions','Action Management','office/actions.php','check'],
     ];
+    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['actions','Action Management','office/actions.php','check'];
     if (($user['role'] ?? '') === 'office_head') {
         $nav[] = ['review','Sentiment Review','review.php','shield'];
-        $nav[] = ['data','Dataset & CSV Upload','office/data.php','database'];
         $nav[] = ['staff','Manage Team','office/staff.php','users'];
+        $nav[] = ['office_audit','System Audit','office/audit.php','database'];
     }
     if (($user['role'] ?? '') === 'supervisor') $nav[] = ['client_counts','Client Counts','office/client-counts.php','users'];
     if (in_array(($user['role'] ?? ''), ['office_head','supervisor','office_staff'], true)) {
         $nav[] = ['client_output','Client Output','office/client-output.php','chart'];
-        $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
-        $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
     }
+    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
+    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count','office/client-count-request.php','message'];
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
-    $nav[] = ['reports','Reports & Export','office/reports.php','report'];
+    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
     $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
     $nav[] = ['account','My Account','account.php','users'];
     return $nav;
@@ -65,14 +65,14 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=30"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=35"></head><body class="<?= e($bodyClass) ?>">
 
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
 
 function render_public_end(): void
 { ?>
-<script src="<?= e(app_url('assets/js/app.js')) ?>?v=22"></script></body></html>
+<script src="<?= e(app_url('assets/js/app.js')) ?>?v=26"></script></body></html>
 <?php }
 
 function render_dashboard_start(string $title, string $active): array
@@ -93,7 +93,7 @@ function render_dashboard_start(string $title, string $active): array
     $workAlerts = (int)$metrics['needs_action'] + (int)$metrics['in_progress'] + (int)$metrics['pending_approval'] + $review;
     $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=30"></head><body class="dashboard-body">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=35"></head><body class="dashboard-body">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
 <?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $workAlerts > 0): ?><b title="Unresolved work items"><?= $workAlerts ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>
@@ -105,7 +105,7 @@ function render_dashboard_start(string $title, string $active): array
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=22"></script></body></html>
+</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=26"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

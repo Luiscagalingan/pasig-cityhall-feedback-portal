@@ -12,10 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit((int)$user['id'], 'notifications_read_all', 'Marked all notifications as read');
         set_flash('success', 'All notifications marked as read.');
     } elseif ($action === 'read') {
-        db()->prepare('UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=? AND user_id=?')->execute([post_int('notification_id'), (int)$user['id']]);
+        $notificationId=post_int('notification_id');
+        db()->prepare('UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=? AND user_id=?')->execute([$notificationId, (int)$user['id']]);
+        audit((int)$user['id'], 'notification_read', 'Binasa ang notification #'.$notificationId);
     } elseif ($action === 'delete') {
         $stmt = db()->prepare('DELETE FROM notifications WHERE id=? AND user_id=? AND created_at<=DATE_SUB(NOW(),INTERVAL 7 DAY)');
-        $stmt->execute([post_int('notification_id'), (int)$user['id']]);
+        $notificationId=post_int('notification_id');$stmt->execute([$notificationId, (int)$user['id']]);
+        if($stmt->rowCount())audit((int)$user['id'], 'notification_delete', 'Binura ang notification #'.$notificationId);
         set_flash($stmt->rowCount() ? 'success' : 'error', $stmt->rowCount() ? 'Notification deleted.' : 'Notifications can only be deleted after seven days.');
     } elseif ($action === 'announce' && $canAnnounce) {
         $title = trim((string)($_POST['title'] ?? ''));

@@ -1,4 +1,12 @@
 (() => {
+  document.querySelectorAll('[data-show-password]').forEach(toggle => {
+    const passwordInput = document.getElementById(toggle.dataset.showPassword || '');
+    if (!passwordInput) return;
+    toggle.addEventListener('change', () => {
+      passwordInput.type = toggle.checked ? 'text' : 'password';
+    });
+  });
+
   document.querySelectorAll('input[name="age"][min="18"]').forEach(input => {
     const validateAge = () => {
       const age = Number(input.value);
@@ -227,12 +235,41 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.app-modal.open').forEach(closeModal); });
 
+  document.querySelectorAll('[data-report-print-form]').forEach(form => {
+    const options = form.querySelector('.scope-options');
+    const insertBefore = options?.querySelector('input[value="services"]')?.closest('label');
+    const extras = [
+      ['insights', 'Feedback Insights', 'Top positive and critical feedback.'],
+      ['clients', 'Client Count', 'Total, daily average, peak, and active days.'],
+      ['ratings', 'Rating Distribution', 'Actual counts for every survey criterion.']
+    ];
+    extras.forEach(([value, title, description]) => {
+      if (!document.querySelector(`[data-report-section="${value}"]`) || form.querySelector(`input[value="${value}"]`)) return;
+      const label = document.createElement('label');
+      label.className = 'scope-option';
+      label.innerHTML = `<input type="checkbox" name="print_section" value="${value}" checked><span><strong>${title}</strong><br><small>${description}</small></span>`;
+      options?.insertBefore(label, insertBefore || null);
+    });
+    form.addEventListener('submit', e => {
+    e.preventDefault();
+    const selected = new Set([...form.querySelectorAll('input[name="print_section"]:checked')].map(input => input.value));
+    if (!selected.size) { window.alert('Select at least one report section to print.'); return; }
+    const sections = [...document.querySelectorAll('[data-report-section]')];
+    sections.forEach(section => section.classList.toggle('print-excluded', !selected.has(section.dataset.reportSection)));
+    closeModal(form.closest('.app-modal'));
+    const restore = () => sections.forEach(section => section.classList.remove('print-excluded'));
+    window.addEventListener('afterprint', restore, {once:true});
+    window.print();
+    window.setTimeout(restore, 1000);
+    });
+  });
+
   document.querySelectorAll('form.filters[method="get"]').forEach(form => {
     let timer;
     const submit = () => { form.querySelectorAll('input[name="page"]').forEach(input => input.remove()); form.requestSubmit(); };
     form.querySelectorAll('select,input[type="date"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
     form.querySelectorAll('input:not([type]),input[type="text"],input[type="search"]').forEach(input => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(submit, 450); }));
-    form.querySelectorAll('button:not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
+    form.querySelectorAll('button[type="submit"]:not([name="export"]),button:not([type]):not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
   });
 
   const toast = document.querySelector('[data-toast]');

@@ -36,7 +36,11 @@ render_public_start('Authorized Login', 'login-body');
     <?php if ($error): ?><div class="error-box"><?= e($error) ?></div><?php endif; ?>
     <form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
       <div class="form-group"><label>Username or Email</label><input name="identity" autocomplete="username" required></div>
-      <div class="form-group"><label>Password</label><input type="password" name="password" autocomplete="current-password" required></div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" name="password" autocomplete="current-password" required>
+        <label class="password-toggle"><input type="checkbox" data-show-password="login-password"> <span>Show password</span></label>
+      </div>
       <button class="btn" type="submit" style="width:100%;justify-content:center">Sign In</button>
     </form>
     <p class="help">Archived users cannot sign in. Staff and heads can access only their assigned active office.</p>

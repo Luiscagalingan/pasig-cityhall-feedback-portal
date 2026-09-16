@@ -220,11 +220,17 @@ function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $d
     if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
     if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
     if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
-    if ($assistedBy !== '') { $where[] = 'f.assisted_by=?'; $params[] = $assistedBy; }
+    if ($assistedBy === 'Unassigned') {
+        $where[] = "NULLIF(TRIM(f.assisted_by),'') IS NULL";
+    } elseif ($assistedBy !== '') {
+        $where[] = 'f.assisted_by=?';
+        $params[] = $assistedBy;
+    }
     $sql = "SELECT f.visit_date,COUNT(*) client_count,ROUND(AVG(f.average_rating),2) avg_rating,
-                   COALESCE(NULLIF(MAX(f.assisted_by),''),'Unassigned') top_assisting_staff
+                   COALESCE(NULLIF(TRIM(f.assisted_by),''),'Unassigned') top_assisting_staff
             FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) . "
-            GROUP BY f.visit_date ORDER BY f.visit_date DESC";
+            GROUP BY f.visit_date,COALESCE(NULLIF(TRIM(f.assisted_by),''),'Unassigned')
+            ORDER BY f.visit_date DESC,top_assisting_staff";
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
@@ -232,14 +238,55 @@ function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $d
 
 function assisting_staff_options(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null): array
 {
-    $where = ["f.is_void=0", "o.status='active'", "NULLIF(f.assisted_by,'') IS NOT NULL"];
+    // Active team accounts must appear even before they have assisted a client.
+    $userWhere = ["u.status='active'", "u.role IN ('office_staff','supervisor')", "o.status='active'"];
+    $userParams = [];
+    if ($officeId) { $userWhere[] = 'u.office_id=?'; $userParams[] = $officeId; }
+    $userStmt = db()->prepare("SELECT u.full_name label FROM users u JOIN offices o ON o.id=u.office_id WHERE " . implode(' AND ', $userWhere) . " ORDER BY u.full_name");
+    $userStmt->execute($userParams);
+    $options = [];
+    foreach ($userStmt->fetchAll() as $userRow) {
+        $label = trim((string)$userRow['label']);
+        if ($label !== '') $options[$label] = ['label'=>$label, 'clients'=>0];
+    }
+
+    $where = ["f.is_void=0", "o.status='active'"];
     $params = [];
     if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
     if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
     if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
-    $stmt = db()->prepare("SELECT f.assisted_by label,COUNT(*) clients FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) . " GROUP BY f.assisted_by ORDER BY clients DESC,label");
+    $stmt = db()->prepare("SELECT COALESCE(NULLIF(TRIM(f.assisted_by),''),'Unassigned') label,COUNT(*) clients FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) . " GROUP BY COALESCE(NULLIF(TRIM(f.assisted_by),''),'Unassigned') ORDER BY clients DESC,label");
     $stmt->execute($params);
-    return $stmt->fetchAll();
+    foreach ($stmt->fetchAll() as $feedbackRow) {
+        $label = (string)$feedbackRow['label'];
+        $options[$label] = ['label'=>$label, 'clients'=>(int)$feedbackRow['clients']];
+    }
+    uasort($options, fn($a,$b)=>($b['clients'] <=> $a['clients']) ?: strcasecmp($a['label'],$b['label']));
+    return array_values($options);
+}
+
+function client_output_summary(?int $officeId = null): array
+{
+    $where = ["f.is_void=0", "o.status='active'"];
+    $params = [];
+    if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    $stmt = db()->prepare(
+        "SELECT f.visit_date,COUNT(*) client_count
+         FROM feedback f JOIN offices o ON o.id=f.office_id
+         WHERE " . implode(' AND ', $where) . "
+         GROUP BY f.visit_date ORDER BY client_count DESC,f.visit_date DESC"
+    );
+    $stmt->execute($params);
+    $days = $stmt->fetchAll();
+    $total = array_sum(array_map(fn($row)=>(int)$row['client_count'], $days));
+    $activeDays = count($days);
+    return [
+        'total' => $total,
+        'average' => $activeDays ? round($total / $activeDays, 1) : 0,
+        'peak' => $days ? (int)$days[0]['client_count'] : 0,
+        'peak_date' => $days ? (string)$days[0]['visit_date'] : null,
+        'active_days' => $activeDays,
+    ];
 }
 
 function feedback_highlights(?int $officeId, ?string $month = null, int $limit = 5): array

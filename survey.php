@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('');
     }
 }
-render_public_start('Feedback Survey');
+render_public_start('Feedback Survey', 'public-body survey-page');
 ?>
 <nav class="public-nav"><a class="public-brand" href="<?= e(app_url()) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>City Government of Pasig</strong><small>Public Feedback Survey</small></div></a><div class="public-actions"><a class="btn secondary public-back" href="<?= e(app_url()) ?>"><span aria-hidden="true">←</span> Back to Office Selection</a></div></nav>
 <div class="survey-shell"><div class="survey-banner"><span class="eyebrow"><?= e($office['code']) ?> FEEDBACK</span><h1>Ibahagi ang inyong feedback</h1><p class="muted survey-intro">Tumatagal lamang nang 2–3 minuto. Gagamitin ang inyong sagot upang mapabuti ang serbisyo ng CSWDO.</p></div>

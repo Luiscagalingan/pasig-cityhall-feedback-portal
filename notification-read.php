@@ -14,5 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verify_csrf();
 $stmt = db()->prepare('UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE user_id=? AND read_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())');
 $stmt->execute([(int)$user['id']]);
+$markedRead=$stmt->rowCount();
+if($markedRead)audit((int)$user['id'],'notifications_preview_read','Binasa mula sa notification bell ang '.$markedRead.' notification(s)');
 
-echo json_encode(['ok' => true, 'marked_read' => $stmt->rowCount()]);
+echo json_encode(['ok' => true, 'marked_read' => $markedRead]);

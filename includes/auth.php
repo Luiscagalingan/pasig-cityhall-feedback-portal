@@ -111,6 +111,7 @@ function logout_user(): void
 
 function require_login(array $roles = []): array
 {
+    static $accessLogged = false;
     $user = current_user();
     if (!$user) {
         if (!empty($_SESSION)) set_flash('info', 'Your session expired. Please sign in again.');
@@ -124,6 +125,12 @@ function require_login(array $roles = []): array
     if (!empty($user['must_change_password']) && !in_array($script, ['account.php', 'logout.php'], true)) {
         set_flash('info', 'Change your temporary password before continuing.');
         redirect('account.php');
+    }
+    if (!$accessLogged) {
+        $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? $_SERVER['SCRIPT_NAME'] ?? ''), PHP_URL_PATH) ?: $script;
+        $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        audit((int)$user['id'], 'page_access', "Binuksan ang {$path} gamit ang {$method}");
+        $accessLogged = true;
     }
     return $user;
 }

@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
-$user=require_login(['office_head']);$officeId=(int)$user['office_id'];
+$user=require_login(['office_head']);
+set_flash('error', 'Dataset and CSV Upload is no longer available.');
+redirect('office/dashboard.php');
+$officeId=(int)$user['office_id'];
 
 function csv_value(array $row,array $map,array $aliases): string { foreach($aliases as $a)if(isset($map[$a]))return trim((string)($row[$map[$a]]??''));return ''; }
 function csv_date_value(array $row,array $map,array $aliases): string { $value=csv_value($row,$map,$aliases);$time=strtotime($value);return $time===false?$value:date('Y-m-d',$time); }

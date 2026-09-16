@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
 $user=require_login(['admin']);$from=trim((string)($_GET['from']??''));$to=trim((string)($_GET['to']??''));$staff=trim((string)($_GET['assisted_by']??''));
-$options=assisting_staff_options(null,$from?:null,$to?:null);$rows=client_output_rows(null,$from?:null,$to?:null,$staff);$total=array_sum(array_column($rows,'client_count'));$days=count($rows);$peak=$rows?max(array_column($rows,'client_count')):0;$avg=$days?$total/$days:0;
+$options=assisting_staff_options(null,$from?:null,$to?:null);$rows=client_output_rows(null,$from?:null,$to?:null,$staff);$total=array_sum(array_column($rows,'client_count'));$days=count(array_unique(array_column($rows,'visit_date')));$peak=$rows?max(array_column($rows,'client_count')):0;$avg=$days?$total/$days:0;
 render_dashboard_start('Client Output','client_output');page_header('Client Output','Consolidated daily catered-client volume across active offices.');
 ?>
 <form class="filters wide" method="get"><label class="filter-field"><span>Start date</span><input type="date" name="from" value="<?= e($from) ?>"></label><label class="filter-field"><span>End date</span><input type="date" name="to" value="<?= e($to) ?>"></label><select name="assisted_by"><option value="">All Staff (Assisted By)</option><?php foreach($options as $option): ?><option value="<?= e($option['label']) ?>" <?= $staff===$option['label']?'selected':'' ?>><?= e($option['label']) ?> · <?= (int)$option['clients'] ?> clients</option><?php endforeach; ?></select><button class="btn">Apply Filters</button></form>
