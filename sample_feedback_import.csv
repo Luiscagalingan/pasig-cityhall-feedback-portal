@@ -1,4 +1,4 @@
-Assisted By,Timestamp,Client number,Surname,Given Name,Middle Initial,Sex,Age,Types of Client,Transaction / Service,Bilis ng Serbisyo (Timeliness),Pakikitungo sa Kliyente (Client Handling),Kalidad ng Serbisyo (Quality of Service),Overall Satisfaction
+Assisted By,Timestamp,Client Number,Surname,Given Name,Middle Name,Sex,Age,Types of Client,Transaction / Service,Bilis ng Serbisyo (Timeliness),Pakikitungo sa Kliyente (Client Handling),Kalidad ng Serbisyo (Quality of Service),Overall Satisfaction,Prediction,Weighted Result
 Staff A,2026-07-01 09:30:00,C-0001,Dela Cruz,Juan,Santos,Male,29,Pasigueño,Medical consultation,4,4,4,4
 Staff B,2026-07-02 10:15:00,C-0002,Reyes,Maria,Lopez,Female,41,Non-Pasigueño,Medical certificate,3,3,3,3
 Staff A,2026-07-03 14:00:00,C-0003,Santos,Ana,Garcia,Female,35,City Government Employee,Laboratory request,2,2,2,2
