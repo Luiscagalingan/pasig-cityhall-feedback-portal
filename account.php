@@ -5,14 +5,16 @@ $user = require_login();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $current = (string)($_POST['current_password'] ?? '');
+    $email = trim((string)($_POST['email'] ?? $user['email']));
     $new = (string)($_POST['new_password'] ?? '');
     $confirm = (string)($_POST['confirm_password'] ?? '');
-    if (!password_verify($current, (string)$user['password_hash'])) set_flash('error', 'Current password is incorrect.');
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) set_flash('error', 'Enter a valid email address.');
+    elseif (!password_verify($current, (string)$user['password_hash'])) set_flash('error', 'Current password is incorrect.');
     elseif (strlen($new) < 8 || !preg_match('/[A-Za-z]/', $new) || !preg_match('/\d/', $new)) set_flash('error', 'New password must have at least 8 characters, including a letter and a number.');
     elseif ($new !== $confirm) set_flash('error', 'New password and confirmation do not match.');
     elseif (password_verify($new, (string)$user['password_hash'])) set_flash('error', 'Choose a password different from the current password.');
     else {
-        db()->prepare('UPDATE users SET password_hash=?, must_change_password=0, failed_login_attempts=0, locked_until=NULL WHERE id=?')->execute([password_hash($new, PASSWORD_DEFAULT), (int)$user['id']]);
+        db()->prepare('UPDATE users SET email=?, password_hash=?, must_change_password=0, failed_login_attempts=0, locked_until=NULL WHERE id=?')->execute([$email, password_hash($new, PASSWORD_DEFAULT), (int)$user['id']]);
         audit((int)$user['id'], 'password_change', 'User changed password and cleared temporary-password requirement');
         set_flash('success', 'Password changed successfully.');
     }
