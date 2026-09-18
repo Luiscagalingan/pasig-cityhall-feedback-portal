@@ -7,11 +7,16 @@ const APP_BASE_URL = '/pasig-cityhall-feedback-portal';
 const APP_TIMEZONE = 'Asia/Manila';
 const SESSION_NAME = 'pasig_feedback_session';
 
-// Use the project's Python environment so PHP and CLI share ML dependencies.
-// Override with PASIG_PYTHON_BIN when deployed with a different environment.
-$pythonLocalPath = __DIR__ . '/../.venv/'
-    . (PHP_OS_FAMILY === 'Windows' ? 'Scripts/python.exe' : 'bin/python');
-define('PYTHON_BIN', getenv('PASIG_PYTHON_BIN') ?: $pythonLocalPath);
+// Local environments first; the bridge validates dependencies and the production
+// model before accepting an environment override or a system interpreter.
+$pythonSuffix = PHP_OS_FAMILY === 'Windows' ? '/Scripts/python.exe' : '/bin/python';
+define('SVM_PYTHON_CANDIDATES', array_values(array_unique(array_filter([
+    __DIR__ . '/../ml.venv' . $pythonSuffix,
+    __DIR__ . '/../ml/.venv' . $pythonSuffix,
+    trim((string)getenv('PASIG_PYTHON_BIN')),
+    'python',
+    'python3',
+]))));
 const SVM_PREDICT_SCRIPT = __DIR__ . '/../ml/predict.py';
 
 // With comments: 90% normalized ratings + 10% sentiment.

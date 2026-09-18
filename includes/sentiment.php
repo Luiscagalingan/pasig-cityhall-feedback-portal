@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . "/svm_bridge.php";
+
 function predict_sentiment(string $comment): array
 {
     $comment = trim($comment);
@@ -8,36 +10,13 @@ function predict_sentiment(string $comment): array
         return ['label' => 'neutral', 'confidence' => 0.0, 'source' => 'empty'];
     }
 
-    if (is_file(SVM_PREDICT_SCRIPT) && function_exists('proc_open')) {
-        $command = escapeshellcmd(PYTHON_BIN) . ' ' . escapeshellarg(SVM_PREDICT_SCRIPT);
-        $descriptors = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
-        $process = @proc_open($command, $descriptors, $pipes, dirname(SVM_PREDICT_SCRIPT));
-        if (is_resource($process)) {
-            fwrite($pipes[0], $comment);
-            fclose($pipes[0]);
-            $output = stream_get_contents($pipes[1]);
-            $error = stream_get_contents($pipes[2]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            $code = proc_close($process);
-            $data = json_decode((string)$output, true);
-            if ($code === 0 && is_array($data) && in_array($data['label'] ?? '', ['positive','neutral','negative'], true)) {
-                return [
-                    'label' => $data['label'],
-                    'confidence' => round((float)($data['confidence'] ?? 0), 4),
-                    'source' => 'svm',
-                ];
-            }
-            error_log('SVM prediction failed: ' . $error);
-        }
+    $data = svm_predict_json(SVM_PREDICT_SCRIPT, $comment);
+    if ($data !== null) {
+        return ['label' => $data['label'], 'confidence' => round((float)$data['confidence'], 4), 'source' => 'svm'];
     }
 
     // Operational fallback only, so survey submission still works when Python is not installed.
-    // Install/train the included SVM model to make source='svm'.
+    // Restore the Python environment/model if the bridge diagnostics report a failure.
     $text = preg_replace('/[^\pL\pN\s]+/u', ' ', mb_strtolower($comment)) ?? mb_strtolower($comment);
     $positive = [
         'mabilis','maayos','maganda','mabait','magalang','matulungin','malinis','malinaw','kumpleto','tama',
@@ -79,27 +58,14 @@ function predict_sentiments_batch(array $comments): array
 {
     if (!$comments) return [];
     $script = __DIR__ . '/../ml/predict_batch.py';
-    if (is_file($script) && function_exists('proc_open')) {
-        $command = escapeshellcmd(PYTHON_BIN) . ' ' . escapeshellarg($script);
-        $descriptors = [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']];
-        $process = @proc_open($command, $descriptors, $pipes, dirname($script));
-        if (is_resource($process)) {
-            fwrite($pipes[0], json_encode(array_values($comments), JSON_UNESCAPED_UNICODE));
-            fclose($pipes[0]);
-            $output = stream_get_contents($pipes[1]);
-            $error = stream_get_contents($pipes[2]);
-            fclose($pipes[1]); fclose($pipes[2]);
-            $code = proc_close($process);
-            $data = json_decode((string)$output, true);
-            if ($code === 0 && is_array($data) && count($data) === count($comments)) {
-                return array_map(static fn($item) => [
-                    'label' => in_array($item['label'] ?? '', ['positive','neutral','negative'], true) ? $item['label'] : 'neutral',
-                    'confidence' => round((float)($item['confidence'] ?? 0), 4),
-                    'source' => 'svm',
-                ], $data);
-            }
-            error_log('Batch SVM prediction failed: ' . $error);
-        }
+    $input = json_encode(array_values($comments), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    $data = svm_predict_json($script, $input, count($comments));
+    if ($data !== null) {
+        return array_map(static fn($item) => [
+            'label' => $item['label'],
+            'confidence' => round((float)$item['confidence'], 4),
+            'source' => 'svm',
+        ], $data);
     }
     return array_map('predict_sentiment', $comments);
 }

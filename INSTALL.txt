@@ -7,9 +7,9 @@ CSWDO PORTAL SETUP
    for upgrading older installations.
 3. In CMD, run:
    cd C:\xampp\htdocs\pasig-cityhall-feedback-portal
-   python -m venv .venv
-   .venv\Scripts\python.exe -m pip install -r ml\requirements.txt
-   echo Require all denied> .venv\.htaccess
+   python -m venv ml\.venv
+   ml\.venv\Scripts\python.exe -m pip install -r ml\requirements.txt
+   echo Require all denied> ml\.venv\.htaccess
 4. Start Apache and MySQL. Verify:
    C:\xampp\php\php.exe tests\smoke_test.php
 5. Open http://localhost/pasig-cityhall-feedback-portal/
@@ -17,7 +17,15 @@ CSWDO PORTAL SETUP
 Do not copy another laptop's .venv; recreate it on the destination.
 Keep ml/models/svm_sentiment.joblib and ml/models/model_metrics.json.
 Training scripts are not included in this runtime distribution.
-The application uses the project .venv unless PASIG_PYTHON_BIN overrides it.
+The bridge tries project-local ml.venv, then ml\.venv, then PASIG_PYTHON_BIN,
+then system python/python3. Every candidate must load the production model
+and return a valid prediction. Set PASIG_PYTHON_BIN to an executable path only
+(no surrounding quotes or arguments), in the Apache service environment; restart
+Apache after changing it. Local environments take priority.
+Run C:\xampp\php\php.exe tests\svm_bridge_test.php to verify the bridge.
+Technical failures are logged to storage/svm_bridge.log (HTTP access denied by
+storage/.htaccess). Restrict filesystem access to the service account/admins.
+System Health shows the live probe result; old stored labels are not rewritten.
 Database configuration is in config/database.php.
 
 SCORING

@@ -9,7 +9,7 @@ $results=[];
 function check_result(array &$results,string $name,bool $ok,string $detail=''): void {$results[]=['name'=>$name,'ok'=>$ok,'detail'=>$detail];}
 
 check_result($results,'PHP version',version_compare(PHP_VERSION,'8.1.0','>='),PHP_VERSION);
-check_result($results,'Python executable',is_file(PYTHON_BIN),PYTHON_BIN);
+check_result($results,'Python dependencies and production model',svm_python_runtime() !== null);
 check_result($results,'SVM model file',is_file(__DIR__.'/../ml/models/svm_sentiment.joblib'));
 $chapter2Example=compute_feedback_scores([4,3,4,4],'negative','Slow service');
 check_result(
