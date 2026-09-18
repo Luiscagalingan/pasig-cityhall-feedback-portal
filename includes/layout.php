@@ -31,7 +31,7 @@ function admin_nav(): array
         ['offices','Offices','admin/offices.php','building'],['heads','Manage Heads','admin/heads.php','users'],
         ['staff','Manage Staff','admin/staff.php','users'],['reports','Reports & Export','admin/reports.php','report'],
         ['client_output','Client Output','admin/client-output.php','chart'],['feedback_insights','Feedback Insights','admin/feedback-insights.php','message'],
-        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],['data','CSV Data Update','office/data.php','upload'],
+        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],['client_counts','Client Counts','admin/client-counts.php','users'],['data','CSV Data Update','office/data.php','upload'],
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
         ['system','System & Audit','admin/system.php','database'],
     ];
@@ -79,6 +79,9 @@ function render_dashboard_start(string $title, string $active): array
 {
     $user = require_login();
     $nav = $user['role'] === 'admin' ? admin_nav() : office_nav($user);
+    if ($user['role'] === 'admin' && strtolower((string)$user['username']) !== 'uno') {
+        $nav = array_values(array_filter($nav, static fn(array $item): bool => $item[0] !== 'client_counts'));
+    }
     $flash = consume_flash();
     $officeId = $user['role'] === 'admin' ? null : (int)$user['office_id'];
     $metrics = dashboard_metrics($officeId);
@@ -90,7 +93,7 @@ function render_dashboard_start(string $title, string $active): array
         $notificationPreview = $previewStmt->fetchAll();
     } catch (Throwable) {}
     $review = in_array($user['role'], ['admin','office_head'], true) ? review_count($user) : 0;
-    $workAlerts = (int)$metrics['needs_action'] + (int)$metrics['in_progress'] + (int)$metrics['pending_approval'] + $review;
+    $workAlerts = $unread;
     $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
 <!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=35"></head><body class="dashboard-body">

@@ -7,7 +7,7 @@ $offices=db()->query("SELECT id,code,name FROM offices WHERE status='active' ORD
 if ($officeId <= 0 && $offices) $officeId=(int)$offices[0]['id'];
 if ($officeId <= 0) { set_flash('error','Create an active office before importing CSV data.'); redirect('admin/dashboard.php'); }
 
-function csv_value(array $row,array $map,array $aliases): string { foreach($aliases as $a)if(isset($map[$a]))return trim((string)($row[$map[$a]]??''));return ''; }
+function csv_value(array $row,array $map,array $aliases): string { foreach($aliases as $a)if(isset($map[$a]))return trim((string)($row[$map[$a]]??''));foreach($map as $header=>$index)if(in_array('comment',$aliases,true)&&preg_match('/comment|komento|suhestiyon|suggestion/i',(string)$header))return trim((string)($row[$index]??''));return ''; }
 function csv_date_value(array $row,array $map,array $aliases): string { $value=csv_value($row,$map,$aliases);$time=strtotime($value);return $time===false?$value:date('Y-m-d',$time); }
 function preview_path(string $token): string { return __DIR__.'/../storage/import_previews/preview_'.$token.'.json'; }
 function load_preview(string $token,array $user): ?array { if(!preg_match('/^[a-f0-9]{32}$/',$token))return null;$path=preview_path($token);if(!is_file($path))return null;$data=json_decode((string)file_get_contents($path),true);if(!is_array($data)||(int)($data['user_id']??0)!==(int)$user['id']||(int)($data['created_at']??0)<time()-3600)return null;return $data; }
