@@ -188,7 +188,17 @@ function normalize_header(string $header): string
 {
     $header = strtolower(trim($header));
     $header = preg_replace('/[^a-z0-9]+/', '_', $header) ?? $header;
-    return trim($header, '_');
+    $header = trim($header, '_');
+    $header = $header === 'types_of_clients' ? 'types_of_client' : $header;
+    $header = match (true) {
+        str_ends_with($header, '_timeliness') || str_contains($header, 'bilis_ng_sebisyo') => 'timeliness',
+        str_ends_with($header, '_client_handling') || str_contains($header, 'client_handilng') => 'client_handling',
+        str_ends_with($header, '_quality_of_service') => 'quality_of_service',
+        str_ends_with($header, '_overall_satisfaction') => 'overall_satisfaction',
+        str_contains($header, 'comment') || str_contains($header, 'komento') || str_contains($header, 'suhestiyon') => 'comment',
+        default => $header,
+    };
+    return $header;
 }
 
 function feedback_fingerprint(int $officeId, array $record): string

@@ -7,18 +7,16 @@ $officeId = (int)$user['office_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    $supervisors = db()->prepare("SELECT id FROM users WHERE office_id=? AND role='supervisor' AND status='active'");
-    $supervisors->execute([$officeId]);
-    $ids = $supervisors->fetchAll(PDO::FETCH_COLUMN);
+    $ids = db()->query("SELECT id FROM users WHERE role='admin' AND status='active'")->fetchAll(PDO::FETCH_COLUMN);
     if (!$ids) {
-        set_flash('error', 'No active supervisor is assigned to this office yet.');
+        set_flash('error', 'No active administrator is available.');
     } else {
         $insert = db()->prepare("INSERT INTO notifications(user_id,office_id,sender_user_id,type,title,message,link_url) VALUES(?,?,?,'client_count_request',?,?,?)");
         foreach ($ids as $id) {
-            $insert->execute([(int)$id, $officeId, (int)$user['id'], 'Client count requested', $user['full_name'] . ' requested their catered-client count.', 'office/client-counts.php']);
+            $insert->execute([(int)$id, $officeId, (int)$user['id'], 'Client count requested', $user['full_name'] . ' requested their client count.', 'admin/client-counts.php']);
         }
-        audit((int)$user['id'], 'client_count_request', 'Requested catered-client count from supervisor');
-        set_flash('success', 'Your request was sent to the supervisor. The reply will appear in Notifications.');
+        audit((int)$user['id'], 'client_count_request', 'Requested client count from administrator');
+        set_flash('success', 'Your request was sent to the administrator. The reply will appear in Notifications.');
     }
     redirect('office/client-count-request.php');
 }

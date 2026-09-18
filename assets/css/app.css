@@ -363,7 +363,11 @@ textarea {
   padding:20px 14px;
   display:flex;
   flex-direction:column;
-  z-index:30
+  z-index:30;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:#315b88 #081525
 }
 .brand {
   display:flex;
@@ -440,7 +444,10 @@ textarea {
 }
 .app-shell {
   margin-left:270px;
-  min-height:100vh
+  min-height:100vh;
+  min-width:0;
+  max-width:calc(100% - 270px);
+  overflow-x:hidden
 }
 .topbar {
   height:78px;
@@ -492,7 +499,10 @@ textarea {
 .page-content {
   padding:28px;
   max-width:1600px;
-  margin:auto
+  margin:auto;
+  min-width:0;
+  width:100%;
+  box-sizing:border-box
 }
 .page-header {
   display:flex;
@@ -566,6 +576,9 @@ textarea {
   gap:16px;
   margin-bottom:16px
 }
+.content-grid > * {
+  min-width:0
+}
 .card {
   padding:20px
 }
@@ -638,7 +651,9 @@ textarea {
   border-top:3px solid var(--red)
 }
 .table-wrap {
-  overflow:auto;
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
   border:1px solid var(--line);
   border-radius:14px
 }
@@ -1250,6 +1265,13 @@ tr:last-child td {
   margin-bottom:16px;
   border-color:rgba(47,128,237,.55)
 }
+.preview-card {
+  max-width:100%;
+  overflow:hidden
+}
+.preview-card .table-wrap {
+  max-width:100%
+}
 .small-stat {
   font-size:15px!important;
   word-break:break-word
@@ -1588,7 +1610,7 @@ html[data-theme="dark"] .login-theme-toggle {
 .action-summary-card:hover,.action-summary-card.active {border-color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,var(--panel))}
 .action-filters {display:grid;grid-template-columns:1.2fr 1fr 1.5fr auto auto;gap:10px;align-items:end;padding:16px;margin-bottom:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
 .action-filters>div {display:grid;gap:6px}.action-filters label {font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.action-list {display:grid;gap:12px}.action-card {display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:20px;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:0 8px 26px rgba(0,0,0,.06)}
+.action-list {display:grid;gap:12px}.action-card {display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:0 8px 26px rgba(0,0,0,.06)}
 .action-card-title {display:flex;align-items:center;gap:9px}.action-id {font-size:12px;font-weight:900;color:var(--blue2);text-transform:uppercase;letter-spacing:.07em}
 .action-card h2 {margin:8px 0 5px;font-size:17px}.action-card-main>p {margin:0;color:var(--muted);line-height:1.5}
 .action-meta {display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:16px}.action-meta>span {font-size:12px;color:var(--text)}.action-meta b {display:block;margin-bottom:4px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
@@ -1597,6 +1619,12 @@ html[data-theme="dark"] .login-theme-toggle {
 @media(max-width:1000px){.action-summary {grid-template-columns:repeat(2,1fr)}.action-filters {grid-template-columns:1fr 1fr}.action-search {grid-column:1/-1}.action-card {grid-template-columns:1fr}.action-editor form {grid-template-columns:1fr}.action-editor[open] {grid-column:auto}}
 @media(max-width:560px){.action-summary,.action-filters {grid-template-columns:1fr}.action-search {grid-column:auto}.action-meta {display:grid}.action-card {padding:16px}}
 .action-editor summary.btn.secondary {background:var(--blue);border-color:var(--blue);color:#fff}
+.action-card > .formula-box {padding:18px 20px;min-width:0}
+.action-card > .formula-box strong {display:block;font-size:16px;margin-bottom:12px}
+.action-card > .formula-box form {display:grid;gap:10px}
+.action-card > .formula-box select,.action-card > .formula-box textarea {width:100%;box-sizing:border-box}
+.action-card > .formula-box textarea {min-height:110px;resize:vertical}
+.action-card > .formula-box .btn {width:100%;justify-content:center}
 
 /* Unified dropdowns and scrollbars */
 select {
