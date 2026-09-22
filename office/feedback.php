@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
-$user=require_login(['office_head','supervisor','office_staff']);$officeId=(int)$user['office_id'];$sentiment=trim((string)($_GET['sentiment']??''));$review=trim((string)($_GET['review']??''));$dateFrom=trim((string)($_GET['date_from']??''));$dateTo=trim((string)($_GET['date_to']??''));$q=trim((string)($_GET['q']??''));$includeVoid=isset($_GET['include_void'])&&$user['role']==='office_head';
+$user=require_login(['office_head','office_staff']);$officeId=(int)$user['office_id'];$sentiment=trim((string)($_GET['sentiment']??''));$review=trim((string)($_GET['review']??''));$dateFrom=trim((string)($_GET['date_from']??''));$dateTo=trim((string)($_GET['date_to']??''));$q=trim((string)($_GET['q']??''));$includeVoid=isset($_GET['include_void'])&&$user['role']==='office_head';
 $where=['f.office_id=?'];$params=[$officeId];
 if(in_array($sentiment,['positive','neutral','negative'],true)){$where[]='f.sentiment=?';$params[]=$sentiment;}
 if(in_array($review,['not_required','needs_review','reviewed'],true)){$where[]='f.review_status=?';$params[]=$review;}

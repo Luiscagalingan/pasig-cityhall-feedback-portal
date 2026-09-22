@@ -267,7 +267,7 @@
   document.querySelectorAll('form.filters[method="get"]').forEach(form => {
     let timer;
     const submit = () => { form.querySelectorAll('input[name="page"]').forEach(input => input.remove()); form.requestSubmit(); };
-    form.querySelectorAll('select,input[type="date"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
+    form.querySelectorAll('select,input[type="date"],input[type="month"],input[type="checkbox"],input[type="radio"]').forEach(control => control.addEventListener('change', submit));
     form.querySelectorAll('input:not([type]),input[type="text"],input[type="search"]').forEach(input => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(submit, 450); }));
     form.querySelectorAll('button[type="submit"]:not([name="export"]),button:not([type]):not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
   });

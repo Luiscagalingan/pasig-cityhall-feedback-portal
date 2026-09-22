@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 $user = require_login();
-$canAnnounce = in_array($user['role'], ['admin','office_head'], true);
+$canAnnounce = $user['role'] === 'admin';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
-$user=require_login(['admin','office_head','supervisor']);$officeId=$user['role']==='admin'?null:(int)$user['office_id'];
+$user=require_login(['admin','office_head']);$officeId=$user['role']==='admin'?null:(int)$user['office_id'];
 $from=trim((string)($_GET['from']??''));$to=trim((string)($_GET['to']??''));$selected=in_array($_GET['metric']??'',['overall','timeliness','handling','quality'],true)?(string)$_GET['metric']:'overall';
 $distribution=rating_distribution($officeId,$from?:null,$to?:null);$current=$distribution[$selected];
 render_dashboard_start('Rating Distribution','rating_distribution');page_header('Rating Distribution & Actual Numbers','Rating breakdown and actual response counts'.($officeId?' for '.$user['office_name']:' across active offices').'.');

@@ -213,6 +213,26 @@ function frequent_concern_terms(?int $officeId = null, int $limit = 18): array
     return $out;
 }
 
+function staff_client_output_rows(array $user, ?string $dateFrom = null, ?string $dateTo = null): array
+{
+    if (($user['role'] ?? '') !== 'office_staff' || ($user['status'] ?? '') !== 'active'
+        || (int)($user['id'] ?? 0) < 1 || (int)($user['office_id'] ?? 0) < 1) {
+        throw new DomainException('An active staff account with an assigned office is required.');
+    }
+    // Assisted Client Survey writes the authenticated user ID into this field.
+    // For CSV imports it identifies the uploader, NOT the assisting staff member.
+    $where = ["f.is_void=0", "o.status='active'", "f.source='assisted_survey'",
+        'f.imported_by_user_id=?', 'f.office_id=?', "NULLIF(TRIM(f.assisted_by),'') IS NOT NULL"];
+    $params = [(int)$user['id'], (int)$user['office_id']];
+    if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
+    if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
+    $stmt = db()->prepare('SELECT f.visit_date,COUNT(*) client_count,ROUND(AVG(f.average_rating),2) avg_rating
+        FROM feedback f JOIN offices o ON o.id=f.office_id WHERE ' . implode(' AND ', $where)
+        . ' GROUP BY f.visit_date ORDER BY f.visit_date DESC');
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
 function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null, string $assistedBy = ''): array
 {
     $where = ["f.is_void=0", "o.status='active'"];
@@ -239,7 +259,7 @@ function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $d
 function assisting_staff_options(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null): array
 {
     // Active team accounts must appear even before they have assisted a client.
-    $userWhere = ["u.status='active'", "u.role IN ('office_staff','supervisor')", "o.status='active'"];
+    $userWhere = ["u.status='active'", "u.role IN ('office_staff')", "o.status='active'"];
     $userParams = [];
     if ($officeId) { $userWhere[] = 'u.office_id=?'; $userParams[] = $officeId; }
     $userStmt = db()->prepare("SELECT u.full_name label FROM users u JOIN offices o ON o.id=u.office_id WHERE " . implode(' AND ', $userWhere) . " ORDER BY u.full_name");

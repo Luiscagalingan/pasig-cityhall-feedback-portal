@@ -14,13 +14,13 @@ foreach (glob($root.'/admin/*.php') ?: [] as $file) {
     $check('Admin guard: '.$name, str_contains($text, "require_login(['admin'])"));
 }
 $officeRoles = [
-    'data.php'=>"require_login(['office_head'])",
-    'rejected_rows.php'=>"require_login(['office_head'])",
+    'data.php'=>"require_login(['admin'])",
+    'rejected_rows.php'=>"require_login(['admin','office_head'])",
     'staff.php'=>"require_login(['office_head'])",
-    'dashboard.php'=>"require_login(['office_head','supervisor','office_staff'])",
-    'feedback.php'=>"require_login(['office_head','supervisor','office_staff'])",
-    'reports.php'=>"require_login(['office_head','supervisor'])",
-    'actions.php'=>"require_login(['office_head','supervisor'])",
+    'dashboard.php'=>"require_login(['office_head','office_staff'])",
+    'feedback.php'=>"require_login(['office_head','office_staff'])",
+    'reports.php'=>"require_login(['office_head'])",
+    'actions.php'=>"require_login(['office_head'])",
 ];
 foreach ($officeRoles as $file => $guard) $check('Office guard: '.$file, str_contains($source('office/'.$file), $guard));
 $scopeChecks = [
@@ -28,7 +28,7 @@ $scopeChecks = [
     'office/actions.php' => ['a.office_id=?'],
     'office/reports.php' => ['f.office_id=?'],
     'office/rejected_rows.php' => ['id=? AND office_id=?'],
-    'office/staff.php' => ['office_id=?', "role IN ('office_staff','supervisor')"],
+    'office/staff.php' => ['office_id=?', "role='office_staff'"],
     'office/data.php' => ['office_id=?'],
 ];
 foreach ($scopeChecks as $file => $needles) {
@@ -38,7 +38,7 @@ foreach ($scopeChecks as $file => $needles) {
     $check('Office ID scope: '.$file, $ok);
 }
 
-$mutatingFiles = ['account.php','notifications.php','review.php','admin/heads.php','admin/offices.php','admin/staff.php','admin/system.php','office/actions.php','office/data.php','office/staff.php','survey.php'];
+$mutatingFiles = ['account.php','notifications.php','review.php','admin/heads.php','admin/offices.php','admin/staff.php','admin/system.php','office/actions.php','office/data.php','survey.php','admin/client-counts.php','office/client-count-request.php'];
 foreach ($mutatingFiles as $file) $check('CSRF: '.$file, str_contains($source($file), 'verify_csrf()'));
 
 $officeActions = $source('office/actions.php');
@@ -47,10 +47,10 @@ $check('Action scope enforced', str_contains($officeActions, 'WHERE id=? AND off
 $check('Staff completion requires approval', str_contains($officeActions, "status='pending_approval'") && str_contains($officeActions, 'completion_requested_by_user_id'));
 $check('Head completion approval', str_contains($officeActions, "requested==='completed'") && str_contains($officeActions, 'approved_by_user_id'));
 $check('Head can return completion request', str_contains($officeActions, "requested==='reject_completion'") && str_contains($officeActions, "status='in_progress'"));
-$check('Admin action oversight is view-only',
+$check('Admin action updates retain authentication and CSRF',
     str_contains($adminActions, "require_login(['admin'])")
     && str_contains($adminActions, "REQUEST_METHOD']==='POST'")
-    && str_contains($adminActions, 'http_response_code(403)')
+    && str_contains($adminActions, 'verify_csrf()')
 );
 
 $allPhp = '';

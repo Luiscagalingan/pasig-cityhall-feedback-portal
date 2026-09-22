@@ -6,6 +6,7 @@ USE pasig_feedback_portal;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS trg_one_active_head_insert;
 DROP TRIGGER IF EXISTS trg_one_active_head_update;
+DROP TABLE IF EXISTS client_count_requests;
 DROP TABLE IF EXISTS training_candidates;
 DROP TABLE IF EXISTS public_submission_log;
 DROP TABLE IF EXISTS login_attempts;
@@ -37,7 +38,7 @@ CREATE TABLE users (
   username VARCHAR(80) NOT NULL UNIQUE,
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin','office_head','supervisor','office_staff') NOT NULL,
+  role ENUM('admin','office_head','office_staff') NOT NULL,
   status ENUM('active','archived') NOT NULL DEFAULT 'active',
   created_by_user_id INT UNSIGNED NULL,
   last_login_at DATETIME NULL,
@@ -266,3 +267,23 @@ INSERT INTO users (id,office_id,full_name,username,email,password_hash,role,stat
 (8,1,'Kenneth','kenneth','kenneth.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
 (9,1,'Uno','uno','uno.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
 (10,1,'Alex','alex','alex.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1);
+
+-- Additive migration. Does not alter users, feedback, or historical notifications.
+CREATE TABLE IF NOT EXISTS client_count_requests (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  staff_user_id INT UNSIGNED NOT NULL,
+  office_id INT UNSIGNED NOT NULL,
+  requested_year SMALLINT UNSIGNED NULL,
+  status ENUM('pending','answered') NOT NULL DEFAULT 'pending',
+  requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  answered_count INT UNSIGNED NULL,
+  answered_at DATETIME NULL,
+  answered_by_user_id INT UNSIGNED NULL,
+  CONSTRAINT fk_count_staff FOREIGN KEY (staff_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_count_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_count_admin FOREIGN KEY (answered_by_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  INDEX idx_count_staff (staff_user_id, office_id, requested_at),
+  INDEX idx_count_status (status, requested_at),
+  pending_year SMALLINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN status='pending' THEN requested_year ELSE NULL END) STORED,
+  UNIQUE KEY uq_pending_staff_year (staff_user_id, pending_year)
+) ENGINE=InnoDB;

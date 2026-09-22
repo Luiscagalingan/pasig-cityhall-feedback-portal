@@ -223,8 +223,11 @@ function survey_client_hash(): string
     return hash('sha256', $ip . '|' . $agent);
 }
 
-function survey_submission_limit(): array
+function survey_submission_limit(bool $enabled = PUBLIC_SUBMISSION_RATE_LIMIT_ENABLED): array
 {
+    if (!$enabled) {
+        return ['allowed' => true, 'wait_seconds' => 0, 'hourly_count' => 0];
+    }
     $sessionLast = (int)($_SESSION['last_public_submission'] ?? 0);
     $wait = max(0, SURVEY_SUBMISSION_COOLDOWN_SECONDS - (time() - $sessionLast));
     try {

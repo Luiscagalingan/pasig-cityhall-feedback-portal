@@ -38,6 +38,8 @@ const SESSION_IDLE_TIMEOUT = 1800; // 30 minutes
 const PRIVACY_NOTICE_VERSION = '2026-07-29';
 
 // Public survey abuse controls.
+// Enabled for production; disable only for controlled public-survey tests.
+const PUBLIC_SUBMISSION_RATE_LIMIT_ENABLED = true;
 const SURVEY_SUBMISSION_COOLDOWN_SECONDS = 60;
 const SURVEY_SUBMISSION_HOURLY_LIMIT = 3;
 

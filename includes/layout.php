@@ -31,7 +31,7 @@ function admin_nav(): array
         ['offices','Offices','admin/offices.php','building'],['heads','Manage Heads','admin/heads.php','users'],
         ['staff','Manage Staff','admin/staff.php','users'],['reports','Reports & Export','admin/reports.php','report'],
         ['client_output','Client Output','admin/client-output.php','chart'],['feedback_insights','Feedback Insights','admin/feedback-insights.php','message'],
-        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],['client_counts','Client Counts','admin/client-counts.php','users'],['data','CSV Data Update','office/data.php','upload'],
+        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],['client_counts','Annual Client Counts','admin/client-counts.php','users'],['data','CSV Data Update','office/data.php','upload'],
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
         ['system','System & Audit','admin/system.php','database'],
     ];
@@ -42,21 +42,20 @@ function office_nav(array $user): array
     $nav = [
         ['overview','Overview','office/dashboard.php','grid'],['feedback','Feedback Records','office/feedback.php','message'],
     ];
-    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['actions','Action Management','office/actions.php','check'];
+    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['actions','Action Management','office/actions.php','check'];
     if (($user['role'] ?? '') === 'office_head') {
         $nav[] = ['review','Sentiment Review','review.php','shield'];
-        $nav[] = ['staff','Manage Team','office/staff.php','users'];
+        $nav[] = ['staff','View Team','office/staff.php','users'];
         $nav[] = ['office_audit','System Audit','office/audit.php','database'];
     }
-    if (($user['role'] ?? '') === 'supervisor') $nav[] = ['client_counts','Client Counts','office/client-counts.php','users'];
-    if (in_array(($user['role'] ?? ''), ['office_head','supervisor','office_staff'], true)) {
+    if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) {
         $nav[] = ['client_output','Client Output','office/client-output.php','chart'];
     }
-    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
-    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
-    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count','office/client-count-request.php','message'];
+    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
+    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
+    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Annual Client Count','office/client-count-request.php','message'];
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
-    if (in_array(($user['role'] ?? ''), ['office_head','supervisor'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
+    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
     $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
     $nav[] = ['account','My Account','account.php','users'];
     return $nav;
@@ -72,16 +71,13 @@ function render_public_start(string $title, string $bodyClass = 'public-body'): 
 
 function render_public_end(): void
 { ?>
-<script src="<?= e(app_url('assets/js/app.js')) ?>?v=26"></script></body></html>
+<script src="<?= e(app_url('assets/js/app.js')) ?>?v=27"></script></body></html>
 <?php }
 
 function render_dashboard_start(string $title, string $active): array
 {
     $user = require_login();
     $nav = $user['role'] === 'admin' ? admin_nav() : office_nav($user);
-    if ($user['role'] === 'admin' && strtolower((string)$user['username']) !== 'uno') {
-        $nav = array_values(array_filter($nav, static fn(array $item): bool => $item[0] !== 'client_counts'));
-    }
     $flash = consume_flash();
     $officeId = $user['role'] === 'admin' ? null : (int)$user['office_id'];
     $metrics = dashboard_metrics($officeId);
@@ -108,7 +104,7 @@ function render_dashboard_start(string $title, string $active): array
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=26"></script></body></html>
+</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=27"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

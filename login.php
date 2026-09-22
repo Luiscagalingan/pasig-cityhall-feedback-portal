@@ -32,7 +32,7 @@ render_public_start('Authorized Login', 'login-body');
     </div>
     <div class="city-silhouette" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
   </section>
-  <section class="login-form"><span class="eyebrow">SECURE OFFICE ACCESS</span><h2>Authorized Login</h2><p class="muted">Administrator, Office Head, Supervisor, and Office Staff</p>
+  <section class="login-form"><span class="eyebrow">SECURE OFFICE ACCESS</span><h2>Authorized Login</h2><p class="muted">Administrator, Office Head, and Office Staff</p>
     <?php if ($error): ?><div class="error-box"><?= e($error) ?></div><?php endif; ?>
     <form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
       <div class="form-group"><label>Username or Email</label><input name="identity" autocomplete="username" required></div>

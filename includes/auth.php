@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+function active_application_role(string $role): bool
+{
+    // Retired role values may remain in historical rows, but cannot authenticate.
+    return in_array($role, ['admin', 'office_head', 'office_staff'], true);
+}
+
 function current_user(): ?array
 {
     $id = (int)($_SESSION['user_id'] ?? 0);
@@ -20,7 +26,7 @@ function current_user(): ?array
     );
     $stmt->execute([$id]);
     $user = $stmt->fetch();
-    if (!$user || $user['status'] !== 'active' || (($user['role'] !== 'admin') && $user['office_status'] !== 'active')) {
+    if (!$user || !active_application_role((string)$user['role']) || $user['status'] !== 'active' || (($user['role'] !== 'admin') && $user['office_status'] !== 'active')) {
         logout_user();
         return null;
     }
@@ -71,6 +77,7 @@ function login_user(string $identity, string $password): bool
     }
 
     $valid = $user
+        && active_application_role((string)$user['role'])
         && $user['status'] === 'active'
         && ($user['role'] === 'admin' || $user['office_status'] === 'active')
         && password_verify($password, (string)$user['password_hash']);
@@ -122,6 +129,13 @@ function require_login(array $roles = []): array
         exit('You do not have permission to access this page.');
     }
     $script = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    // Office Heads monitor business data; personal account/notification actions
+    // retain their own CSRF and ownership checks. Announcements are admin-only.
+    if ($user['role'] === 'office_head' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+        && !in_array($script, ['account.php', 'notifications.php', 'notification-read.php', 'logout.php'], true)) {
+        http_response_code(403);
+        exit('Office Head access is view-only.');
+    }
     if (!empty($user['must_change_password']) && !in_array($script, ['account.php', 'logout.php'], true)) {
         set_flash('info', 'Change your temporary password before continuing.');
         redirect('account.php');

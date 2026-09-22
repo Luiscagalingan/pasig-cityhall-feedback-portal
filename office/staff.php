@@ -1,30 +1,15 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
-$head=require_login(['office_head']);$officeId=(int)$head['office_id'];
-if($_SERVER['REQUEST_METHOD']==='POST'){
- verify_csrf();$action=(string)($_POST['action']??'');
- try{
-  if($action==='create'){
-   $name=trim((string)($_POST['full_name']??''));$username=trim((string)($_POST['username']??''));$email=trim((string)($_POST['email']??''));$password=(string)($_POST['password']??'');
-   if($name===''||$username===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8||!preg_match('/[A-Za-z]/',$password)||!preg_match('/\d/',$password))throw new RuntimeException('Complete all fields. Password must be at least 8 characters with a letter and a number.');
-   $stmt=db()->prepare("INSERT INTO users(office_id,full_name,username,email,password_hash,role,status,created_by_user_id,must_change_password) VALUES(?,?,?,?,?,'office_staff','active',?,1)");$stmt->execute([$officeId,$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),(int)$head['id']]);audit((int)$head['id'],'staff_create',"Created {$username}");set_flash('success','Staff account created for '.$head['office_code'].'.');
-  }elseif($action==='edit'){
-   $id=post_int('user_id');$name=trim((string)($_POST['full_name']??''));$username=trim((string)($_POST['username']??''));$email=trim((string)($_POST['email']??''));$password=(string)($_POST['password']??'');
-   $sql=$password!==''?"UPDATE users SET full_name=?,username=?,email=?,password_hash=?,must_change_password=1 WHERE id=? AND office_id=? AND role IN ('office_staff','supervisor')":"UPDATE users SET full_name=?,username=?,email=? WHERE id=? AND office_id=? AND role IN ('office_staff','supervisor')";
-   $params=$password!==''?[$name,$username,$email,password_hash($password,PASSWORD_DEFAULT),$id,$officeId]:[$name,$username,$email,$id,$officeId];db()->prepare($sql)->execute($params);audit((int)$head['id'],'staff_edit',"Updated staff #{$id}; password_reset=".($password!==''?'yes':'no'));set_flash('success','Staff account updated.');
-  }elseif($action==='status'){
-   $id=post_int('user_id');$status=(string)($_POST['status']??'');if(!in_array($status,['active','archived'],true))throw new RuntimeException('Invalid status.');db()->prepare("UPDATE users SET status=? WHERE id=? AND office_id=? AND role IN ('office_staff','supervisor')")->execute([$status,$id,$officeId]);audit((int)$head['id'],'team_status',"Team member #{$id} -> {$status}");set_flash('success','Team account status updated.');
-  }elseif($action==='delete'){
-   $id=post_int('user_id');db()->prepare("UPDATE users SET status='archived' WHERE id=? AND office_id=? AND role IN ('office_staff','supervisor')")->execute([$id,$officeId]);audit((int)$head['id'],'team_status',"Team member #{$id} -> archived (legacy delete request)");set_flash('success','Team account archived.');
-  }
- }catch(Throwable $e){set_flash('error','Unable to complete action: '.$e->getMessage());}
- redirect('office/staff.php');
-}
-$stmt=db()->prepare("SELECT * FROM users WHERE office_id=? AND role IN ('office_staff','supervisor') ORDER BY role='supervisor' DESC,status='active' DESC,full_name");$stmt->execute([$officeId]);$staff=$stmt->fetchAll();
-render_dashboard_start('Manage Team','staff');page_header($head['office_code'].' Manage Team','Only the Office Head can create, edit, archive, or reactivate Supervisor and Staff accounts from this office.');
+$head = require_login(['office_head']);
+$stmt = db()->prepare("SELECT full_name,username,email,status,created_at FROM users WHERE office_id=? AND role='office_staff' ORDER BY full_name");
+$stmt->execute([(int)$head['office_id']]);
+$staff = $stmt->fetchAll();
+render_dashboard_start('View Team', 'staff');
+page_header($head['office_code'] . ' Office Team', 'View only. Administrators manage staff accounts.');
 ?>
-<div class="split-grid"><section class="panel-form"><h2>Add Office Staff</h2><p>The new user is automatically restricted to <?= e($head['office_name']) ?>.</p><form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="create"><div class="form-group"><label>Full Name</label><input name="full_name" required></div><div class="form-row"><div class="form-group"><label>Username</label><input name="username" required></div><div class="form-group"><label>Email</label><input type="email" name="email" required></div></div><div class="form-group"><label>Temporary Password</label><input type="password" name="password" minlength="8" required></div><button class="btn">Create Staff Account</button></form></section>
-<section class="card"><div class="card-head"><div><h2>Office Team</h2><p><?= count($staff) ?> account(s) in <?= e($head['office_code']) ?></p></div></div><div class="table-wrap"><table><thead><tr><th>Team Member</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody><?php foreach($staff as $s):?><tr><td><strong><?= e($s['full_name']) ?></strong><br><span class="muted"><?= e($s['username']) ?> · <?= e($s['email']) ?></span></td><td><?= badge(status_label($s['role']),$s['role']==='supervisor'?'neutral':'positive') ?></td><td><?= badge(status_label($s['status']),$s['status']) ?></td><td><?= e(date('M d, Y',strtotime($s['created_at']))) ?></td><td class="actions-cell"><details><summary class="btn secondary small">Edit</summary><form method="post" style="min-width:300px;padding-top:10px"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="edit"><input type="hidden" name="user_id" value="<?= (int)$s['id'] ?>"><div class="form-group"><input name="full_name" value="<?= e($s['full_name']) ?>" required></div><div class="form-group"><input name="username" value="<?= e($s['username']) ?>" required></div><div class="form-group"><input type="email" name="email" value="<?= e($s['email']) ?>" required></div><div class="form-group"><input type="password" name="password" placeholder="New password (optional)"></div><button class="btn small">Save Changes</button></form></details><form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="status"><input type="hidden" name="user_id" value="<?= (int)$s['id'] ?>"><input type="hidden" name="status" value="<?= $s['status']==='active'?'archived':'active' ?>"><button class="btn <?= $s['status']==='active'?'danger':'success' ?> small"><?= $s['status']==='active'?'Archive':'Reactivate' ?></button></form></td></tr><?php endforeach;?><?php if(!$staff):?><tr><td colspan="5" class="empty-state">No team accounts yet.</td></tr><?php endif;?></tbody></table></div></section></div>
-<?php if(($head['role'] ?? '')==='office_head'): ?><script>document.querySelectorAll('.panel-form form,.actions-cell form,details').forEach((item)=>item.remove());</script><?php endif; ?>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Staff</th><th>Username</th><th>Email</th><th>Status</th><th>Created</th></tr></thead><tbody>
+<?php foreach ($staff as $member): ?><tr><td><?= e($member['full_name']) ?></td><td><?= e($member['username']) ?></td><td><?= e($member['email']) ?></td><td><?= e($member['status']) ?></td><td><?= e($member['created_at']) ?></td></tr><?php endforeach; ?>
+<?php if (!$staff): ?><tr><td colspan="5" class="empty-state">No staff accounts in this office.</td></tr><?php endif; ?>
+</tbody></table></div></section>
 <?php render_dashboard_end(); ?>

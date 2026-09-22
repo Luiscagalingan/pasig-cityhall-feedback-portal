@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
-$user=require_login(['office_head','supervisor','office_staff']);$officeId=(int)$user['office_id'];$month=trim((string)($_GET['month']??''));$highlights=feedback_highlights($officeId,$month?:null);
+$user=require_login(['office_head','office_staff']);$officeId=(int)$user['office_id'];$month=trim((string)($_GET['month']??''));$highlights=feedback_highlights($officeId,$month?:null);
 render_dashboard_start('Feedback Insights','feedback_insights');page_header('Feedback Insights','Positive feedback and areas for improvement for '.$user['office_name'].'.');
 ?>
 <form class="filters compact" method="get"><label class="filter-field"><span>Month</span><input type="month" name="month" value="<?= e($month) ?>"></label><button class="btn">Apply</button><a class="btn secondary" href="<?= e(app_url('office/feedback-insights.php')) ?>">All Months</a></form>
