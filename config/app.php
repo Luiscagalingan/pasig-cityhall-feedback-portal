@@ -11,6 +11,7 @@ const SESSION_NAME = 'pasig_feedback_session';
 // model before accepting an environment override or a system interpreter.
 $pythonSuffix = PHP_OS_FAMILY === 'Windows' ? '/Scripts/python.exe' : '/bin/python';
 define('SVM_PYTHON_CANDIDATES', array_values(array_unique(array_filter([
+    __DIR__ . '/../.venv' . $pythonSuffix,
     __DIR__ . '/../ml.venv' . $pythonSuffix,
     __DIR__ . '/../ml/.venv' . $pythonSuffix,
     trim((string)getenv('PASIG_PYTHON_BIN')),

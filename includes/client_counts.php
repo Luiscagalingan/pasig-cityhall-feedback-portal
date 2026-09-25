@@ -17,10 +17,11 @@ function assisted_client_count(PDO $pdo, int $staffId, int $officeId, int $year)
 {
     client_count_year($year);
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM feedback f JOIN offices o ON o.id=f.office_id
-        WHERE f.office_id=? AND o.status='active' AND f.is_void=0 AND f.source='assisted_survey'
-        AND f.imported_by_user_id=? AND NULLIF(TRIM(f.assisted_by),'') IS NOT NULL
+        WHERE f.office_id=? AND o.status='active' AND f.is_void=0
+        AND ((f.source='assisted_survey' AND f.imported_by_user_id=?) OR (f.source='csv_import' AND f.assisted_by_user_id=?))
+        AND NULLIF(TRIM(f.assisted_by),'') IS NOT NULL
         AND f.visit_date>=? AND f.visit_date<?");
-    $stmt->execute([$officeId, $staffId, $year . '-01-01', ($year + 1) . '-01-01']);
+    $stmt->execute([$officeId, $staffId, $staffId, $year . '-01-01', ($year + 1) . '-01-01']);
     return (int)$stmt->fetchColumn();
 }
 

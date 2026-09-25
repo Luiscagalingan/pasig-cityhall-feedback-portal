@@ -219,11 +219,10 @@ function staff_client_output_rows(array $user, ?string $dateFrom = null, ?string
         || (int)($user['id'] ?? 0) < 1 || (int)($user['office_id'] ?? 0) < 1) {
         throw new DomainException('An active staff account with an assigned office is required.');
     }
-    // Assisted Client Survey writes the authenticated user ID into this field.
-    // For CSV imports it identifies the uploader, NOT the assisting staff member.
-    $where = ["f.is_void=0", "o.status='active'", "f.source='assisted_survey'",
-        'f.imported_by_user_id=?', 'f.office_id=?', "NULLIF(TRIM(f.assisted_by),'') IS NOT NULL"];
-    $params = [(int)$user['id'], (int)$user['office_id']];
+    $where = ["f.is_void=0", "o.status='active'",
+        "((f.source='assisted_survey' AND f.imported_by_user_id=?) OR (f.source='csv_import' AND f.assisted_by_user_id=?))",
+        'f.office_id=?', "NULLIF(TRIM(f.assisted_by),'') IS NOT NULL"];
+    $params = [(int)$user['id'], (int)$user['id'], (int)$user['office_id']];
     if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
     if ($dateTo) { $where[] = 'f.visit_date<=?'; $params[] = $dateTo; }
     $stmt = db()->prepare('SELECT f.visit_date,COUNT(*) client_count,ROUND(AVG(f.average_rating),2) avg_rating

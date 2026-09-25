@@ -205,13 +205,18 @@ function feedback_fingerprint(int $officeId, array $record): string
 {
     $payload = [
         $officeId,
-        strtolower(trim((string)($record['visit_date'] ?? ''))),
+        strtolower(trim((string)($record['source_timestamp'] ?? $record['visit_date'] ?? ''))),
         strtolower(trim((string)($record['sex'] ?? ''))),
         (int)($record['age'] ?? 0),
         strtolower(trim((string)($record['client_type'] ?? ''))),
         preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)($record['service'] ?? $record['service_received'] ?? '')))),
         array_map('intval', $record['ratings'] ?? []),
         preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)($record['comment'] ?? '')))),
+        preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)($record['assisted_by'] ?? '')))),
+        mb_strtolower(trim((string)($record['client_number'] ?? ''))),
+        mb_strtolower(trim((string)($record['surname'] ?? ''))),
+        mb_strtolower(trim((string)($record['given_name'] ?? ''))),
+        mb_strtolower(trim((string)($record['middle_initial'] ?? ''))),
     ];
     return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
 }
