@@ -33,7 +33,9 @@ function redirect(string $path): never
 
 function csrf_token(): string
 {
-    if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
     return (string)$_SESSION['csrf_token'];
 }
 
@@ -90,7 +92,9 @@ function pagination(int $total, int $perPage = 25): array
 
 function pagination_links(array $p): string
 {
-    if (($p['pages'] ?? 1) <= 1) return '';
+    if (($p['pages'] ?? 1) <= 1) {
+        return '';
+    }
     $query = $_GET;
     unset($query['page']);
     $html = '<nav class="pagination" aria-label="Page navigation">';
@@ -100,7 +104,9 @@ function pagination_links(array $p): string
     }
     for ($i = 1; $i <= (int)$p['pages']; $i++) {
         if ($i > 2 && $i < (int)$p['pages'] - 1 && abs($i - (int)$p['page']) > 2) {
-            if ($i === 3 || $i === (int)$p['pages'] - 2) $html .= '<span>…</span>';
+            if ($i === 3 || $i === (int)$p['pages'] - 2) {
+                $html .= '<span>…</span>';
+            }
             continue;
         }
         $query['page'] = $i;
@@ -162,8 +168,12 @@ function compute_feedback_scores(array $ratings, string $sentiment, string $comm
 
 function final_interpretation(float $score): string
 {
-    if ($score >= 66.5) return 'Positive';
-    if ($score >= 33.5) return 'Neutral';
+    if ($score >= 66.5) {
+        return 'Positive';
+    }
+    if ($score >= 33.5) {
+        return 'Neutral';
+    }
     return 'Negative';
 }
 
@@ -293,7 +303,9 @@ function backfill_office_feedback_fingerprints(int $officeId): int
 function model_version(): string
 {
     $metrics = __DIR__ . '/../ml/models/model_metrics.json';
-    if (!is_file($metrics)) return 'unavailable';
+    if (!is_file($metrics)) {
+        return 'unavailable';
+    }
     $data = json_decode((string)file_get_contents($metrics), true);
     $samples = (int)($data['sample_count'] ?? 0);
     return 'svm-' . $samples . '-' . date('YmdHis', (int)filemtime($metrics));
@@ -301,7 +313,11 @@ function model_version(): string
 
 function prediction_review_status(array $prediction): string
 {
-    if (($prediction['source'] ?? '') === 'rating') return 'not_required';
+    // Rating-only feedback has no ML prediction to review. Every fallback and
+    // low-margin SVM result remains reviewable by an authorized user.
+    if (($prediction['source'] ?? '') === 'rating') {
+        return 'not_required';
+    }
     return (($prediction['source'] ?? '') !== 'svm' || (float)($prediction['confidence'] ?? 0) < LOW_CONFIDENCE_THRESHOLD)
         ? 'needs_review'
         : 'not_required';
@@ -346,7 +362,7 @@ function notify_office_users(int $officeId, string $type, string $title, string 
 function unread_notification_count(int $userId): int
 {
     try {
-        $stmt = db()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id=? AND read_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())');
+        $stmt = db()->prepare("SELECT COUNT(*) FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR recipient.username='uno') AND n.read_at IS NULL AND (n.expires_at IS NULL OR n.expires_at>NOW())");
         $stmt->execute([$userId]);
         return (int)$stmt->fetchColumn();
     } catch (Throwable) {
@@ -373,7 +389,9 @@ function review_count(array $user): int
 
 function create_action_if_needed(int $feedbackId, int $officeId, string $sentiment, float $finalScore, string $comment, bool $notify = true): ?int
 {
-    if ($sentiment !== 'negative' && $finalScore >= ACTION_SCORE_THRESHOLD) return null;
+    if ($sentiment !== 'negative' && $finalScore >= ACTION_SCORE_THRESHOLD) {
+        return null;
+    }
     $existing = db()->prepare('SELECT id,status FROM actions WHERE feedback_id=? LIMIT 1');
     $existing->execute([$feedbackId]);
     if ($row = $existing->fetch()) {
@@ -388,7 +406,7 @@ function create_action_if_needed(int $feedbackId, int $officeId, string $sentime
     $stmt->execute([$feedbackId, $officeId, 'Review client feedback #' . $feedbackId, mb_substr($comment, 0, 1000), 'needs_action']);
     $id = (int)db()->lastInsertId();
     if ($notify) {
-        notify_office_users($officeId, 'action', 'New feedback requires action', 'Feedback #' . $feedbackId . ' generated a new action item.', 'office/actions.php');
+        notify_office_heads($officeId, 'action', 'New feedback requires action', 'Feedback #' . $feedbackId . ' generated a new action item.', 'office/actions.php');
         notify_admins('action', 'New action item', 'Feedback #' . $feedbackId . ' requires office action.', 'admin/actions.php');
     }
     return $id;
@@ -410,7 +428,11 @@ function status_label(string $status): string
 function csv_safe_cell(mixed $value): string
 {
     $text = (string)$value;
-    if ($text !== '' && preg_match('/^[=+\-@]/', ltrim($text))) return "'" . $text;
+    // Spreadsheet programs can execute formula-like CSV cells. Prefixing an
+    // apostrophe preserves the visible value while forcing literal text.
+    if ($text !== '' && preg_match('/^[=+\-@]/', ltrim($text))) {
+        return "'" . $text;
+    }
     return $text;
 }
 

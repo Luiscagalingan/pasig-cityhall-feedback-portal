@@ -6,6 +6,7 @@ USE pasig_feedback_portal;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS trg_one_active_head_insert;
 DROP TRIGGER IF EXISTS trg_one_active_head_update;
+DROP TRIGGER IF EXISTS trg_csv_auto_rating_label;
 DROP TABLE IF EXISTS client_count_requests;
 DROP TABLE IF EXISTS training_candidates;
 DROP TABLE IF EXISTS public_submission_log;
@@ -97,6 +98,7 @@ CREATE TABLE feedback (
   original_sentiment ENUM('positive','neutral','negative') NULL,
   sentiment_confidence DECIMAL(6,4) NOT NULL DEFAULT 0,
   sentiment_source ENUM('svm','fallback','manual','empty','rating') NOT NULL DEFAULT 'svm',
+  label_source ENUM('auto_rating','svm_prediction','fallback','verified_manual') NOT NULL DEFAULT 'svm_prediction',
   review_status ENUM('not_required','needs_review','reviewed') NOT NULL DEFAULT 'not_required',
   reviewed_by_user_id INT UNSIGNED NULL,
   reviewed_at DATETIME NULL,
@@ -129,7 +131,8 @@ CREATE TABLE feedback (
   INDEX idx_feedback_review (office_id, review_status, is_void),
   INDEX idx_feedback_fingerprint (office_id, record_fingerprint),
   INDEX idx_feedback_client_number (client_number),
-  INDEX idx_feedback_import_batch (import_batch_id)
+  INDEX idx_feedback_import_batch (import_batch_id),
+  INDEX idx_feedback_assisted_user (assisted_by_user_id, office_id, visit_date)
 ) ENGINE=InnoDB;
 
 CREATE TABLE public_submission_log (
@@ -253,6 +256,20 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Only one active Office Head is allowed per office.';
   END IF;
 END$$
+CREATE TRIGGER trg_csv_auto_rating_label BEFORE INSERT ON feedback FOR EACH ROW
+BEGIN
+  IF NEW.source='csv_import' THEN
+    SET NEW.sentiment = CASE
+      WHEN NEW.overall_rating >= 4 THEN 'positive'
+      WHEN NEW.overall_rating = 3 THEN 'neutral'
+      ELSE 'negative'
+    END;
+    SET NEW.original_sentiment = NEW.sentiment;
+    SET NEW.sentiment_source = 'rating';
+    SET NEW.label_source = 'auto_rating';
+    SET NEW.review_status = 'not_required';
+  END IF;
+END$$
 DELIMITER ;
 
 INSERT INTO offices (id,name,code,description,status) VALUES
@@ -268,11 +285,9 @@ INSERT INTO users (id,office_id,full_name,username,email,password_hash,role,stat
 (6,1,'EMS','ems','ems.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
 (7,1,'John','john','john.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
 (8,1,'Kenneth','kenneth','kenneth.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
-(9,1,'Uno','uno','uno.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1),
 (10,1,'Alex','alex','alex.staff@pasig.local','$2y$10$lPTmIx4ex1lhhP9aYzq89OdC5fx8CqQIdRorhqnKSSwEo4B2yceKa','office_staff','active',2,1);
 
--- Additive migration. Does not alter users, feedback, or historical notifications.
-CREATE TABLE IF NOT EXISTS client_count_requests (
+CREATE TABLE client_count_requests (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   staff_user_id INT UNSIGNED NOT NULL,
   office_id INT UNSIGNED NOT NULL,

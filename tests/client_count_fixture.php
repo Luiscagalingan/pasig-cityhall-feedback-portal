@@ -8,23 +8,7 @@ $port = getenv('PASIG_DB_PORT') ?: '3306';
 $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", getenv('PASIG_DB_USER') ?: 'root', getenv('PASIG_DB_PASS') ?: '',
     [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
 if ($argv[1] === 'cleanup') { $pdo->exec("DROP DATABASE IF EXISTS `$name`"); exit; }
-if ($argv[1] === 'migration_test') {
-    $pdo->exec("USE `$name`");
-    $sql = file_get_contents(__DIR__.'/../database/migrations/015_client_count_requests.sql');
-    $pdo->exec(str_replace(['client_count_requests','fk_count_'], ['legacy_count_requests','fk_legacy_count_'], $sql));
-    $pdo->exec("INSERT INTO legacy_count_requests(staff_user_id,office_id,status,answered_count,answered_at,answered_by_user_id) VALUES(4,1,'answered',42,NOW(),1)");
-    $pdo->exec("INSERT INTO legacy_count_requests(staff_user_id,office_id) VALUES(4,1),(4,1)");
-    $before = $pdo->query('SELECT * FROM legacy_count_requests ORDER BY id')->fetchAll();
-    $pdo->exec(str_replace('client_count_requests','legacy_count_requests',file_get_contents(__DIR__.'/../database/migrations/016_annual_client_counts.sql')));
-    $after = $pdo->query('SELECT * FROM legacy_count_requests ORDER BY id')->fetchAll();
-    foreach ($after as &$row) {
-        if ($row['requested_year'] !== null || $row['pending_year'] !== null) throw new RuntimeException('Legacy year fabricated');
-        unset($row['requested_year'], $row['pending_year']);
-    }
-    unset($row);
-    if ($before !== $after) throw new RuntimeException('Legacy snapshot changed');
-    echo 'preserved';
-} elseif ($argv[1] === 'legacy_setup') {
+if ($argv[1] === 'legacy_setup') {
     $pdo->exec("USE `$name`");
     $pdo->exec("INSERT INTO client_count_requests(staff_user_id,office_id,status,answered_count,answered_at,answered_by_user_id) VALUES(4,2,'answered',42,NOW(),1),(7,2,'answered',999,NOW(),1)");
     $pdo->exec("INSERT INTO client_count_requests(staff_user_id,office_id) VALUES(4,1)");

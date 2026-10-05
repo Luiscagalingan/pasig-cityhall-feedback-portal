@@ -1,11 +1,14 @@
 <?php
 declare(strict_types=1);
 
-// This directory is denied by storage/.htaccess. Never send diagnostics to HTTP.
 function svm_log_failure(string $stage, array $details): void
 {
-    $entry = json_encode(['time' => gmdate('c'), 'stage' => $stage] + $details,
-        JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    // The destination is denied by storage/.htaccess. Detailed process errors
+    // and server paths must never be returned to the browser.
+    $entry = json_encode(
+        ['time' => gmdate('c'), 'stage' => $stage] + $details,
+        JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+    );
     if (!@error_log($entry . PHP_EOL, 3, __DIR__ . '/../storage/svm_bridge.log')) {
         // No paths or user input in the server-log fallback.
         @error_log('SVM bridge failure; protected diagnostic log unavailable.');
@@ -46,15 +49,23 @@ function svm_run_python(string $python, string $script, string $input, float $ti
         }
         rewind($streams[0]);
         // Array arguments bypass cmd.exe/shell parsing, including paths with spaces.
-        $process = @proc_open([$python, '-B', '-X', 'utf8', $script], $streams, $pipes,
-            dirname($script), null, ['bypass_shell' => true]);
+        $process = @proc_open(
+            [$python, '-B', '-X', 'utf8', $script],
+            $streams,
+            $pipes,
+            dirname($script),
+            null,
+            ['bypass_shell' => true]
+        );
         if (!is_resource($process)) {
             throw new RuntimeException('Cannot start Python process');
         }
         $deadline = microtime(true) + $timeout;
         do {
             $status = proc_get_status($process);
-            if (!$status['running']) break;
+            if (!$status['running']) {
+                break;
+            }
             if (microtime(true) >= $deadline) {
                 proc_terminate($process);
                 throw new RuntimeException('Python prediction timed out');
@@ -69,14 +80,24 @@ function svm_run_python(string $python, string $script, string $input, float $ti
         $output = stream_get_contents($streams[1]);
         $stderr = stream_get_contents($streams[2], 4096);
         $data = json_decode((string)$output, true);
-        return ['ok' => $exit === 0 && json_last_error() === JSON_ERROR_NONE,
+        return [
+            'ok' => $exit === 0 && json_last_error() === JSON_ERROR_NONE,
             'reason' => $exit !== 0 ? 'Python exited unsuccessfully' : 'Invalid JSON output',
-            'exit_code' => $exit, 'stderr' => $stderr, 'data' => $data];
+            'exit_code' => $exit,
+            'stderr' => $stderr,
+            'data' => $data,
+        ];
     } catch (Throwable $error) {
         return ['ok' => false, 'reason' => $error->getMessage()];
     } finally {
-        if (is_resource($process)) proc_close($process);
-        foreach ($streams as $stream) if (is_resource($stream)) fclose($stream);
+        if (is_resource($process)) {
+            proc_close($process);
+        }
+        foreach ($streams as $stream) {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
     }
 }
 
@@ -89,8 +110,12 @@ function svm_resolve_python(array $candidates): ?string
             continue;
         }
         $result = svm_run_python($python, SVM_PREDICT_SCRIPT, 'Mabilis at maayos ang serbisyo.');
-        if ($result['ok'] && svm_valid_prediction($result['data'] ?? null)) return $python;
-        if ($result['ok']) $result['reason'] = 'Invalid prediction response';
+        if ($result['ok'] && svm_valid_prediction($result['data'] ?? null)) {
+            return $python;
+        }
+        if ($result['ok']) {
+            $result['reason'] = 'Invalid prediction response';
+        }
         unset($result['data']);
         svm_log_failure('candidate', ['python' => $python] + $result);
     }
@@ -111,14 +136,24 @@ function svm_python_runtime(): ?string
 function svm_predict_json(string $script, string $input, ?int $batchCount = null): ?array
 {
     $python = svm_python_runtime();
-    if ($python === null) return null;
+    if ($python === null) {
+        return null;
+    }
+
     $result = svm_run_python($python, $script, $input);
     $data = $result['data'] ?? null;
+
+    // Batch responses must preserve both count and numeric order so a label is
+    // never attached to a different imported comment.
     $valid = $result['ok'] && ($batchCount === null ? svm_valid_prediction($data)
         : is_array($data) && array_keys($data) === range(0, $batchCount - 1)
             && count($data) === $batchCount && count(array_filter($data, 'svm_valid_prediction')) === $batchCount);
-    if ($valid) return $data;
-    if ($result['ok']) $result['reason'] = 'Invalid prediction response';
+    if ($valid) {
+        return $data;
+    }
+    if ($result['ok']) {
+        $result['reason'] = 'Invalid prediction response';
+    }
     unset($result['data']);
     svm_log_failure('prediction', ['python' => $python, 'script' => $script] + $result);
     return null;

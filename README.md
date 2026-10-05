@@ -26,13 +26,6 @@ PHP + MySQL/XAMPP portal for CHD with expandable office management, office-scope
 
 Import `database/schema.sql`.
 
-## Upgrade from the earlier supplied version
-
-Replace the files, then import once:
-
-Run the applicable migrations in numerical order through
-`database/migrations/010_rename_initial_office_to_cswdo.sql`.
-
 ## Security and retention operations
 
 - Public submissions use exact-duplicate blocking, a 60-second cooldown, and a three-submission hourly limit based on a one-way client hash.
@@ -44,9 +37,13 @@ Run the applicable migrations in numerical order through
 
 ## Verification
 
-Run `tests/run_smoke_test.bat`. Administrator → System & Audit must show **SVM Bridge: Working**.
+Run `tests/run_smoke_test.bat`. It verifies security rules, scoring, calendar boundaries, dataset imports, survey rate limiting, the SVM bridge, and the live database schema. Administrator → System & Audit must show **SVM Bridge: Working**.
 
 The included 300-comment model is a functional development/demo model. Final research evaluation still requires an approved, de-identified, manually labeled CHD dataset.
+
+Maintenance notes for the request lifecycle, role boundaries, scoring formula, dataset-import transaction, and ML pipeline are in `DEVELOPER_NOTES.md`. Model-specific assumptions and limitations are in `ml/MODEL_CARD.md`.
+
+The defense reviewer, difficult-code explanations, ML concepts, and suggested panel answers are in `SYSTEM_DEFENSE_REVIEWER.md`.
 
 ## Distribution scope
 

@@ -308,16 +308,22 @@ function client_output_summary(?int $officeId = null): array
     ];
 }
 
-function feedback_highlights(?int $officeId, ?string $month = null, int $limit = 5): array
+function feedback_highlights(?int $officeId, ?string $month = null, int $limit = 5, ?int $staffUserId = null): array
 {
     $where = ["f.is_void=0", "o.status='active'", "NULLIF(f.comment,'') IS NOT NULL"];
     $params = [];
     if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    if ($staffUserId) {
+        $where[] = "((f.source='assisted_survey' AND f.imported_by_user_id=?) OR (f.source='csv_import' AND f.assisted_by_user_id=?))";
+        $params[] = $staffUserId;
+        $params[] = $staffUserId;
+    }
     if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) { $where[] = "DATE_FORMAT(f.visit_date,'%Y-%m')=?"; $params[] = $month; }
     $base = " FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where);
-    $good = db()->prepare("SELECT f.visit_date,f.comment,f.sentiment,f.assisted_by" . $base . " AND f.sentiment='positive' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
+    $columns = "f.id,f.visit_date,f.submitted_at,f.comment,f.sentiment,f.sentiment_confidence,f.service_received,f.sex,f.age,f.client_type,f.timeliness_rating,f.client_handling_rating,f.quality_rating,f.overall_rating,f.final_score,f.assisted_by,f.source,o.code office_code,o.name office_name";
+    $good = db()->prepare("SELECT {$columns}" . $base . " AND f.sentiment='positive' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
     $good->execute($params);
-    $critical = db()->prepare("SELECT f.visit_date,f.comment,f.sentiment,f.assisted_by" . $base . " AND f.sentiment='negative' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
+    $critical = db()->prepare("SELECT {$columns}" . $base . " AND f.sentiment='negative' ORDER BY f.visit_date DESC,f.id DESC LIMIT " . (int)$limit);
     $critical->execute($params);
     return ['good'=>$good->fetchAll(), 'critical'=>$critical->fetchAll()];
 }

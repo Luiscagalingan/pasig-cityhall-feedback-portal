@@ -98,7 +98,12 @@ def normalize_text(text: str) -> str:
 
 
 def normalize_for_model(text: str) -> str:
-    """Keep raw slang signals and append a normalized interpretation."""
+    """Keep raw slang signals and append a normalized interpretation.
+
+    The trained vocabulary may contain either the original spelling or its
+    normalized form. Supplying both avoids throwing away a useful raw feature
+    while still giving the model standardized Filipino/Taglish terms.
+    """
     raw = unicodedata.normalize("NFKC", str(text)).lower().strip()
     normalized = normalize_text(raw)
     if not normalized or normalized == raw:

@@ -19,22 +19,30 @@ function icon(string $name): string
         'upload'=>'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
         'bell'=>'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>',
         'shield'=>'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>',
+        'eye'=>'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        'eye_off'=>'<path d="m3 3 18 18"/><path d="M10.6 5.2A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a16.5 16.5 0 0 1-3 4.1M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.5 0 2.8-.4 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     ];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($icons[$name] ?? $icons['grid']) . '</svg>';
 }
 
-function admin_nav(): array
+function admin_nav(array $user): array
 {
-    return [
+    $nav = [
         ['overview','Overview','admin/dashboard.php','grid'],['feedback','Feedback Records','admin/feedback.php','message'],
         ['review','Sentiment Review','review.php','shield'],['actions','Action Management','admin/actions.php','check'],
         ['offices','Offices','admin/offices.php','building'],['heads','Manage Heads','admin/heads.php','users'],
         ['staff','Manage Staff','admin/staff.php','users'],['reports','Reports & Export','admin/reports.php','report'],
         ['client_output','Client Output','admin/client-output.php','chart'],['feedback_insights','Feedback Insights','admin/feedback-insights.php','message'],
-        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],['client_counts','Client Count Requests','admin/client-counts.php','users'],['data','CSV Data Update','office/data.php','upload'],
+        ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],
+    ];
+    if (can_manage_client_count_requests($user)) {
+        $nav[] = ['client_counts','Requested Client Counts','admin/client-counts.php','users'];
+    }
+    return array_merge($nav, [
+        ['data','CSV Data Update','office/data.php','upload'],
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
         ['system','System & Audit','admin/system.php','database'],
-    ];
+    ]);
 }
 
 function office_nav(array $user): array
@@ -51,9 +59,9 @@ function office_nav(array $user): array
     if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) {
         $nav[] = ['client_output','Client Output','office/client-output.php','chart'];
     }
-    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
+    if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
     if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
-    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count from Admin','office/client-count-request.php','message'];
+    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count from Sir Uno','office/client-count-request.php','message'];
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
     if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
     $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
@@ -64,27 +72,27 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=35"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=40"></head><body class="<?= e($bodyClass) ?>">
 
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
 
 function render_public_end(): void
 { ?>
-<script src="<?= e(app_url('assets/js/app.js')) ?>?v=27"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script><script src="<?= e(app_url('assets/js/app.js')) ?>?v=30"></script></body></html>
 <?php }
 
 function render_dashboard_start(string $title, string $active): array
 {
     $user = require_login();
-    $nav = $user['role'] === 'admin' ? admin_nav() : office_nav($user);
+    $nav = $user['role'] === 'admin' ? admin_nav($user) : office_nav($user);
     $flash = consume_flash();
     $officeId = $user['role'] === 'admin' ? null : (int)$user['office_id'];
     $metrics = dashboard_metrics($officeId);
     $unread = unread_notification_count((int)$user['id']);
     $notificationPreview = [];
     try {
-        $previewStmt = db()->prepare('SELECT title,message,type,read_at,created_at FROM notifications WHERE user_id=? AND (expires_at IS NULL OR expires_at>NOW()) ORDER BY read_at IS NULL DESC,created_at DESC LIMIT 5');
+        $previewStmt = db()->prepare("SELECT n.title,n.message,n.type,n.read_at,n.created_at FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR recipient.username='uno') AND (n.expires_at IS NULL OR n.expires_at>NOW()) ORDER BY n.read_at IS NULL DESC,n.created_at DESC LIMIT 5");
         $previewStmt->execute([(int)$user['id']]);
         $notificationPreview = $previewStmt->fetchAll();
     } catch (Throwable) {}
@@ -92,7 +100,7 @@ function render_dashboard_start(string $title, string $active): array
     $workAlerts = $unread;
     $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=35"></head><body class="dashboard-body">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=45"></head><body class="dashboard-body">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
 <?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $workAlerts > 0): ?><b title="Unresolved work items"><?= $workAlerts ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>
@@ -104,7 +112,7 @@ function render_dashboard_start(string $title, string $active): array
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="<?= e(app_url('assets/js/app.js')) ?>?v=27"></script></body></html>
+</main></div><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script><script src="<?= e(app_url('assets/js/app.js')) ?>?v=36"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

@@ -38,17 +38,17 @@ function create_client_count_request(PDO $pdo, int $staffId, int $year): int
     $pdo->beginTransaction();
     try {
         $staff = client_count_actor($pdo, $staffId, 'office_staff');
-        $admins = $pdo->query("SELECT id FROM users WHERE role='admin' AND status='active'")->fetchAll(PDO::FETCH_COLUMN);
-        if (!$admins) throw new DomainException('No active Administrator is available.');
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE username=? AND role='admin' AND status='active' LIMIT 1");
+        $stmt->execute(['uno']);
+        $requestAdminId = $stmt->fetchColumn();
+        if (!$requestAdminId) throw new DomainException('Sir Uno is not available to receive this request.');
         $pdo->prepare('INSERT INTO client_count_requests(staff_user_id,office_id,requested_year) VALUES(?,?,?)')
             ->execute([$staffId, (int)$staff['office_id'], $year]);
         $id = (int)$pdo->lastInsertId();
         $notify = $pdo->prepare("INSERT INTO notifications(user_id,office_id,sender_user_id,type,title,message,link_url) VALUES(?,?,?,'client_count_request',?,?,?)");
-        foreach ($admins as $adminId) {
-            $notify->execute([(int)$adminId, (int)$staff['office_id'], $staffId, 'Annual client count requested',
-                $staff['full_name'] . ' (@' . $staff['username'] . ') requested Administrator review of annual client-count request #' . $id . ' for ' . $year . '.',
-                'admin/client-counts.php?request_id=' . $id]);
-        }
+        $notify->execute([(int)$requestAdminId, (int)$staff['office_id'], $staffId, 'Annual client count requested',
+            $staff['full_name'] . ' (@' . $staff['username'] . ') requested Sir Uno\'s review of annual client-count request #' . $id . ' for ' . $year . '.',
+            'admin/client-counts.php?request_id=' . $id]);
         client_count_audit($pdo, $staffId, 'client_count_request', 'Created annual request #' . $id . ' for ' . $year . ' for Administrator review');
         $pdo->commit();
         return $id;
@@ -65,7 +65,10 @@ function answer_client_count_request(PDO $pdo, int $adminId, int $requestId): in
 {
     $pdo->beginTransaction();
     try {
-        client_count_actor($pdo, $adminId, 'admin');
+        $admin = client_count_actor($pdo, $adminId, 'admin');
+        if (strcasecmp((string)$admin['username'], 'uno') !== 0) {
+            throw new DomainException('Only Sir Uno can answer client-count requests.');
+        }
         // Serialize competing administrators before calculating or notifying.
         $stmt = $pdo->prepare('SELECT * FROM client_count_requests WHERE id=? FOR UPDATE');
         $stmt->execute([$requestId]);

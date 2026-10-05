@@ -15,8 +15,9 @@ function predict_sentiment(string $comment): array
         return ['label' => $data['label'], 'confidence' => round((float)$data['confidence'], 4), 'source' => 'svm'];
     }
 
-    // Operational fallback only, so survey submission still works when Python is not installed.
-    // Restore the Python environment/model if the bridge diagnostics report a failure.
+    // This lexicon is continuity logic, not a replacement for the trained
+    // model. Fallback predictions are marked by source so they always enter
+    // the authorized human-review queue.
     $text = preg_replace('/[^\pL\pN\s]+/u', ' ', mb_strtolower($comment)) ?? mb_strtolower($comment);
     $positive = [
         'mabilis','maayos','maganda','mabait','magalang','matulungin','malinis','malinaw','kumpleto','tama',
@@ -45,18 +46,42 @@ function predict_sentiment(string $comment): array
         'sobrang bagal','sobrang tagal','mahaba ang pila','matagal ang pila','poor service','bad service',
         'walang tumulong','walang sumasagot','sayang ang oras','pabalik balik','paulit ulit'
     ];
+    // Phrases carry twice the weight of individual terms because they preserve
+    // useful context such as negation (for example, "hindi maayos").
     $score = 0;
-    foreach ($positivePhrases as $phrase) if (str_contains($text, $phrase)) $score += 2;
-    foreach ($negativePhrases as $phrase) if (str_contains($text, $phrase)) $score -= 2;
-    foreach ($positive as $word) if (str_contains($text, $word)) $score++;
-    foreach ($negative as $word) if (str_contains($text, $word)) $score--;
+    foreach ($positivePhrases as $phrase) {
+        if (str_contains($text, $phrase)) {
+            $score += 2;
+        }
+    }
+    foreach ($negativePhrases as $phrase) {
+        if (str_contains($text, $phrase)) {
+            $score -= 2;
+        }
+    }
+    foreach ($positive as $word) {
+        if (str_contains($text, $word)) {
+            $score++;
+        }
+    }
+    foreach ($negative as $word) {
+        if (str_contains($text, $word)) {
+            $score--;
+        }
+    }
+
     $label = $score > 0 ? 'positive' : ($score < 0 ? 'negative' : 'neutral');
     return ['label' => $label, 'confidence' => min(0.75, 0.45 + abs($score) * 0.08), 'source' => 'fallback'];
 }
 
 function predict_sentiments_batch(array $comments): array
 {
-    if (!$comments) return [];
+    if (!$comments) {
+        return [];
+    }
+
+    // One Python process for the entire import is substantially cheaper than
+    // launching a new interpreter for every CSV row.
     $script = __DIR__ . '/../ml/predict_batch.py';
     $input = json_encode(array_values($comments), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     $data = svm_predict_json($script, $input, count($comments));

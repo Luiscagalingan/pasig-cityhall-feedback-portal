@@ -8,11 +8,65 @@ $offices=db()->query("SELECT id,code,name FROM offices WHERE status='active' ORD
 if ($officeId <= 0 && $offices) $officeId=(int)$offices[0]['id'];
 if ($officeId <= 0) { set_flash('error','Create an active office before importing CSV data.'); redirect('admin/dashboard.php'); }
 
-function csv_value(array $row,array $map,array $aliases): string { foreach($aliases as $a)if(isset($map[$a]))return trim((string)($row[$map[$a]]??''));foreach($map as $header=>$index)if(in_array('comment',$aliases,true)&&preg_match('/comment|komento|suhestiyon|suggestion/i',(string)$header))return trim((string)($row[$index]??''));return ''; }
-function csv_date_value(array $row,array $map,array $aliases): string { $value=csv_value($row,$map,$aliases);$time=strtotime($value);return $time===false?$value:date('Y-m-d',$time); }
-function csv_timestamp_value(array $row,array $map,array $aliases): string { $value=csv_value($row,$map,$aliases);$time=strtotime($value);return $time===false?$value:date('Y-m-d H:i:s',$time); }
-function preview_path(string $token): string { return __DIR__.'/../storage/import_previews/preview_'.$token.'.json'; }
-function load_preview(string $token,array $user): ?array { if(!preg_match('/^[a-f0-9]{32}$/',$token))return null;$path=preview_path($token);if(!is_file($path))return null;$data=json_decode((string)file_get_contents($path),true);if(!is_array($data)||(int)($data['user_id']??0)!==(int)$user['id']||(int)($data['created_at']??0)<time()-3600)return null;return $data; }
+function csv_value(array $row, array $map, array $aliases): string
+{
+    foreach ($aliases as $alias) {
+        if (isset($map[$alias])) {
+            return trim((string)($row[$map[$alias]] ?? ''));
+        }
+    }
+
+    if (in_array('comment', $aliases, true)) {
+        foreach ($map as $header => $index) {
+            if (preg_match('/comment|komento|suhestiyon|suggestion/i', (string)$header)) {
+                return trim((string)($row[$index] ?? ''));
+            }
+        }
+    }
+
+    return '';
+}
+
+function csv_date_value(array $row, array $map, array $aliases): string
+{
+    $value = csv_value($row, $map, $aliases);
+    $time = strtotime($value);
+    return $time === false ? $value : date('Y-m-d', $time);
+}
+
+function csv_timestamp_value(array $row, array $map, array $aliases): string
+{
+    $value = csv_value($row, $map, $aliases);
+    $time = strtotime($value);
+    return $time === false ? $value : date('Y-m-d H:i:s', $time);
+}
+
+function preview_path(string $token): string
+{
+    return __DIR__ . '/../storage/import_previews/preview_' . $token . '.json';
+}
+
+function load_preview(string $token, array $user): ?array
+{
+    if (!preg_match('/^[a-f0-9]{32}$/', $token)) {
+        return null;
+    }
+
+    $path = preview_path($token);
+    if (!is_file($path)) {
+        return null;
+    }
+
+    $data = json_decode((string)file_get_contents($path), true);
+    $expiresBefore = time() - (IMPORT_PREVIEW_RETENTION_HOURS * 3600);
+    if (!is_array($data)
+        || (int)($data['user_id'] ?? 0) !== (int)$user['id']
+        || (int)($data['created_at'] ?? 0) < $expiresBefore) {
+        return null;
+    }
+
+    return $data;
+}
 
 $uploadError=null;
 if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -48,7 +102,7 @@ $previewToken=(string)($_GET['preview']??'');$preview=$previewToken!==''?load_pr
 render_dashboard_start('Dataset Upload','data');page_header('Dataset & Historical Data','CSV and Excel files are previewed before import, checked for duplicates, classified in batch, and remain rollback-capable.','<a class="btn secondary" href="'.e(app_url('sample_feedback_import.csv')).'" download>Download CSV Template</a>');
 ?>
 <?php if($uploadError!==null): ?><section class="card" role="alert"><h2>Upload could not be completed</h2><p><?= e($uploadError) ?></p><p>Select the dataset file again after correcting the issue.</p></section><?php endif; ?>
-<section class="card" style="margin-bottom:16px"><form class="filters compact" method="get"><label>Import to Office</label><select name="office_id" onchange="this.form.submit()" required><?php foreach($offices as $o):?><option value="<?= (int)$o['id'] ?>" <?= $officeId===(int)$o['id']?'selected':'' ?>><?= e($o['code']) ?> — <?= e($o['name']) ?></option><?php endforeach;?></select></form></section>
+<section class="card office-import-card"><form class="filters office-import-filter" method="get"><label for="import-office-select">Import to Office</label><select id="import-office-select" name="office_id" onchange="this.form.submit()" required><?php foreach($offices as $o):?><option value="<?= (int)$o['id'] ?>" <?= $officeId===(int)$o['id']?'selected':'' ?>><?= e($o['code']) ?> — <?= e($o['name']) ?></option><?php endforeach;?></select></form></section>
 <section class="card" style="margin-bottom:16px"><p class="muted">The CSV/Excel importer accepts and stores the client-provided headers: <strong>Assisted By</strong>, client number, names, <strong>Timestamp</strong>, <strong>Types of Client</strong>, <strong>Transaction / Service</strong>, and the four rating columns.</p></section>
 <?php if($preview): ?><section class="card preview-card"><div class="card-head"><div><h2>Import Preview: <?= e($preview['filename']) ?></h2><p>Nothing has been saved yet. Confirm only after reviewing the validation results.<?php if(!empty($preview['sheet_name'])): ?> Worksheet: <?= e($preview['sheet_name']) ?>.<?php endif; ?></p></div></div><div class="stats-grid"><div class="stat-card highlight"><small>Valid Rows</small><strong><?= count($preview['valid']) ?></strong></div><div class="stat-card"><small>Rejected Rows</small><strong><?= count($preview['rejected']) ?></strong></div><div class="stat-card"><small>Duplicates</small><strong><?= (int)$preview['duplicates'] ?></strong></div><div class="stat-card"><small>MIME</small><strong class="small-stat"><?= e($preview['mime']) ?></strong></div></div><div class="content-grid"><div><h3>First Valid Rows</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Service</th><th>Ratings</th><th>Comment</th></tr></thead><tbody><?php foreach(array_slice($preview['valid'],0,10) as $r):?><tr><td><?= e($r['visit_date']) ?></td><td><?= e($r['service']) ?></td><td><?= e(implode('/',$r['ratings'])) ?></td><td><?= e($r['comment']) ?></td></tr><?php endforeach;?></tbody></table></div></div><div><h3>Rejected Examples</h3><div class="table-wrap"><table><thead><tr><th>Row</th><th>Error</th></tr></thead><tbody><?php foreach(array_slice($preview['rejected'],0,10) as $r):?><tr><td><?= (int)$r['row_number'] ?></td><td><?= e($r['error']) ?></td></tr><?php endforeach;?><?php if(!$preview['rejected']):?><tr><td colspan="2">No rejected rows.</td></tr><?php endif;?></tbody></table></div></div></div><form method="post" class="actions-cell"><input type="hidden" name="office_id" value="<?= (int)$officeId ?>"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="confirm"><input type="hidden" name="preview_token" value="<?= e($previewToken) ?>"><button class="btn success">Confirm Import</button><a class="btn secondary" href="<?= e(app_url('office/data.php')) ?>">Cancel Preview</a></form></section><?php endif; ?>
 <section class="card" style="margin-bottom:16px"><div class="card-head"><div><h2>How to Upload a Dataset</h2><p>Download → validate/preview → confirm → review rejected rows or rollback the batch.</p></div></div><img class="csv-guide-image" src="<?= e(app_url('assets/images/csv-guide.svg')) ?>?v=2" alt="CSV preparation, upload validation, and dashboard processing guide"><div class="upload-guide"><div class="guide-step"><span class="num">1</span><strong>Prepare the template</strong><p>Keep the headers unchanged. Remove names, contact information, diagnoses, and identifiers.</p></div><div class="guide-step"><span class="num">2</span><strong>Preview validation</strong><p>The system checks MIME type, required columns, dates, allowed values, ratings, comments, and duplicates before saving.</p></div><div class="guide-step"><span class="num">3</span><strong>Confirm or cancel</strong><p>Valid rows are imported only after confirmation. Rejected rows are downloadable and the whole batch can be rolled back.</p></div></div><div class="csv-preview">visit_date,sex,age,client_type,service_received,timeliness,client_handling,quality_of_service,overall_satisfaction,comment</div></section>

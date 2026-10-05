@@ -1,9 +1,58 @@
 (() => {
+  const sweetAlertAvailable = () => typeof window.Swal?.fire === 'function';
+  const sweetAlertOptions = options => ({
+    background: '#111c2f',
+    color: '#eef4ff',
+    confirmButtonColor: '#2563eb',
+    cancelButtonColor: '#64748b',
+    reverseButtons: true,
+    ...options
+  });
+
+  const showNotice = (title, text, icon = 'info') => {
+    if (sweetAlertAvailable()) {
+      return window.Swal.fire(sweetAlertOptions({title, text, icon}));
+    }
+    window.alert(text ? `${title}\n\n${text}` : title);
+    return Promise.resolve({isConfirmed: true});
+  };
+
   document.querySelectorAll('[data-show-password]').forEach(toggle => {
     const passwordInput = document.getElementById(toggle.dataset.showPassword || '');
     if (!passwordInput) return;
     toggle.addEventListener('change', () => {
       passwordInput.type = toggle.checked ? 'text' : 'password';
+    });
+  });
+  document.querySelectorAll('[data-password-toggle]').forEach(button => {
+    const input = document.getElementById(button.dataset.passwordToggle || '');
+    if (!input) return;
+    button.addEventListener('click', () => {
+      const visible = input.type === 'password';
+      input.type = visible ? 'text' : 'password';
+      button.classList.toggle('visible', visible);
+      button.setAttribute('aria-pressed', String(visible));
+      button.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+      input.focus();
+    });
+  });
+  document.querySelectorAll('[data-account-edit-cancel]').forEach(button => {
+    button.addEventListener('click', () => {
+      const editor = button.closest('details');
+      const form = editor?.querySelector('form');
+      form?.reset();
+      form?.querySelectorAll('[data-show-password]').forEach(toggle => {
+        const input = document.getElementById(toggle.dataset.showPassword || '');
+        if (input) input.type = 'password';
+      });
+      form?.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+        const input = document.getElementById(toggle.dataset.passwordToggle || '');
+        if (input) input.type = 'password';
+        toggle.classList.remove('visible');
+        toggle.setAttribute('aria-pressed', 'false');
+        toggle.setAttribute('aria-label', 'Show password');
+      });
+      if (editor) editor.open = false;
     });
   });
 
@@ -168,6 +217,7 @@
   document.body.appendChild(confirmOverlay);
 
   const confirmMessage = confirmOverlay.querySelector('#confirm-message');
+  const confirmTitle = confirmOverlay.querySelector('#confirm-title');
   const confirmAccept = confirmOverlay.querySelector('[data-confirm-accept]');
   const confirmCancel = confirmOverlay.querySelector('[data-confirm-cancel]');
   let confirmAction = null;
@@ -178,10 +228,34 @@
     document.body.classList.remove('modal-open');
     confirmAction = null;
   };
-  const openConfirm = (message, action, destructive = true) => {
+  const openConfirm = (message, action, options = {}) => {
+    const {
+      title = 'Please confirm',
+      confirmText = 'Yes, continue',
+      icon = 'warning',
+      destructive = true
+    } = options;
+
+    if (sweetAlertAvailable()) {
+      window.Swal.fire(sweetAlertOptions({
+        title,
+        text: message,
+        icon,
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: destructive ? '#dc2626' : '#2563eb',
+        focusCancel: true
+      })).then(result => {
+        if (result.isConfirmed) action?.();
+      });
+      return;
+    }
+
+    confirmTitle.textContent = title;
     confirmMessage.textContent = message;
     confirmAction = action;
-    confirmAccept.textContent = destructive ? 'Yes, continue' : 'Log out';
+    confirmAccept.textContent = confirmText;
     confirmAccept.classList.toggle('danger', destructive);
     confirmOverlay.classList.add('open');
     confirmOverlay.setAttribute('aria-hidden', 'false');
@@ -210,14 +284,43 @@
     el.addEventListener('click', e => {
       if (!e.target.closest('button, input[type="submit"]')) return;
       e.preventDefault();
-      openConfirm(el.dataset.confirmDelete || 'Continue with this action?', () => el.requestSubmit());
+      openConfirm(el.dataset.confirmDelete || 'Continue with this action?', () => el.requestSubmit(), {
+        title: 'Confirm this action',
+        confirmText: 'Yes, continue',
+        destructive: true
+      });
     });
   });
   document.querySelectorAll('[data-confirm-logout]').forEach(link => link.addEventListener('click', e => {
     e.preventDefault();
     const href = e.currentTarget.href;
-    openConfirm('Are you sure you want to log out of the system?', () => window.location.assign(href), false);
+    openConfirm('Are you sure you want to log out of the system?', () => window.location.assign(href), {
+      title: 'Log out?',
+      confirmText: 'Yes, log out',
+      icon: 'question',
+      destructive: false
+    });
   }));
+
+  document.querySelectorAll('form[data-swal-confirm]').forEach(form => {
+    form.addEventListener('submit', event => {
+      if (form.dataset.swalConfirmed === 'true') {
+        delete form.dataset.swalConfirmed;
+        return;
+      }
+      event.preventDefault();
+      const submitter = event.submitter;
+      openConfirm(form.dataset.swalConfirm || 'Continue with this action?', () => {
+        form.dataset.swalConfirmed = 'true';
+        form.requestSubmit(submitter || undefined);
+      }, {
+        title: form.dataset.swalTitle || 'Please confirm',
+        confirmText: form.dataset.swalConfirmText || 'Yes, continue',
+        icon: form.hasAttribute('data-swal-destructive') ? 'warning' : 'question',
+        destructive: form.hasAttribute('data-swal-destructive')
+      });
+    });
+  });
   const closeModal = modal => {
     modal?.classList.remove('open');
     modal?.setAttribute('aria-hidden', 'true');
@@ -251,16 +354,75 @@
       options?.insertBefore(label, insertBefore || null);
     });
     form.addEventListener('submit', e => {
-    e.preventDefault();
-    const selected = new Set([...form.querySelectorAll('input[name="print_section"]:checked')].map(input => input.value));
-    if (!selected.size) { window.alert('Select at least one report section to print.'); return; }
-    const sections = [...document.querySelectorAll('[data-report-section]')];
-    sections.forEach(section => section.classList.toggle('print-excluded', !selected.has(section.dataset.reportSection)));
-    closeModal(form.closest('.app-modal'));
-    const restore = () => sections.forEach(section => section.classList.remove('print-excluded'));
-    window.addEventListener('afterprint', restore, {once:true});
-    window.print();
-    window.setTimeout(restore, 1000);
+      e.preventDefault();
+      const selected = new Set([...form.querySelectorAll('input[name="print_section"]:checked')].map(input => input.value));
+      if (!selected.size) {
+        showNotice('No section selected', 'Select at least one report section to export.', 'warning');
+        return;
+      }
+
+      openConfirm(
+        `${selected.size} report section(s) will be included. The browser print window will open; choose “Save as PDF” to download the file.`,
+        () => {
+          const sections = [...document.querySelectorAll('[data-report-section]')];
+          sections.forEach(section => section.classList.toggle('print-excluded', !selected.has(section.dataset.reportSection)));
+          closeModal(form.closest('.app-modal'));
+          const restore = () => sections.forEach(section => section.classList.remove('print-excluded'));
+          window.addEventListener('afterprint', restore, {once:true});
+          window.setTimeout(() => window.print(), 200);
+          window.setTimeout(restore, 1500);
+        },
+        {title: 'Export report as PDF?', confirmText: 'Continue to PDF', icon: 'question', destructive: false}
+      );
+    });
+  });
+
+  const submitAfterExportConfirmation = (form, submitter, message) => {
+    if (form.dataset.exportConfirmed === 'true') {
+      delete form.dataset.exportConfirmed;
+      return true;
+    }
+    openConfirm(message, () => {
+      form.dataset.exportConfirmed = 'true';
+      form.requestSubmit(submitter || undefined);
+    }, {
+      title: 'Export file?',
+      confirmText: 'Yes, export',
+      icon: 'question',
+      destructive: false
+    });
+    return false;
+  };
+
+  document.querySelectorAll('form.export-csv-form').forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!submitAfterExportConfirmation(form, event.submitter, 'Download the currently filtered records as a CSV file?')) {
+        event.preventDefault();
+      }
+    });
+  });
+
+  document.querySelectorAll('form[target="_blank"]').forEach(form => {
+    if (!form.querySelector('input[name="export"][value="pdf"]')) return;
+    form.addEventListener('submit', event => {
+      if (!submitAfterExportConfirmation(form, event.submitter, 'Open a printable PDF report using the current filters?')) {
+        event.preventDefault();
+      } else {
+        closeModal(form.closest('.app-modal'));
+      }
+    });
+  });
+
+  document.querySelectorAll('a[href*="export=pdf"]').forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      const href = link.href;
+      openConfirm('Generate and download the dashboard PDF using the current data?', () => window.location.assign(href), {
+        title: 'Download dashboard PDF?',
+        confirmText: 'Yes, download',
+        icon: 'question',
+        destructive: false
+      });
     });
   });
 
@@ -273,7 +435,32 @@
   });
 
   const toast = document.querySelector('[data-toast]');
-  if (toast) setTimeout(() => toast.remove(), 4500);
+  if (toast) {
+    const permissionDenied = toast.classList.contains('denied');
+    const type = ['success', 'error', 'warning', 'info'].includes(toast.classList[1])
+      ? toast.classList[1]
+      : 'info';
+    const message = toast.textContent.trim();
+    if (sweetAlertAvailable()) {
+      toast.remove();
+      window.Swal.fire(sweetAlertOptions(permissionDenied ? {
+        icon: 'error',
+        title: 'Access denied',
+        text: message,
+        confirmButtonText: 'OK'
+      } : {
+        toast: true,
+        position: 'top-end',
+        icon: type,
+        title: message,
+        showConfirmButton: false,
+        timer: 4500,
+        timerProgressBar: true
+      }));
+    } else {
+      setTimeout(() => toast.remove(), 4500);
+    }
+  }
 
   document.querySelectorAll('[data-chart]').forEach(canvas => {
     const type = canvas.dataset.type || 'bar';

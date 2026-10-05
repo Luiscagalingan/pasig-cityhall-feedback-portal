@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 verify_csrf();
-$stmt = db()->prepare('UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE user_id=? AND read_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())');
+$stmt = db()->prepare("UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE user_id=? AND (type<>'client_count_request' OR user_id=(SELECT uno.id FROM users uno WHERE uno.username='uno' LIMIT 1)) AND read_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())");
 $stmt->execute([(int)$user['id']]);
 $markedRead=$stmt->rowCount();
 if($markedRead)audit((int)$user['id'],'notifications_preview_read','Binasa mula sa notification bell ang '.$markedRead.' notification(s)');

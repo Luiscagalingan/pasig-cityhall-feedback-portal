@@ -2,9 +2,7 @@ CSWDO PORTAL SETUP
 
 1. Install XAMPP and Python. Place the project at:
    C:\xampp\htdocs\pasig-cityhall-feedback-portal
-2. Import your exported database from the original laptop into MySQL.
-   For a fresh database, use database/schema.sql. Keep database/migrations
-   for upgrading older installations.
+2. Import database/schema.sql into MySQL.
 3. In CMD, run:
    cd C:\xampp\htdocs\pasig-cityhall-feedback-portal
    python -m venv ml\.venv

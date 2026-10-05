@@ -3,3 +3,9 @@ __pycache__/
 *.py[cod]
 storage/test_sessions/
 storage/*.log
+storage/import_previews/*.json
+storage/sessions/*
+!storage/sessions/.gitkeep
+uploads/*
+!uploads/.gitkeep
+!uploads/.htaccess

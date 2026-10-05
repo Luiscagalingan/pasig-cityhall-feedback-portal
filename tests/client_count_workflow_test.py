@@ -19,8 +19,8 @@ DB = 'pasig_count_test_' + secrets.token_hex(8)
 FLAGS = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
 
 
-def fixture(action):
-    return subprocess.check_output([PHP, str(ROOT / 'tests/client_count_fixture.php'), action, DB],
+def fixture(action, *args):
+    return subprocess.check_output([PHP, str(ROOT / 'tests/client_count_fixture.php'), action, DB, *map(str, args)],
                                    cwd=ROOT, creationflags=FLAGS, text=True)
 
 
@@ -60,7 +60,6 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
     log = open(Path(temp) / 'server.log', 'w+', encoding='utf-8')
     try:
         fixture('setup')
-        check('migration preserves legacy snapshot without inventing annual year', fixture('migration_test') == 'preserved')
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
@@ -84,11 +83,15 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
         check('Office Head can download own office rejected rows', head.request('/office/rejected_rows.php?batch_id=1')[0] == 200)
         check('Office Head cannot forge rejected-row office scope', head.request('/office/rejected_rows.php?batch_id=2&office_id=2')[0] == 404)
         check('Office Staff cannot download rejected rows', staff.request('/office/rejected_rows.php?batch_id=1')[0] == 403)
-        for browser, name in [(uno, 'Uno'), (other, 'another Administrator')]:
-            code, page = browser.request('/admin/client-counts.php')
-            check(name + ' can open processing page and navigation', code == 200 and 'Annual Client-count Requests' in page and 'admin/client-counts.php' in page)
+        code, page = uno.request('/admin/client-counts.php')
+        check('Uno can open processing page and navigation', code == 200 and 'Annual Client-count Requests' in page and 'Requested Client Counts' in page)
+        code, page = other.request('/admin/dashboard.php')
+        check('other Administrator has no requested-count navigation', code == 200 and 'Requested Client Counts' not in page and 'admin/client-counts.php' not in page)
+        code, denied = other.request('/admin/client-counts.php')
+        check('other Administrator gets permission popup instead of processing page', code == 200 and 'permission to open this page' in denied and 'Annual Client-count Requests' not in denied)
         for browser, role in [(head, 'Office Head'), (staff, 'Office Staff')]:
-            check(role + ' cannot open processing page', browser.request('/admin/client-counts.php')[0] == 403)
+            code, denied = browser.request('/admin/client-counts.php')
+            check(role + ' gets permission popup instead of processing page', code == 200 and 'permission to open this page' in denied and 'Annual Client-count Requests' not in denied)
             check(role + ' cannot use legacy processing route', browser.request('/office/client-counts.php')[0] == 403)
         for username in ['inactive', 'legacy']:
             browser = Browser()
@@ -102,29 +105,26 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
         _, page = staff.request('/office/client-count-request.php')
         check('request creation requires CSRF', staff.request('/office/client-count-request.php', {})[0] == 419)
         _, page = staff.request('/office/client-count-request.php', {'csrf_token': token(page), 'staff_id': 8, 'user_id': 8})
-        check('Staff creates pending request', 'Pending' in page and 'sent to an Administrator' in page)
-        for browser in [uno, other]:
-            _, notices = browser.request('/notifications.php')
-            check('Administrator receives request notification', 'Annual client count requested' in notices and 'Administrator review' in notices)
+        check('Staff creates pending request', 'Pending' in page and 'sent to Sir Uno' in page)
+        _, notices = uno.request('/notifications.php')
+        check('Sir Uno receives request notification', 'Annual client count requested' in notices and 'Sir Uno' in notices and 'review' in notices)
+        _, notices = other.request('/notifications.php')
+        check('other Administrator does not receive request notification', 'Annual client count requested' not in notices)
         snapshot = json.loads(fixture('inspect'))
         request_id = snapshot['requests'][0]['id']
         check('forged requester IDs ignored and requested year defaults to current year', int(snapshot['requests'][0]['staff_user_id']) == 4 and int(snapshot['requests'][0]['requested_year']) == time.localtime().tm_year)
         _, request_page = staff.request('/office/client-count-request.php')
         _, duplicate = staff.request('/office/client-count-request.php', {'csrf_token': token(request_page)})
         check('duplicate pending annual request rejected', 'pending annual request already exists' in duplicate and len(json.loads(fixture('inspect'))['requests']) == 1)
-        check('only active Administrators notified', [int(n['user_id']) for n in snapshot['notifications']] == [1, 2])
+        check('only Sir Uno notified', [int(n['user_id']) for n in snapshot['notifications']] == [1])
         _, uno_pending = uno.request('/admin/client-counts.php')
         check('office separator is an ASCII hyphen', 'TEST - Test Office' in uno_pending and 'TEST ? Test Office' not in uno_pending)
         uno_token = token(uno_pending)
-        _, page = other.request('/admin/client-counts.php')
-        check('Administrator response requires CSRF', other.request('/admin/client-counts.php', {'request_id': request_id})[0] == 419)
-        _, page = other.request('/admin/client-counts.php', {'csrf_token': token(page), 'request_id': request_id, 'count': 999})
-        check('Administrator answers using calculated count, ignores submitted count', 'Verified annual count sent: 2.' in page and 'Answered' in page)
-        _, page = uno.request('/admin/client-counts.php')
-        _, page = uno.request('/admin/client-counts.php', {'csrf_token': uno_token, 'request_id': request_id})
-        check('second Administrator cannot answer answered request', 'already been answered' in page)
+        check('Uno response requires CSRF', uno.request('/admin/client-counts.php', {'request_id': request_id})[0] == 419)
+        _, page = uno.request('/admin/client-counts.php', {'csrf_token': uno_token, 'request_id': request_id, 'count': 999})
+        check('Uno answers using calculated count, ignores submitted count', 'Verified annual count sent: 2.' in page and 'Answered' in page)
         _, page = staff.request('/office/client-count-request.php')
-        check('Staff sees count, answered status, responder', 'Answered' in page and '<td>2</td>' in page and 'Another Administrator' in page)
+        check('Staff sees count, answered status, responder', 'Answered' in page and '<td>2</td>' in page and 'Sir Uno' in page)
         _, page = staff.request('/notifications.php')
         check('Staff receives answered count notification', ' is 2. Status: Answered.' in page and 'Status: Answered' in page)
         _, page = outsider.request('/office/client-count-request.php')
@@ -133,7 +133,7 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
             check('Office Head business POST denied: ' + path, head.request(path, {})[0] == 403)
         snapshot = json.loads(fixture('inspect'))
         answered = snapshot['requests'][0]
-        check('response persisted with count/time/administrator', answered['status'] == 'answered' and int(answered['answered_count']) == 2 and answered['answered_at'] and int(answered['answered_by_user_id']) == 2)
+        check('response persisted with count/time/administrator', answered['status'] == 'answered' and int(answered['answered_count']) == 2 and answered['answered_at'] and int(answered['answered_by_user_id']) == 1)
         check('exactly one staff answer notification', sum(n['type'] == 'client_count' for n in snapshot['notifications']) == 1)
         check('request and response audit entries recorded once', [a['action'] for a in snapshot['audit']] == ['client_count_request', 'admin_client_count_sent'])
         check('fixture feedback remains unchanged in count', snapshot['feedback_count'] == 5)
@@ -146,12 +146,8 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
         _, page = staff.request('/office/client-count-request.php')
         staff.request('/office/client-count-request.php', {'csrf_token': token(page)})
         third_id = json.loads(fixture('inspect'))['requests'][-1]['id']
-        workers = [subprocess.Popen([PHP, str(ROOT / 'tests/client_count_fixture.php'), 'answer', DB, str(admin), str(third_id)],
-                                   cwd=ROOT, creationflags=FLAGS, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                   for admin in [1, 2]]
-        results = [worker.communicate(timeout=20) for worker in workers]
-        check('simultaneous administrators produce exactly one answer',
-              all(worker.returncode == 0 for worker in workers) and sorted(out for out, err in results) == ['answered', 'rejected'])
+        check('non-Uno admin is rejected by domain authorization', fixture('answer', 2, third_id) == 'rejected')
+        check('Uno answers the pending request', fixture('answer', 1, third_id) == 'answered')
         snapshot = json.loads(fixture('inspect'))
         check('three requests yield exactly three answers and six audit entries',
               sum(n['type'] == 'client_count' for n in snapshot['notifications']) == 3 and len(snapshot['audit']) == 6)
@@ -197,10 +193,10 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
         staff.request('/office/client-count-request.php', {'csrf_token':token(annual_form),'requested_year':2001,'staff_id':8,'user_id':8})
         annual = json.loads(fixture('inspect'))['requests'][-1]
         check('annual requester and year stored securely', int(annual['requested_year']) == 2001 and int(annual['staff_user_id']) == 4)
-        check('Office Head cannot answer annual request', head.request('/admin/client-counts.php', {'request_id':annual['id']})[0] == 403)
-        check('Staff cannot answer annual request', staff.request('/admin/client-counts.php', {'request_id':annual['id']})[0] == 403)
-        _, admin_form = other.request('/admin/client-counts.php')
-        other.request('/admin/client-counts.php', {'csrf_token':token(admin_form),'request_id':annual['id'],'requested_year':2002})
+        check('Office Head cannot answer annual request', 'permission to open this page' in head.request('/admin/client-counts.php', {'request_id':annual['id']})[1])
+        check('Staff cannot answer annual request', 'permission to open this page' in staff.request('/admin/client-counts.php', {'request_id':annual['id']})[1])
+        _, admin_form = uno.request('/admin/client-counts.php')
+        uno.request('/admin/client-counts.php', {'csrf_token':token(admin_form),'request_id':annual['id'],'requested_year':2002})
         annual = json.loads(fixture('inspect'))['requests'][-1]
         check('annual count includes Jan 1 and Dec 31, excludes other years, staff, public, CSV, void and unknown owners', int(annual['answered_count']) == 5 and int(annual['requested_year']) == 2001)
         _, history = staff.request('/office/client-count-request.php')
@@ -214,9 +210,9 @@ with tempfile.TemporaryDirectory(prefix='pasig-count-test-') as temp:
         check('own legacy snapshot remains accessible across an office transfer', 'Legacy - no year' in history and '<td>42</td>' in history)
         check('other requester legacy snapshot stays private', '<td>999</td>' not in history)
         legacy_request = json.loads(fixture('inspect'))['requests'][-1]
-        _, admin_form = other.request('/admin/client-counts.php')
+        _, admin_form = uno.request('/admin/client-counts.php')
         check('Administrator can read legacy snapshots', 'Legacy - no year' in admin_form and '<td>42</td>' in admin_form)
-        _, rejected = other.request('/admin/client-counts.php', {'csrf_token':token(admin_form),'request_id':legacy_request['id'],'requested_year':2001})
+        _, rejected = uno.request('/admin/client-counts.php', {'csrf_token':token(admin_form),'request_id':legacy_request['id'],'requested_year':2001})
         check('legacy pending request cannot be assigned an invented year', 'legacy request has no year' in rejected and json.loads(fixture('inspect'))['requests'][-1]['requested_year'] is None)
         print('PASS: PHP HTTP workflow completed against isolated MySQL database.', flush=True)
     except Exception:

@@ -11,7 +11,13 @@ $source = static fn(string $path): string => (string)file_get_contents($root.'/'
 foreach (glob($root.'/admin/*.php') ?: [] as $file) {
     $name = basename($file);
     $text = (string)file_get_contents($file);
-    $check('Admin guard: '.$name, str_contains($text, "require_login(['admin'])"));
+    // Formatting and quote style must not weaken this check. Match the parsed
+    // call shape instead of one exact source-code spelling.
+    $roleGuard = preg_match('/require_login\s*\(\s*\[\s*[\'\"]admin[\'\"]\s*\]\s*\)/', $text) === 1;
+    $namedAdminGuard = $name === 'client-counts.php'
+        && str_contains($text, 'require_login()')
+        && str_contains($text, 'can_manage_client_count_requests($user)');
+    $check('Admin guard: '.$name, $roleGuard || $namedAdminGuard);
 }
 $officeRoles = [
     'data.php'=>"require_login(['admin'])",
@@ -48,8 +54,8 @@ $check('Staff completion requires approval', str_contains($officeActions, "statu
 $check('Head completion approval', str_contains($officeActions, "requested==='completed'") && str_contains($officeActions, 'approved_by_user_id'));
 $check('Head can return completion request', str_contains($officeActions, "requested==='reject_completion'") && str_contains($officeActions, "status='in_progress'"));
 $check('Admin action updates retain authentication and CSRF',
-    str_contains($adminActions, "require_login(['admin'])")
-    && str_contains($adminActions, "REQUEST_METHOD']==='POST'")
+    preg_match('/require_login\s*\(\s*\[\s*[\'\"]admin[\'\"]\s*\]\s*\)/', $adminActions) === 1
+    && preg_match('/REQUEST_METHOD[\'\"]?\]\s*===\s*[\'\"]POST[\'\"]/', $adminActions) === 1
     && str_contains($adminActions, 'verify_csrf()')
 );
 
@@ -60,7 +66,11 @@ $check('Adult-only survey', str_contains($source('survey.php'), '$age < 18') && 
 $check('Exact duplicate protection', str_contains($source('survey.php'), 'record_fingerprint=?'));
 $check('Survey rate limit', str_contains($source('survey.php'), 'survey_submission_limit()'));
 $check('Encrypted backup only', str_contains($source('admin/backup.php'), "AES-256-GCM") || str_contains(strtolower($source('admin/backup.php')), 'aes-256-gcm'));
-$check('Backup requires POST and CSRF', str_contains($source('admin/backup.php'), "REQUEST_METHOD'] !== 'POST'") && str_contains($source('admin/backup.php'), 'verify_csrf()'));
+$backupSource = $source('admin/backup.php');
+$check('Backup requires POST and CSRF',
+    preg_match('/REQUEST_METHOD[\'\"]?\]\s*!==\s*[\'\"]POST[\'\"]/', $backupSource) === 1
+    && str_contains($backupSource, 'verify_csrf()')
+);
 $cryptoOk = false;
 if (function_exists('openssl_encrypt')) {
     $plain = 'backup round-trip test';$salt = random_bytes(16);$iv = random_bytes(12);$tag = '';
