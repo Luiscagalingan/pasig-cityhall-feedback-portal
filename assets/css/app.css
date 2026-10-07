@@ -1910,3 +1910,89 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 .swal2-timer-progress-bar {
   background: #fff !important;
 }
+
+/* Reliable phone layout for the public survey and authenticated workspaces. */
+.form-group,
+.form-row > *,
+.filters > *,
+.action-filters > * {
+  min-width:0
+}
+.survey-page input[type="date"] {
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  -webkit-min-logical-width:0
+}
+
+@media(max-width:850px) {
+  .dashboard-body {overflow-x:hidden}
+  .sidebar {width:min(86vw,300px);padding-bottom:max(20px,env(safe-area-inset-bottom))}
+  .app-shell {width:100%;max-width:100%;min-width:0}
+  .topbar {height:64px;gap:9px;padding:0 12px}
+  .topbar > div:not(.topbar-actions) {min-width:0;flex:1}
+  .topbar > div:not(.topbar-actions) strong,
+  .topbar > div:not(.topbar-actions) small {overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .topbar > div:not(.topbar-actions) strong {font-size:15px}
+  .topbar-actions {flex:0 0 auto;gap:6px}
+  .topbar .icon-btn,.top-profile-trigger {min-width:40px;min-height:40px;justify-content:center;padding:8px}
+  .notification-preview {position:fixed;top:68px;right:10px;left:10px;width:auto;max-width:none}
+  .page-content {width:100%;padding:14px 12px 28px;overflow:hidden}
+  .page-header {gap:12px;margin-bottom:16px}
+  .page-header h1 {font-size:23px;line-height:1.2}
+  .page-header p {font-size:13px}
+  .header-actions {width:100%}
+  .header-actions .btn,.header-actions form,.header-actions form .btn {max-width:100%}
+  .card,.panel-form,.client-request-form-card,.client-request-history-card {padding:15px;border-radius:14px}
+  .card-head {align-items:flex-start;gap:10px}
+  .stats-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .stat-card {min-width:0;padding:14px}
+  .stat-card strong {font-size:23px}
+  .content-grid,.split-grid,.account-grid {grid-template-columns:minmax(0,1fr)}
+  .filters,.filters.wide,.filters.compact,.filters.month-filter,.action-filters {grid-template-columns:minmax(0,1fr)}
+  .filters .btn,.filters > a.btn,.action-filters .btn,.action-filters > a.btn {width:100%;justify-content:center}
+  .table-wrap {width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+  table {min-width:720px}
+  th,td {padding:11px 12px}
+  .app-modal,.confirm-overlay {padding:12px}
+  .app-modal-dialog,.confirm-dialog {width:100%;max-height:calc(100dvh - 24px);padding:20px;border-radius:16px}
+  .confirm-actions {flex-direction:column-reverse}
+  .confirm-actions .btn {width:100%}
+  .action-card {grid-template-columns:minmax(0,1fr);gap:14px;padding:15px}
+  .action-editor,.action-editor summary {width:100%}
+  .action-editor summary {justify-content:center}
+  .action-editor[open] {grid-column:auto}
+  .action-editor form {grid-template-columns:minmax(0,1fr)}
+}
+
+@media(max-width:560px) {
+  input,select,textarea {max-width:100%}
+  input[type="date"] {min-height:50px;padding-right:8px}
+  .mobile-only {flex:0 0 40px}
+  .topbar small {font-size:8px}
+  .topbar .theme-toggle {display:none}
+  .page-content {padding-inline:10px}
+  .page-header {display:grid}
+  .header-actions {display:grid;grid-template-columns:minmax(0,1fr)}
+  .header-actions .btn,.header-actions form,.header-actions form .btn {width:100%;justify-content:center}
+  .stats-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .overview-output-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card-head {display:grid}
+  .tabs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tab {min-width:0;text-align:center}
+  .action-summary {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .action-summary-card {min-width:0;padding:13px}
+  .action-summary-card strong {font-size:20px}
+  .action-meta {display:grid;grid-template-columns:minmax(0,1fr)}
+  .pagination {max-width:100%;overflow-x:auto;justify-content:flex-start;padding-bottom:3px}
+  .survey-page .form-group {min-width:0;width:100%}
+  .survey-page .survey-form input:not([type="checkbox"]):not([type="radio"]),
+  .survey-page .survey-form select,
+  .survey-page .survey-form textarea {display:block;width:100%;min-width:0;max-width:100%}
+}
+
+@media(max-width:380px) {
+  .stats-grid,.overview-output-grid,.action-summary,.tabs {grid-template-columns:minmax(0,1fr)}
+  .survey-page .survey-banner,.survey-page .survey-form {padding:14px}
+}
