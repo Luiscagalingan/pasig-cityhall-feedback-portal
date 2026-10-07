@@ -34,7 +34,7 @@ page_header(
     $pending = $request["status"] === "pending";
     $eligible =
         $request["requested_year"] !== null &&
-        $request["staff_role"] === "office_staff" &&
+        in_array($request["staff_role"], ["office_head", "office_staff"], true) &&
         $request["staff_status"] === "active" &&
         $request["office_status"] === "active" &&
         (int) $request["current_office_id"] === (int) $request["office_id"];
@@ -64,7 +64,7 @@ page_header(
     "id"
 ] ?>"><button class="btn small">Send Count to <?= e($request["full_name"]) ?></button></form><?php elseif (
     $pending
-): ?>Annual year, staff account, or assigned office unavailable; submit a new annual request<?php else: ?>Answered<?php endif; ?>
+): ?>Annual year, requester account, or assigned office unavailable; submit a new annual request<?php else: ?>Answered<?php endif; ?>
 </td></tr><?php
 endforeach; ?>
 <?php if (

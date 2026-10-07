@@ -1,0 +1,18 @@
+{
+    "name": "pasig-cityhall/feedback-portal",
+    "description": "Runtime requirements for the Pasig City Hall feedback portal.",
+    "type": "project",
+    "require": {
+        "php": ">=8.2 <8.5",
+        "ext-dom": "*",
+        "ext-fileinfo": "*",
+        "ext-iconv": "*",
+        "ext-json": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "ext-zip": "*"
+    }
+}
