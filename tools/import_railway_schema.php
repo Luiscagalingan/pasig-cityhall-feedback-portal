@@ -32,7 +32,8 @@ if ($host === '' || !ctype_digit($port) || $password === false || $password === 
     exit(2);
 }
 
-$schemaPath = __DIR__ . '/../database/railway_schema.sql';
+$requestedSqlFile = trim((string)getenv('PASIG_IMPORT_SQL_FILE'));
+$schemaPath = $requestedSqlFile !== '' ? $requestedSqlFile : __DIR__ . '/../database/railway_schema.sql';
 $lines = file($schemaPath, FILE_IGNORE_NEW_LINES);
 if ($lines === false) {
     throw new RuntimeException('Cannot read database/railway_schema.sql');
@@ -47,6 +48,17 @@ $pdo = new PDO(
         PDO::ATTR_EMULATE_PREPARES => false,
     ]
 );
+
+if (getenv('PASIG_IMPORT_CLEAR_SEED') === 'YES') {
+    $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+    try {
+        $pdo->exec('DELETE FROM users');
+        $pdo->exec('DELETE FROM offices');
+    } finally {
+        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+    }
+    echo "Cleared fresh-install seed rows.\n";
+}
 
 $delimiter = ';';
 $statement = '';
