@@ -1931,6 +1931,31 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 }
 .survey-page input[type="date"]::-webkit-date-and-time-value {margin:0;text-align:left}
 .survey-page input[type="date"]::-webkit-datetime-edit {display:block;padding:0;text-align:left}
+.survey-page .survey-date-control {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:50px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--panel2)
+}
+.survey-page .survey-date-control:focus-within {
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(47,128,237,.14)
+}
+.survey-page .survey-date-control input[type="date"] {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:48px;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none
+}
 
 @media(max-width:850px) {
   .dashboard-body {overflow-x:hidden}
@@ -1993,7 +2018,7 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
   .action-meta {display:grid;grid-template-columns:minmax(0,1fr)}
   .pagination {max-width:100%;overflow-x:auto;justify-content:flex-start;padding-bottom:3px}
   .survey-page .form-group {min-width:0;width:100%}
-  .survey-page .form-group:has(input[type="date"]) {contain:inline-size}
+  .survey-page .survey-date-field,.survey-page .survey-date-control {width:100%;min-width:0;max-width:100%;contain:inline-size}
   .survey-page input[type="date"] {
     width:-webkit-fill-available;
     inline-size:-webkit-fill-available;
