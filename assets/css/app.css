@@ -1927,10 +1927,10 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
   max-width:100%;
   max-inline-size:100%;
   -webkit-min-logical-width:0;
-  text-align:left
+  text-align:center
 }
-.survey-page input[type="date"]::-webkit-date-and-time-value {margin:0;text-align:left}
-.survey-page input[type="date"]::-webkit-datetime-edit {display:block;padding:0;text-align:left}
+.survey-page input[type="date"]::-webkit-date-and-time-value {width:100%;margin:0;text-align:center}
+.survey-page input[type="date"]::-webkit-datetime-edit {display:block;width:100%;padding:0;text-align:center}
 .survey-page .survey-date-control {
   width:100%;
   min-width:0;
