@@ -1921,10 +1921,16 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 .survey-page input[type="date"] {
   display:block;
   width:100%;
+  inline-size:100%;
   min-width:0;
+  min-inline-size:0;
   max-width:100%;
-  -webkit-min-logical-width:0
+  max-inline-size:100%;
+  -webkit-min-logical-width:0;
+  text-align:left
 }
+.survey-page input[type="date"]::-webkit-date-and-time-value {margin:0;text-align:left}
+.survey-page input[type="date"]::-webkit-datetime-edit {display:block;padding:0;text-align:left}
 
 @media(max-width:850px) {
   .dashboard-body {overflow-x:hidden}
@@ -1987,6 +1993,15 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
   .action-meta {display:grid;grid-template-columns:minmax(0,1fr)}
   .pagination {max-width:100%;overflow-x:auto;justify-content:flex-start;padding-bottom:3px}
   .survey-page .form-group {min-width:0;width:100%}
+  .survey-page .form-group:has(input[type="date"]) {contain:inline-size}
+  .survey-page input[type="date"] {
+    width:-webkit-fill-available;
+    inline-size:-webkit-fill-available;
+    min-width:0;
+    max-width:100%;
+    padding-left:13px;
+    padding-right:13px
+  }
   .survey-page .survey-form input:not([type="checkbox"]):not([type="radio"]),
   .survey-page .survey-form select,
   .survey-page .survey-form textarea {display:block;width:100%;min-width:0;max-width:100%}
