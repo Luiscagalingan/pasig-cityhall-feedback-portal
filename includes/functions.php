@@ -18,8 +18,8 @@ function app_url(string $path = ''): string
         $root = str_replace('\\', '/', rtrim($projectRoot, DIRECTORY_SEPARATOR));
         $doc = str_replace('\\', '/', rtrim($documentRoot, DIRECTORY_SEPARATOR));
         if (stripos($root, $doc) === 0) {
-            $relative = substr($root, strlen($doc));
-            $base = '/' . trim(str_replace('\\', '/', $relative), '/');
+            $relative = trim(str_replace('\\', '/', substr($root, strlen($doc))), '/');
+            $base = $relative === '' ? '' : '/' . $relative;
         }
     }
     return $base . ($path !== '' ? '/' . ltrim($path, '/') : '/');

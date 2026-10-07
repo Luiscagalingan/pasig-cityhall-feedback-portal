@@ -1,7 +1,6 @@
 -- Pasig City Hall Service Satisfaction Monitoring System
 -- Fresh-install schema with workflow, security, review, notifications, and CSV data-quality upgrades.
-CREATE DATABASE IF NOT EXISTS pasig_feedback_portal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE pasig_feedback_portal;
+USE railway;
 
 SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS trg_one_active_head_insert;
@@ -81,7 +80,7 @@ CREATE TABLE feedback (
   source_timestamp DATETIME NULL,
   sex ENUM('Female','Male','Prefer not to say') NOT NULL,
   age TINYINT UNSIGNED NOT NULL,
-  client_type ENUM('Pasigueño','Non-Pasigueño','City Government Employee') NOT NULL,
+  client_type ENUM('PasigueÃ±o','Non-PasigueÃ±o','City Government Employee') NOT NULL,
   service_received VARCHAR(255) NOT NULL,
   timeliness_rating TINYINT UNSIGNED NOT NULL,
   client_handling_rating TINYINT UNSIGNED NOT NULL,
@@ -305,3 +304,5 @@ CREATE TABLE client_count_requests (
   pending_year SMALLINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN status='pending' THEN requested_year ELSE NULL END) STORED,
   UNIQUE KEY uq_pending_staff_year (staff_user_id, pending_year)
 ) ENGINE=InnoDB;
+
+
