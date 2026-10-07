@@ -119,8 +119,8 @@ foreach (
     $a["resolution_notes"]
 ): ?><div class="resolution-preview"><b>Latest resolution notes</b><p><?= nl2br(
     e($a["resolution_notes"]),
-) ?></p></div><?php endif; ?></div><div class="formula-box"><strong>Administrator Update</strong>
-<form method="post" style="margin-top:10px">
+) ?></p></div><?php endif; ?></div><details class="action-editor"><summary class="btn secondary">Update Action</summary>
+<form method="post">
 <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
 <input type="hidden" name="action_id" value="<?= (int) $a["id"] ?>">
 <select name="status" required aria-label="Action status">
@@ -135,7 +135,7 @@ foreach (
 </select>
 <textarea name="resolution_notes" minlength="5" required placeholder="Resolution notes"></textarea>
 <button class="btn small">Save Update</button>
-</form></div></article><?php endforeach;
+</form></details></article><?php endforeach;
 if (!$rows): ?><div class="card empty-state">No action items match the selected filters.</div><?php endif;
 pagination_links($p)
 ?></section>

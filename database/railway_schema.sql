@@ -255,20 +255,6 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Only one active Office Head is allowed per office.';
   END IF;
 END$$
-CREATE TRIGGER trg_csv_auto_rating_label BEFORE INSERT ON feedback FOR EACH ROW
-BEGIN
-  IF NEW.source='csv_import' THEN
-    SET NEW.sentiment = CASE
-      WHEN NEW.overall_rating >= 4 THEN 'positive'
-      WHEN NEW.overall_rating = 3 THEN 'neutral'
-      ELSE 'negative'
-    END;
-    SET NEW.original_sentiment = NEW.sentiment;
-    SET NEW.sentiment_source = 'rating';
-    SET NEW.label_source = 'auto_rating';
-    SET NEW.review_status = 'not_required';
-  END IF;
-END$$
 DELIMITER ;
 
 INSERT INTO offices (id,name,code,description,status) VALUES
