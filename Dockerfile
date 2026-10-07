@@ -28,6 +28,8 @@ RUN python -m pip install --upgrade pip \
 
 COPY . /var/www/html
 
+RUN install -m 0755 docker-runtime-entrypoint.sh /usr/local/bin/pasig-runtime-entrypoint
+
 RUN mkdir -p storage/import_previews storage/sessions uploads \
     && chown -R www-data:www-data storage uploads
 
@@ -43,5 +45,8 @@ RUN php -m \
     && php tests/svm_bridge_test.php
 
 EXPOSE 80
+
+ENTRYPOINT ["pasig-runtime-entrypoint"]
+CMD ["apache2-foreground"]
 
 
