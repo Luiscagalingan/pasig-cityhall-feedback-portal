@@ -72,7 +72,7 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=44"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=45"></head><body class="<?= e($bodyClass) ?>">
 
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
