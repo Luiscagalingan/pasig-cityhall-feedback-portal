@@ -43,7 +43,7 @@ function csv_timestamp_value(array $row, array $map, array $aliases): string
 
 function preview_path(string $token): string
 {
-    return __DIR__ . '/../storage/import_previews/preview_' . $token . '.json';
+    return app_storage_path('import_previews/preview_' . $token . '.json');
 }
 
 function load_preview(string $token, array $user): ?array

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/request_security.php';
 
 function e(mixed $value): string
 {
@@ -231,10 +232,37 @@ function feedback_fingerprint(int $officeId, array $record): string
     return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
 }
 
-function survey_client_hash(): string
+function claim_feedback_fingerprint(PDO $pdo, int $officeId, string $fingerprint, ?DateTimeImmutable $now = null): bool
 {
-    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-    $agent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? 'unknown'), 0, 255);
+    $now ??= new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
+    $expires = $now->modify('+' . FEEDBACK_DUPLICATE_WINDOW_MINUTES . ' minutes');
+    try {
+        $stmt = $pdo->prepare('INSERT INTO feedback_duplicate_claims(office_id,record_fingerprint,claimed_at,expires_at) VALUES(?,?,?,?)');
+        $stmt->execute([$officeId, $fingerprint, $now->format('Y-m-d H:i:s'), $expires->format('Y-m-d H:i:s')]);
+        return true;
+    } catch (PDOException $error) {
+        if (($error->errorInfo[0] ?? '') !== '23000') throw $error;
+    }
+    $stmt = $pdo->prepare('SELECT expires_at FROM feedback_duplicate_claims WHERE office_id=? AND record_fingerprint=? FOR UPDATE');
+    $stmt->execute([$officeId, $fingerprint]);
+    $current = $stmt->fetchColumn();
+    if ($current === false || (string)$current > $now->format('Y-m-d H:i:s')) return false;
+    $stmt = $pdo->prepare('UPDATE feedback_duplicate_claims SET feedback_id=NULL,claimed_at=?,expires_at=? WHERE office_id=? AND record_fingerprint=?');
+    $stmt->execute([$now->format('Y-m-d H:i:s'), $expires->format('Y-m-d H:i:s'), $officeId, $fingerprint]);
+    return true;
+}
+
+function attach_feedback_duplicate_claim(PDO $pdo, int $officeId, string $fingerprint, int $feedbackId): void
+{
+    $pdo->prepare('UPDATE feedback_duplicate_claims SET feedback_id=? WHERE office_id=? AND record_fingerprint=?')
+        ->execute([$feedbackId, $officeId, $fingerprint]);
+}
+
+function survey_client_hash(?array $server = null, ?array $environment = null): string
+{
+    $server ??= $_SERVER;
+    $ip = request_client_ip($server, $environment);
+    $agent = mb_substr((string)($server['HTTP_USER_AGENT'] ?? 'unknown'), 0, 255);
     return hash('sha256', $ip . '|' . $agent);
 }
 
@@ -257,6 +285,40 @@ function survey_submission_limit(bool $enabled = PUBLIC_SUBMISSION_RATE_LIMIT_EN
     } catch (Throwable) {
         return ['allowed' => $wait <= 0, 'wait_seconds' => max(0, $wait), 'hourly_count' => 0];
     }
+}
+
+function reserve_public_submission_slot(PDO $pdo, string $clientHash, ?DateTimeImmutable $now = null): array
+{
+    if (!PUBLIC_SUBMISSION_RATE_LIMIT_ENABLED) return ['allowed'=>true,'wait_seconds'=>0,'hourly_count'=>0];
+    $now ??= new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
+    $nowText = $now->format('Y-m-d H:i:s');
+    $select = $pdo->prepare('SELECT window_started_at,submission_count,last_submit_at FROM public_submission_rate_limits WHERE client_hash=? FOR UPDATE');
+    $select->execute([$clientHash]);
+    $row = $select->fetch();
+    if (!$row) {
+        try {
+            $pdo->prepare('INSERT INTO public_submission_rate_limits(client_hash,window_started_at,submission_count,last_submit_at) VALUES(?,?,1,?)')
+                ->execute([$clientHash,$nowText,$nowText]);
+            return ['allowed'=>true,'wait_seconds'=>0,'hourly_count'=>1];
+        } catch (PDOException $error) {
+            if (($error->errorInfo[0] ?? '') !== '23000') throw $error;
+            $select->execute([$clientHash]);
+            $row = $select->fetch();
+        }
+    }
+    $windowStart = new DateTimeImmutable((string)$row['window_started_at'], new DateTimeZone(APP_TIMEZONE));
+    if ($windowStart <= $now->modify('-1 hour')) {
+        $pdo->prepare('UPDATE public_submission_rate_limits SET window_started_at=?,submission_count=1,last_submit_at=? WHERE client_hash=?')
+            ->execute([$nowText,$nowText,$clientHash]);
+        return ['allowed'=>true,'wait_seconds'=>0,'hourly_count'=>1];
+    }
+    $last = new DateTimeImmutable((string)$row['last_submit_at'], new DateTimeZone(APP_TIMEZONE));
+    $wait = max(0, SURVEY_SUBMISSION_COOLDOWN_SECONDS - ($now->getTimestamp() - $last->getTimestamp()));
+    $count = (int)$row['submission_count'];
+    if ($wait > 0 || $count >= SURVEY_SUBMISSION_HOURLY_LIMIT) return ['allowed'=>false,'wait_seconds'=>$wait,'hourly_count'=>$count];
+    $pdo->prepare('UPDATE public_submission_rate_limits SET submission_count=submission_count+1,last_submit_at=? WHERE client_hash=?')
+        ->execute([$nowText,$clientHash]);
+    return ['allowed'=>true,'wait_seconds'=>0,'hourly_count'=>$count+1];
 }
 
 function record_public_submission(int $officeId, int $feedbackId): void

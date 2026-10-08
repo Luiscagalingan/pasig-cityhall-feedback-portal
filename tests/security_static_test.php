@@ -63,7 +63,8 @@ $allPhp = '';
 foreach (glob($root.'/{admin,office}/*.php', GLOB_BRACE) ?: [] as $file) $allPhp .= file_get_contents($file);
 $check('No permanent user deletion', !preg_match('/DELETE\s+FROM\s+users/i', $allPhp));
 $check('Adult-only survey', str_contains($source('survey.php'), '$age < 18') && str_contains($source('survey.php'), 'min="18"'));
-$check('Exact duplicate protection', str_contains($source('survey.php'), 'record_fingerprint=?'));
+$check('Concurrency-safe duplicate protection', str_contains($source('survey.php'), 'claim_feedback_fingerprint')
+    && str_contains($source('includes/functions.php'), 'FOR UPDATE'));
 $check('Survey rate limit', str_contains($source('survey.php'), 'survey_submission_limit()'));
 $check('Encrypted backup only', str_contains($source('admin/backup.php'), "AES-256-GCM") || str_contains(strtolower($source('admin/backup.php')), 'aes-256-gcm'));
 $backupSource = $source('admin/backup.php');

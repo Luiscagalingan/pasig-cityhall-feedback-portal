@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../includes/request_security.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../includes/functions.php';
+$check = function (bool $ok, string $name): void { if (!$ok) throw new RuntimeException($name); };
+$check(request_is_https(['HTTPS'=>'on'], []), 'direct HTTPS');
+$check(!request_is_https([], []), 'local HTTP remains non-secure');
+$check(request_is_https([], ['PASIG_FORCE_HTTPS'=>'1']), 'forced Railway HTTPS');
+$check(!request_is_https(['REMOTE_ADDR'=>'10.0.0.2','HTTP_X_FORWARDED_PROTO'=>'https'], ['PASIG_TRUST_PROXY_HEADERS'=>'1','PASIG_TRUSTED_PROXY_IPS'=>'10.0.0.1']), 'untrusted proxy rejected');
+$check(request_is_https(['REMOTE_ADDR'=>'10.0.0.1','HTTP_X_FORWARDED_PROTO'=>'https'], ['PASIG_TRUST_PROXY_HEADERS'=>'1','PASIG_TRUSTED_PROXY_IPS'=>'10.0.0.1']), 'trusted proxy accepted');
+$env=['PASIG_TRUST_PROXY_HEADERS'=>'1','PASIG_TRUSTED_PROXY_IPS'=>'10.0.0.1,10.0.0.2'];
+$a=['REMOTE_ADDR'=>'10.0.0.1','HTTP_X_FORWARDED_FOR'=>'203.0.113.9','HTTP_USER_AGENT'=>'same-browser'];
+$b=['REMOTE_ADDR'=>'10.0.0.2','HTTP_X_FORWARDED_FOR'=>'203.0.113.9','HTTP_USER_AGENT'=>'same-browser'];
+$check(request_client_ip($a,$env)==='203.0.113.9' && survey_client_hash($a,$env)===survey_client_hash($b,$env), 'changing trusted proxy addresses retain client bucket');
+$check(request_client_ip(['REMOTE_ADDR'=>'198.51.100.2','HTTP_X_FORWARDED_FOR'=>'203.0.113.9'],$env)==='198.51.100.2', 'untrusted forwarded client IP rejected');
+$railway=['PASIG_TRUST_RAILWAY_HEADERS'=>'1','RAILWAY_ENVIRONMENT_ID'=>'production-id'];
+$ra=['REMOTE_ADDR'=>'100.64.1.10','HTTP_X_REAL_IP'=>'203.0.113.25','HTTP_USER_AGENT'=>'same-browser'];
+$rb=['REMOTE_ADDR'=>'100.64.8.90','HTTP_X_REAL_IP'=>'203.0.113.25','HTTP_USER_AGENT'=>'same-browser'];
+$check(survey_client_hash($ra,$railway)===survey_client_hash($rb,$railway), 'Railway X-Real-IP survives changing ingress peers');
+$check(request_client_ip($ra,['PASIG_TRUST_RAILWAY_HEADERS'=>'1'])==='100.64.1.10', 'Railway header ignored outside Railway runtime');
+$badRailway=$ra;$badRailway['HTTP_X_REAL_IP']='not-an-ip';
+$check(request_client_ip($badRailway,$railway)==='100.64.1.10', 'invalid Railway client IP rejected');
+echo "PASS: HTTPS detection and trusted-proxy policy.\n";

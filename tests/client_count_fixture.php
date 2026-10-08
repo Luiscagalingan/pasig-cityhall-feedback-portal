@@ -42,6 +42,65 @@ if ($argv[1] === 'legacy_setup') {
     require_once __DIR__ . '/../includes/client_counts.php';
     try { create_client_count_request($pdo, 4, 2003); echo 'created'; }
     catch (DomainException $error) { echo 'rejected'; }
+} elseif ($argv[1] === 'claim') {
+    $pdo->exec("USE `$name`");
+    require_once __DIR__ . '/../config/app.php';
+    require_once __DIR__ . '/../includes/functions.php';
+    $pdo->beginTransaction();
+    $claimed = claim_feedback_fingerprint($pdo, 1, str_repeat('a', 64));
+    usleep(200000);
+    $pdo->commit();
+    echo $claimed ? 'claimed' : 'duplicate';
+} elseif ($argv[1] === 'expire_claim') {
+    $pdo->exec("USE `$name`");
+    $pdo->exec("UPDATE feedback_duplicate_claims SET expires_at=DATE_SUB(NOW(),INTERVAL 1 SECOND)");
+    echo 'expired';
+} elseif ($argv[1] === 'import_inspect') {
+    $pdo->exec("USE `$name`");
+    echo json_encode([
+        'feedback'=>$pdo->query("SELECT id,service_received,source,assisted_by,assisted_by_user_id,import_batch_id,rating_percent,comment_score,final_score FROM feedback ORDER BY id")->fetchAll(),
+        'batches'=>$pdo->query("SELECT id,total_rows,imported_rows,rejected_rows,duplicate_rows,rolled_back_at FROM import_batches ORDER BY id")->fetchAll(),
+        'rejected'=>(int)$pdo->query('SELECT COUNT(*) FROM import_rejected_rows')->fetchColumn(),
+    ]);
+} elseif ($argv[1] === 'dashboard_reconcile') {
+    putenv('PASIG_DB_NAME=' . $name);
+    require_once __DIR__ . '/../config/app.php';
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../includes/functions.php';
+    require_once __DIR__ . '/../includes/dashboard.php';
+    $direct=(int)$pdo->query("SELECT COUNT(*) FROM `$name`.feedback WHERE office_id=1 AND is_void=0 AND visit_date BETWEEN '2001-01-01' AND '2001-01-31'")->fetchColumn();
+    $metrics=dashboard_metrics(1,'2001-01-01','2001-01-31');
+    $ages=array_sum(array_map(fn($r)=>(int)$r['count'],age_group_counts(1,'2001-01-01','2001-01-31')));
+    $services=array_sum(array_map(fn($r)=>(int)$r['responses'],service_summary(1,100,'2001-01-01','2001-01-31')));
+    echo json_encode(['direct'=>$direct,'metrics'=>$metrics['total'],'ages'=>$ages,'services'=>$services]);
+} elseif ($argv[1] === 'rate_reserve') {
+    $pdo->exec("USE `$name`");
+    putenv('PASIG_DB_NAME=' . $name);
+    require_once __DIR__ . '/../config/app.php';
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../includes/functions.php';
+    $pdo->beginTransaction();
+    $result=reserve_public_submission_slot($pdo,(string)$argv[3],new DateTimeImmutable((string)$argv[4],new DateTimeZone(APP_TIMEZONE)));
+    usleep(200000);
+    $pdo->commit();
+    echo json_encode($result);
+} elseif ($argv[1] === 'review_setup') {
+    $pdo->exec("USE `$name`");
+    $pdo->exec("INSERT INTO feedback(office_id,visit_date,sex,age,client_type,service_received,timeliness_rating,client_handling_rating,quality_rating,overall_rating,comment,sentiment,original_sentiment,sentiment_confidence,sentiment_source,review_status,average_rating,rating_percent,comment_score,final_score,source) VALUES(1,CURRENT_DATE,'Female',30,'City Government Employee','Review fixture',3,3,3,3,'Mixed review fixture','neutral','neutral',0.40,'svm','needs_review',3,66.67,50,65,'public_survey')");
+    $feedbackId=(int)$pdo->lastInsertId();
+    $pdo->prepare("INSERT INTO actions(feedback_id,office_id,title,status,resolution_notes,completed_at) VALUES(?,1,'Review fixture action','completed','Originally complete',NOW())")->execute([$feedbackId]);
+    echo (string)$feedbackId;
+} elseif ($argv[1] === 'review_inspect') {
+    $pdo->exec("USE `$name`");
+    $id=(int)$argv[3];
+    $s=$pdo->prepare('SELECT id,sentiment,sentiment_source,review_status,reviewed_by_user_id,reviewed_at,reviewer_notes,comment_score,final_score FROM feedback WHERE id=?');$s->execute([$id]);
+    $a=$pdo->prepare('SELECT id,status,resolution_notes,completed_at FROM actions WHERE feedback_id=?');$a->execute([$id]);
+    echo json_encode(['feedback'=>$s->fetch(),'action'=>$a->fetch()]);
+} elseif ($argv[1] === 'drop_guard_tables') {
+    $pdo->exec("USE `$name`");
+    $pdo->exec('DROP TABLE public_submission_rate_limits');
+    $pdo->exec('DROP TABLE feedback_duplicate_claims');
+    echo 'dropped';
 } elseif ($argv[1] === 'answer') {
     $pdo->exec("USE `$name`");
     require_once __DIR__ . '/../includes/client_counts.php';

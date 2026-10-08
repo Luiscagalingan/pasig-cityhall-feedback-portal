@@ -10,12 +10,14 @@ DROP TRIGGER IF EXISTS trg_csv_auto_rating_label;
 DROP TABLE IF EXISTS client_count_requests;
 DROP TABLE IF EXISTS training_candidates;
 DROP TABLE IF EXISTS public_submission_log;
+DROP TABLE IF EXISTS public_submission_rate_limits;
 DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS import_rejected_rows;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS actions;
 DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS feedback_duplicate_claims;
 DROP TABLE IF EXISTS import_batches;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS offices;
@@ -135,6 +137,18 @@ CREATE TABLE feedback (
   INDEX idx_feedback_assisted_user (assisted_by_user_id, office_id, visit_date)
 ) ENGINE=InnoDB;
 
+CREATE TABLE feedback_duplicate_claims (
+  office_id INT UNSIGNED NOT NULL,
+  record_fingerprint CHAR(64) NOT NULL,
+  feedback_id BIGINT UNSIGNED NULL,
+  claimed_at DATETIME NOT NULL,
+  expires_at DATETIME NOT NULL,
+  PRIMARY KEY (office_id,record_fingerprint),
+  INDEX idx_feedback_claim_expiry (expires_at),
+  CONSTRAINT fk_feedback_claim_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE,
+  CONSTRAINT fk_feedback_claim_feedback FOREIGN KEY (feedback_id) REFERENCES feedback(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE public_submission_log (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   client_hash CHAR(64) NOT NULL,
@@ -145,6 +159,14 @@ CREATE TABLE public_submission_log (
   CONSTRAINT fk_public_log_feedback FOREIGN KEY (feedback_id) REFERENCES feedback(id) ON DELETE CASCADE,
   INDEX idx_public_client_date (client_hash, submitted_at),
   INDEX idx_public_date (submitted_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE public_submission_rate_limits (
+  client_hash CHAR(64) PRIMARY KEY,
+  window_started_at DATETIME NOT NULL,
+  submission_count SMALLINT UNSIGNED NOT NULL,
+  last_submit_at DATETIME NOT NULL,
+  INDEX idx_public_rate_window (window_started_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE actions (

@@ -43,6 +43,7 @@ const PRIVACY_NOTICE_VERSION = '2026-07-29';
 const PUBLIC_SUBMISSION_RATE_LIMIT_ENABLED = true;
 const SURVEY_SUBMISSION_COOLDOWN_SECONDS = 60;
 const SURVEY_SUBMISSION_HOURLY_LIMIT = 3;
+const FEEDBACK_DUPLICATE_WINDOW_MINUTES = 1440;
 
 // Institutional defaults; update these when the approved retention schedule changes.
 const FEEDBACK_RETENTION_MONTHS = 60;

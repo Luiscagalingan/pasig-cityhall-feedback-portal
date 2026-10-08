@@ -9,7 +9,7 @@ render_public_start('Public Feedback Portal');
 </nav>
 <section class="hero">
   <div>
-    <span class="eyebrow">UGNAYAN SA PASIG OFFICE FEEDBACK</span>
+    <span class="eyebrow"><?= e(strtoupper(APP_NAME)) ?></span>
     <h1>Your feedback helps improve public service.</h1>
     <p>Share your experience after receiving a service. The survey records demographic information, transaction details, and four service ratings. A written comment is optional. No account is required.</p>
     <div class="public-actions"><a class="btn" href="#offices">Choose an Office</a><a class="btn secondary" href="<?= e(app_url('privacy.php')) ?>">Privacy Policy</a></div>

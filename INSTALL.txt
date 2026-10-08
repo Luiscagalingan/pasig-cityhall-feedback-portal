@@ -14,6 +14,41 @@ CSWDO PORTAL SETUP
 
 Do not copy another laptop's .venv; recreate it on the destination.
 Keep ml/models/svm_sentiment.joblib and ml/models/model_metrics.json.
+
+Railway production configuration
+--------------------------------
+Set PASIG_FORCE_HTTPS=1 so session cookies are Secure behind Railway TLS termination.
+Do not enable PASIG_TRUST_PROXY_HEADERS unless PASIG_TRUSTED_PROXY_IPS contains the
+exact proxy source IPs that are allowed to set X-Forwarded-Proto.
+Railway documents X-Real-IP as the originating client address but does not publish a
+permanent complete ingress-proxy allowlist. Set PASIG_TRUST_RAILWAY_HEADERS=1 only on
+Railway. The application also requires Railway's injected RAILWAY_ENVIRONMENT_ID before
+using X-Real-IP and validates it as an IP address. Outside Railway it falls back to
+REMOTE_ADDR. PASIG_TRUST_PROXY_HEADERS/PASIG_TRUSTED_PROXY_IPS remain available only
+for deployments with an independently verified exact proxy allowlist.
+
+Create a Railway volume mounted at /var/lib/pasig-feedback and set:
+  PASIG_STORAGE_PATH=/var/lib/pasig-feedback
+The application creates sessions/, import_previews/, and logs/ below that path.
+Sessions and previews are operationally temporary, but a volume prevents unexpected
+loss during a restart; expired previews remain rejected by their 24-hour TTL. Logs
+should follow the organization's retention policy. The current application does not
+store durable user uploads; uploads/ remains a protected compatibility directory.
+The HTTP import workflow, System cleanup, and maintenance CLI use PASIG_STORAGE_PATH.
+
+Before deploying the duplicate-window code, back up MySQL and inspect:
+  SELECT office_id,record_fingerprint,COUNT(*) total
+  FROM feedback WHERE is_void=0 AND record_fingerprint IS NOT NULL
+  GROUP BY office_id,record_fingerprint HAVING COUNT(*)>1;
+Then run database/migrations/2026_10_08_feedback_duplicate_claims.sql before deploying
+the new application. It creates both duplicate-claim and transactional hourly-limit
+tables. It does not delete feedback and seeds only fingerprints submitted within the
+last 24 hours.
+If the application is started first, public submissions fail closed with a temporary
+unavailable message; existing records and authenticated read-only pages remain intact.
+Rollback order: deploy the previous application image first, then run
+database/migrations/2026_10_08_feedback_duplicate_claims_rollback.sql. Removing the
+claim table while the new code is live would temporarily break public submissions.
 Training scripts are not included in this runtime distribution.
 The bridge tries project-local ml.venv, then ml\.venv, then PASIG_PYTHON_BIN,
 then system python/python3. Every candidate must load the production model
@@ -21,8 +56,9 @@ and return a valid prediction. Set PASIG_PYTHON_BIN to an executable path only
 (no surrounding quotes or arguments), in the Apache service environment; restart
 Apache after changing it. Local environments take priority.
 Run C:\xampp\php\php.exe tests\svm_bridge_test.php to verify the bridge.
-Technical failures are logged to storage/svm_bridge.log (HTTP access denied by
-storage/.htaccess). Restrict filesystem access to the service account/admins.
+Technical failures are logged to logs/svm_bridge.log below PASIG_STORAGE_PATH (or the
+default protected storage directory). Restrict filesystem access to the service
+account and authorized administrators.
 System Health shows the live probe result; old stored labels are not rewritten.
 Database configuration is in config/database.php.
 

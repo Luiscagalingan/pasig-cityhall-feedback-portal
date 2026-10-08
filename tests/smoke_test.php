@@ -23,7 +23,7 @@ check_result($results,'PHP-to-SVM bridge',($prediction['source']??'')==='svm',js
 
 try{
  $pdo=db();check_result($results,'Database connection',true);
- $requiredTables=['offices','users','feedback','actions','import_batches','import_rejected_rows','notifications','login_attempts','public_submission_log','training_candidates','audit_logs'];
+ $requiredTables=['offices','users','feedback','feedback_duplicate_claims','public_submission_rate_limits','actions','import_batches','import_rejected_rows','notifications','login_attempts','public_submission_log','training_candidates','audit_logs'];
  $tables=$pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);foreach($requiredTables as $table)check_result($results,'Table: '.$table,in_array($table,$tables,true));
  $requiredColumns=['review_status','is_void','record_fingerprint','import_batch_id','model_version'];$cols=$pdo->query('SHOW COLUMNS FROM feedback')->fetchAll(PDO::FETCH_COLUMN);foreach($requiredColumns as $col)check_result($results,'feedback.'.$col,in_array($col,$cols,true));
  $actionCols=$pdo->query('SHOW COLUMNS FROM actions')->fetchAll(PDO::FETCH_COLUMN);check_result($results,'Head approval columns',in_array('approved_by_user_id',$actionCols,true)&&in_array('completion_requested_by_user_id',$actionCols,true));

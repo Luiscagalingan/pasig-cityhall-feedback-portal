@@ -29,6 +29,7 @@ Import `database/schema.sql`.
 ## Security and retention operations
 
 - Public submissions use exact-duplicate blocking, a 60-second cooldown, and a three-submission hourly limit based on a one-way client hash.
+- Exact public duplicates are serialized through a database claim for 24 hours; identical feedback is permitted again after that window.
 - Retention periods are declared in `config/app.php` and are applied by an administrator from **System & Audit > Retention Policy**.
 - Backups are downloaded only as AES-256-GCM encrypted `.pasigbak` files and are not stored by the portal.
 - Decrypt an authorized backup from the project directory with `C:\xampp\php\php.exe tools\decrypt_backup.php backup.pasigbak restored.sql`, then import the SQL through an authorized database administrator.

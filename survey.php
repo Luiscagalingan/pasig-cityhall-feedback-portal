@@ -32,14 +32,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         $fingerprint = feedback_fingerprint((int)$office['id'], ['visit_date'=>$visitDate,'sex'=>$sex,'age'=>$age,'client_type'=>$clientType,'service'=>$service,'ratings'=>$ratings,'comment'=>$comment]);
-        $duplicate = db()->prepare('SELECT id FROM feedback WHERE office_id=? AND record_fingerprint=? AND is_void=0 LIMIT 1');
-        $duplicate->execute([(int)$office['id'], $fingerprint]);
-        if ($duplicate->fetchColumn()) {
-            $errors[] = 'Naisumite na ang kaparehong feedback. Hindi na ito muling isinave upang maiwasan ang duplicate response.';
+        try {
+            db()->beginTransaction();
+            if (!claim_feedback_fingerprint(db(), (int)$office['id'], $fingerprint)) {
+                db()->rollBack();
+                $errors[] = 'Naisumite na ang kaparehong feedback kamakailan. Hindi ito muling isinave upang maiwasan ang duplicate response.';
+            }
+        } catch (PDOException $error) {
+            if (db()->inTransaction()) db()->rollBack();
+            error_log('Public duplicate protection is unavailable; database migration may be pending.');
+            $errors[] = 'Pansamantalang hindi available ang pagsusumite. Subukan muli pagkatapos ma-update ang system.';
+        }
+        if (!$errors) {
+            try {
+                $reserved = reserve_public_submission_slot(db(), survey_client_hash());
+                if (!$reserved['allowed']) {
+                    db()->rollBack();
+                    $errors[] = (int)$reserved['hourly_count'] >= SURVEY_SUBMISSION_HOURLY_LIMIT
+                        ? 'Naabot na ang maximum na tatlong submission sa loob ng isang oras. Subukan muli mamaya.'
+                        : 'Maghintay muna ng ' . max(1, (int)$reserved['wait_seconds']) . ' segundo bago muling magsumite.';
+                }
+            } catch (PDOException $error) {
+                if (db()->inTransaction()) db()->rollBack();
+                error_log('Public submission rate-limit storage is unavailable; database migration may be pending.');
+                $errors[] = 'Pansamantalang hindi available ang pagsusumite. Subukan muli pagkatapos ma-update ang system.';
+            }
         }
     }
-
     if (!$errors) {
+        try {
         $prediction = feedback_sentiment_prediction($ratings, $comment);
         $scores = compute_feedback_scores($ratings, $prediction['label'], $comment);
         $reviewStatus = prediction_review_status($prediction);
@@ -51,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([(int)$office['id'],$visitDate,$sex,$age,$clientType,$service,(int)$ratings[0],(int)$ratings[1],(int)$ratings[2],(int)$ratings[3],$comment,
             $prediction['label'],$prediction['label'],$prediction['confidence'],$prediction['source'],$reviewStatus,model_version(),$scores['average_rating'],$scores['rating_percent'],$scores['comment_score'],$scores['final_score'],$fingerprint,PRIVACY_NOTICE_VERSION]);
         $feedbackId = (int)db()->lastInsertId();
+        attach_feedback_duplicate_claim(db(), (int)$office['id'], $fingerprint, $feedbackId);
+        db()->commit();
         record_public_submission((int)$office['id'], $feedbackId);
         create_action_if_needed($feedbackId, (int)$office['id'], $prediction['label'], $scores['final_score'], $comment);
         if ($reviewStatus === 'needs_review') {
@@ -60,6 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit(null, 'public_feedback_submit', 'Office ' . $office['code'] . ', feedback #' . $feedbackId . ', source=' . $prediction['source']);
         set_flash('success', 'Thank you. Your feedback was submitted successfully.');
         redirect('');
+        } catch (Throwable $error) {
+            if (db()->inTransaction()) db()->rollBack();
+            throw $error;
+        }
     }
 }
 render_public_start('Feedback Survey', 'public-body survey-page');
@@ -77,7 +104,8 @@ render_public_start('Feedback Survey', 'public-body survey-page');
   <div class="form-group"><label>Kasarian <span class="required">*</span></label><select name="sex" required><option value="">Pumili</option><?php foreach(['Female','Male','Prefer not to say'] as $v): ?><option <?= (($_POST['sex'] ?? '')===$v)?'selected':'' ?>><?= e($v) ?></option><?php endforeach; ?></select></div>
   <div class="form-group"><label>Edad (18+) <span class="required">*</span></label><input type="number" min="18" max="120" name="age" value="<?= e($_POST['age'] ?? '') ?>" inputmode="numeric" required><div class="help">Para sa edad 18–120 lamang.</div></div>
 </div>
-<div class="form-row"><div class="form-group"><label>Uri ng kliyente <span class="required">*</span></label><select name="client_type" required><option value="">Pumili</option><?php foreach(['Pasigueño','Non-Pasigueño','City Government Employee'] as $v): ?><option <?= (($_POST['client_type'] ?? '')===$v)?'selected':'' ?>><?= e($v) ?></option><?php endforeach; ?></select></div><div class="form-group"><label>Serbisyong natanggap <span class="required">*</span></label><input name="service_received" value="<?= e($_POST['service_received'] ?? '') ?>" placeholder="Halimbawa: Pagkuha ng permit" required></div></div>
+<?php $serviceExample = $office['code'] === 'CSWDO' ? 'Halimbawa: Assistance to Individuals in Crisis Situation (AICS)' : 'Halimbawa: Serbisyong natanggap sa opisina'; ?>
+<div class="form-row"><div class="form-group"><label>Uri ng kliyente <span class="required">*</span></label><select name="client_type" required><option value="">Pumili</option><?php foreach(['Pasigueño','Non-Pasigueño','City Government Employee'] as $v): ?><option <?= (($_POST['client_type'] ?? '')===$v)?'selected':'' ?>><?= e($v) ?></option><?php endforeach; ?></select></div><div class="form-group"><label>Serbisyong natanggap <span class="required">*</span></label><input name="service_received" value="<?= e($_POST['service_received'] ?? '') ?>" placeholder="<?= e($serviceExample) ?>" required></div></div>
 <h2 class="section-title">2. I-rate ang serbisyo</h2><p class="muted survey-instruction">Piliin ang sagot na pinakamalapit sa inyong karanasan.</p><div class="rating-guide" aria-label="Rating guide"><span><b>1</b>Lubos na hindi sang-ayon</span><span><b>2</b>Hindi sang-ayon</span><span><b>3</b>Sang-ayon</span><span><b>4</b>Lubos na sang-ayon</span></div><div class="rating-grid">
 <?php $items=['timeliness'=>'Bilis ng serbisyo','client_handling'=>'Pakikitungo ng kawani','quality'=>'Kalidad ng serbisyo','overall'=>'Kabuuang kasiyahan']; foreach($items as $name=>$label): ?><div class="rating-item"><strong class="rating-question"><?= e($label) ?> <span class="required">*</span></strong><div class="rating-options"><?php for($i=1;$i<=4;$i++): ?><label><input type="radio" name="<?= e($name) ?>" value="<?= $i ?>" <?= ((int)($_POST[$name] ?? 0)===$i)?'checked':'' ?> required><span><?= $i ?></span></label><?php endfor; ?></div></div><?php endforeach; ?></div>
 <h2 class="section-title">3. Komento <span class="muted">(opsyonal)</span></h2><div class="form-group"><label>Komento o mungkahi</label><textarea name="comment" maxlength="3000" placeholder="Ibahagi ang inyong karanasan o mungkahi."><?= e($_POST['comment'] ?? '') ?></textarea><div class="help">Kung blangko, ang ratings ang gagamitin. Huwag maglagay ng personal na impormasyon.</div></div>

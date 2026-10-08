@@ -72,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             throw $e;
         }
-        $previewDir = __DIR__ . "/../storage/import_previews";
+        $previewDir = app_storage_path('import_previews');
         if (is_dir($previewDir)) {
             foreach (glob($previewDir . "/preview_*.json") ?: [] as $file) {
                 if (

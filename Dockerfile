@@ -30,7 +30,7 @@ COPY . /var/www/html
 
 RUN install -m 0755 docker-runtime-entrypoint.sh /usr/local/bin/pasig-runtime-entrypoint
 
-RUN mkdir -p storage/import_previews storage/sessions uploads \
+RUN mkdir -p storage/import_previews storage/sessions storage/logs uploads \
     && chown -R www-data:www-data storage uploads
 
 # Fail the image build if either runtime or the real production model is broken.

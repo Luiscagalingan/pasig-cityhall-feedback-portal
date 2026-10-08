@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/bootstrap.php';
 $token = $argv[1] ?? '';
-$path = __DIR__ . '/../storage/import_previews/preview_' . $token . '.json';
+$path = app_storage_path('import_previews/preview_' . $token . '.json');
 if (!preg_match('/^[a-f0-9]{32}$/', $token) || !is_file($path)) throw new RuntimeException('Preview not found.');
 $preview = json_decode((string)file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
 $pdo=db();$officeId=(int)$preview['office_id'];$userId=(int)$preview['user_id'];$valid=$preview['valid'];$rejected=$preview['rejected'];

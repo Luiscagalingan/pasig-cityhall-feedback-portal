@@ -9,7 +9,10 @@ function svm_log_failure(string $stage, array $details): void
         ['time' => gmdate('c'), 'stage' => $stage] + $details,
         JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
     );
-    if (!@error_log($entry . PHP_EOL, 3, __DIR__ . '/../storage/svm_bridge.log')) {
+    $logPath = function_exists('app_storage_path') ? app_storage_path('logs/svm_bridge.log') : __DIR__ . '/../storage/svm_bridge.log';
+    $logDir = dirname($logPath);
+    if (!is_dir($logDir)) @mkdir($logDir, 0770, true);
+    if (!@error_log($entry . PHP_EOL, 3, $logPath)) {
         // No paths or user input in the server-log fallback.
         @error_log('SVM bridge failure; protected diagnostic log unavailable.');
     }
