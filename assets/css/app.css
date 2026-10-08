@@ -957,6 +957,9 @@ tr:last-child td {
   .hero,.login-wrap {
     grid-template-columns:1fr
   }
+  .hero .public-actions {
+    justify-content:center
+  }
   .login-info {
     display:none
   }
