@@ -22,8 +22,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
         exit('Service temporarily unavailable. Runtime storage could not be initialized.');
     }
     ini_set('session.save_path', $sessionPath);
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_trans_sid', '0');
     session_name(SESSION_NAME);
     session_set_cookie_params([
+        'lifetime' => 0,
         'httponly' => true,
         'secure' => request_is_https(),
         'samesite' => 'Lax',

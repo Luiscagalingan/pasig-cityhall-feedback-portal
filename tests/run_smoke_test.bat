@@ -5,6 +5,7 @@ set "PHP_BIN=C:\xampp\php\php.exe"
 
 for %%T in (
     tests\security_static_test.php
+    tests\session_cookie_security_test.php
     tests\scoring_test.php
     tests\output_periods_test.php
     tests\dataset_import_test.php
