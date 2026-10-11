@@ -126,7 +126,21 @@ function logout_user(): void
             'samesite' => $params['samesite'] ?? 'Lax',
         ]);
     }
-    if (session_status() === PHP_SESSION_ACTIVE) session_destroy();
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+    // session_destroy() removes server-side data but leaves the identifier in
+    // the current process. Clear it before logout.php starts an anonymous
+    // flash-message session so the authenticated identifier is never reused.
+    session_id('');
+}
+
+function send_private_no_store_headers(): void
+{
+    if (headers_sent()) return;
+    header('Cache-Control: no-store, no-cache, must-revalidate, private');
+    header('Pragma: no-cache');
+    header('Expires: 0');
 }
 
 function require_login(array $roles = []): array
@@ -137,6 +151,7 @@ function require_login(array $roles = []): array
         if (!empty($_SESSION)) set_flash('info', 'Your session expired. Please sign in again.');
         redirect('login.php');
     }
+    send_private_no_store_headers();
     if ($roles && !in_array($user['role'], $roles, true)) {
         http_response_code(403);
         exit('You do not have permission to access this page.');
