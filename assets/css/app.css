@@ -1870,6 +1870,17 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 
 /* QR-ready survey layout for tablets and phones */
 .survey-page {overflow-x:hidden}
+.public-body:not(.survey-page) .hero-card,
+.public-body:not(.survey-page) .office-card,
+.public-body:not(.survey-page) .btn.secondary {border-color:#000}
+.survey-page .survey-form .section-title,
+.survey-page .rating-guide,
+.survey-page .rating-item,
+.survey-page .rating-options label span,
+.survey-page .survey-form input:not([type="checkbox"]):not([type="radio"]),
+.survey-page .survey-form select,
+.survey-page .survey-form textarea,
+.survey-page .survey-form .checkbox-row {border-color:#000}
 .survey-page .survey-form input,
 .survey-page .survey-form select,
 .survey-page .survey-form textarea,
