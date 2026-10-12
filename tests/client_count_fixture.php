@@ -130,7 +130,7 @@ if ($argv[1] === 'legacy_setup') {
     foreach ([[1,' Test Staff ',0],[1,'STAFF',0],[1,'staff',1],[2,'staff',0],[1,'Someone Else',0]] as $f) $feedback->execute($f);
     $pdo->exec("UPDATE feedback SET source='assisted_survey',imported_by_user_id=4 WHERE id IN (1,2)");
     $pdo->exec("INSERT INTO import_batches(id,office_id,uploaded_by_user_id,original_filename,rejected_rows) VALUES(1,1,2,'fixture.csv',1),(2,2,2,'fixture-other.csv',1)");
-    $pdo->exec("INSERT INTO import_rejected_rows(import_batch_id,row_number,raw_row,error_message) VALUES(1,2,'[]','Fixture rejection'),(2,2,'[]','Other office rejection')");
+    $pdo->exec("INSERT INTO import_rejected_rows(import_batch_id,`row_number`,raw_row,error_message) VALUES(1,2,'[]','Fixture rejection'),(2,2,'[]','Other office rejection')");
     echo "Fixture created\n";
 } else {
     $pdo->exec("USE `$name`");
