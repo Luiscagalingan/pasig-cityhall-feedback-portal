@@ -16,6 +16,18 @@
 html {
   color-scheme:dark
 }
+html[data-theme="light"] {
+  color-scheme:light;
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --panel2:#eef4fa;
+  --line:#d7e1ec;
+  --text:#17324d;
+  --muted:#60758b;
+  --blue:#1268bd;
+  --blue2:#1268bd;
+  --shadow:0 20px 60px rgba(35,70,105,.12)
+}
 * {
   box-sizing:border-box
 }
@@ -1121,6 +1133,29 @@ tr:last-child td {
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact
   }
+}
+@media print {
+  .print-help { display:none!important }
+  .report-page, .report-page body { background:#fff!important; color:#000!important }
+  .report-page .page-header h1,
+  .report-page .page-header h2,
+  .report-page .page-header h3,
+  .report-page .card h2,
+  .report-page .card h3,
+  .report-page .stat-card strong,
+  .report-page table,
+  .report-page th,
+  .report-page td { color:#000!important }
+  .report-page .card,
+  .report-page .stat-card,
+  .report-page .table-wrap,
+  .report-page table { background:#fff!important }
+  .report-page .muted,
+  .report-page .card-head p,
+  .report-page .page-header p,
+  .report-page .stat-card small,
+  .report-page .stat-card span { color:#333!important }
+  .report-page .page-header h1 { font-weight:800 }
 }
 .report-cover {
   display:none;

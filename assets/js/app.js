@@ -1,4 +1,37 @@
 (() => {
+  const theme = document.documentElement;
+  const themeToggle = document.querySelector('[data-theme-toggle]');
+  if (themeToggle) {
+    const savedTheme = localStorage.getItem('pasig-theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') theme.dataset.theme = savedTheme;
+    const updateThemeButton = () => {
+      const dark = theme.dataset.theme === 'dark';
+      themeToggle.innerHTML = dark ? '☀️ <span>Light mode</span>' : '🌙 <span>Dark mode</span>';
+      themeToggle.setAttribute('aria-label', dark ? 'Use light mode' : 'Use dark mode');
+    };
+    updateThemeButton();
+    themeToggle.addEventListener('click', () => {
+      theme.dataset.theme = theme.dataset.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('pasig-theme', theme.dataset.theme);
+      updateThemeButton();
+    });
+  }
+  document.querySelectorAll('.dashboard-body .topbar-actions').forEach(actions => {
+    if (!actions.querySelector('[data-theme-toggle]')) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'theme-toggle'; button.dataset.themeToggle = '';
+      actions.prepend(button);
+      button.click = button.click;
+      const saved = localStorage.getItem('pasig-theme');
+      if (saved === 'dark' || saved === 'light') theme.dataset.theme = saved;
+      button.addEventListener('click', () => {
+        theme.dataset.theme = theme.dataset.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('pasig-theme', theme.dataset.theme);
+        button.innerHTML = theme.dataset.theme === 'dark' ? '☀️ <span>Light mode</span>' : '🌙 <span>Dark mode</span>';
+      });
+      button.innerHTML = theme.dataset.theme === 'dark' ? '☀️ <span>Light mode</span>' : '🌙 <span>Dark mode</span>';
+    }
+  });
   const sweetAlertAvailable = () => typeof window.Swal?.fire === 'function';
   const sweetAlertOptions = options => ({
     background: '#111c2f',

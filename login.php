@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 render_public_start('Authorized Login', 'login-body');
 ?>
 <div class="login-wrap">
+  <button type="button" class="theme-toggle login-theme-toggle" data-theme-toggle aria-label="Toggle color theme"></button>
   <section class="login-info">
     <div class="login-orb login-orb-one"></div><div class="login-orb login-orb-two"></div>
     <div class="login-brand">
