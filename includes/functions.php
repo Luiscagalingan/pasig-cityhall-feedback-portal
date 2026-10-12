@@ -504,8 +504,8 @@ function csv_download(string $filename, array $headers, array $rows): never
     header('Content-Disposition: attachment; filename="' . preg_replace('/[^A-Za-z0-9._-]/', '_', $filename) . '"');
     $out = fopen('php://output', 'wb');
     fwrite($out, "\xEF\xBB\xBF");
-    fputcsv($out, array_map('csv_safe_cell', $headers));
-    foreach ($rows as $row) fputcsv($out, array_map('csv_safe_cell', $row));
+    fputcsv($out, array_map('csv_safe_cell', $headers), ',', '"', '\\');
+    foreach ($rows as $row) fputcsv($out, array_map('csv_safe_cell', $row), ',', '"', '\\');
     fclose($out);
     exit;
 }

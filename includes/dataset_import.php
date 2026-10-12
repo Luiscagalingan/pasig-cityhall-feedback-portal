@@ -91,10 +91,10 @@ function dataset_import_stream(string $path, string $extension, ?string &$sheetN
             }
             if (!array_filter($values, static fn($value) => trim($value) !== '')) continue;
             if ($rowNumber > 10001) throw new RuntimeException('The data worksheet exceeds 10,000 data rows. Split it into smaller files.');
-            while (++$previousRow < $rowNumber) fputcsv($stream, []);
+            while (++$previousRow < $rowNumber) fputcsv($stream, [], ',', '"', '\\');
             $dense = array_fill(0, max(array_keys($values)) + 1, '');
             foreach ($values as $column => $value) $dense[$column] = $value;
-            if (fputcsv($stream, $dense) === false) throw new RuntimeException('Unable to prepare workbook preview.');
+            if (fputcsv($stream, $dense, ',', '"', '\\') === false) throw new RuntimeException('Unable to prepare workbook preview.');
         }
         rewind($stream);
         return $stream;
