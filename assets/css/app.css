@@ -91,8 +91,18 @@ svg {
   height:17px
 }
 .public-body {
+  color-scheme:light;
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --panel2:#eef4fa;
+  --line:#d7e1ec;
+  --text:#17324d;
+  --muted:#60758b;
+  --blue:#1268bd;
+  --blue2:#1268bd;
+  --shadow:0 20px 60px rgba(35,70,105,.12);
   min-height:100vh;
-  background:radial-gradient(circle at 15% 10%,rgba(47,128,237,.24),transparent 32%),var(--bg)
+  background:radial-gradient(circle at 15% 10%,rgba(47,128,237,.13),transparent 32%),var(--bg)
 }
 .public-nav {
   display:flex;
@@ -1872,7 +1882,7 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 .survey-page {overflow-x:hidden}
 .public-body:not(.survey-page) .hero-card,
 .public-body:not(.survey-page) .office-card,
-.public-body:not(.survey-page) .btn.secondary {border-color:#000}
+.public-body:not(.survey-page) .btn.secondary {border-color:var(--line)}
 .survey-page .survey-form .section-title,
 .survey-page .rating-guide,
 .survey-page .rating-item,
@@ -1880,7 +1890,7 @@ input[type="checkbox"]:disabled {opacity:.5;cursor:not-allowed}
 .survey-page .survey-form input:not([type="checkbox"]):not([type="radio"]),
 .survey-page .survey-form select,
 .survey-page .survey-form textarea,
-.survey-page .survey-form .checkbox-row {border-color:#000}
+.survey-page .survey-form .checkbox-row {border-color:var(--line)}
 .survey-page .survey-form input,
 .survey-page .survey-form select,
 .survey-page .survey-form textarea,
