@@ -180,7 +180,7 @@ page_header(
     "Makikita rito ang mga aktibidad ng Admin, Office Head, Staff, at public users.",
     $exportPdf
         ? ""
-        : '<button type="button" class="btn" data-modal-open="backup-modal">Gumawa ng Encrypted Backup</button><button type="button" class="btn secondary" data-modal-open="retention-modal">Retention Policy</button>',
+        : '<button type="button" class="btn" data-modal-open="backup-modal">Create Encrypted Backup</button><button type="button" class="btn secondary" data-modal-open="retention-modal">Retention Policy</button>',
 );
 ?>
 <?php if (!$exportPdf): ?><div class="tabs"><a class="tab <?= $roleFilter === "" ? "active" : "" ?>" href="?<?= e(
