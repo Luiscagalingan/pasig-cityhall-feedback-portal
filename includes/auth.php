@@ -10,7 +10,7 @@ function active_application_role(string $role): bool
 function can_manage_client_count_requests(array $user): bool
 {
     return ($user['role'] ?? '') === 'admin'
-        && strcasecmp((string)($user['username'] ?? ''), 'uno') === 0;
+        && strcasecmp((string)($user['username'] ?? ''), 'admin') === 0;
 }
 
 function current_user(): ?array
@@ -160,7 +160,7 @@ function require_login(array $roles = []): array
     // Office Heads monitor business data; personal account/notification actions
     // retain their own CSRF and ownership checks. Announcements are admin-only.
     if ($user['role'] === 'office_head' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
-        && !in_array($script, ['account.php', 'notifications.php', 'notification-read.php', 'client-count-request.php', 'client-counts.php', 'logout.php'], true)) {
+        && !in_array($script, ['account.php', 'notifications.php', 'notification-read.php', 'logout.php'], true)) {
         http_response_code(403);
         exit('Office Head access is view-only.');
     }

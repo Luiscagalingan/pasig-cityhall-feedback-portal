@@ -32,27 +32,35 @@ if ($exportPdf) {
         "Dashboard " . $exportScope . " snapshot as of " . date("M d, Y h:i A"),
     );
 }
-$headerActions =
-    '<a class="btn" href="' .
-    e(app_url("admin/offices.php")) .
-    '">Add Office</a>' .
-    ($exportPdf
-        ? ""
-        : '<button type="button" class="btn secondary" data-modal-open="dashboard-export-modal">Download Dashboard PDF</button>');
 render_dashboard_start("Administrator Overview", "overview");
 page_header(
     "Administrator Overview",
     "Consolidated, active-office service-satisfaction monitoring with data-quality and action indicators.",
-    $headerActions,
 );
 $output = client_output_summary();
 $sex = demographic_counts(null, "sex");
 $clientTypes = demographic_counts(null, "client_type");
 ?>
+<div class="stats-grid"><div class="stat-card highlight"><small>Total Responses</small><strong><?= $m[
+    "total"
+] ?></strong><span>Non-void records from active offices</span></div><div class="stat-card"><small>Final Satisfaction</small><strong><?= number_format(
+    $m["avg_final"],
+    1,
+) ?>%</strong><span><?= e(
+    final_interpretation($m["avg_final"]),
+) ?></span></div><div class="stat-card"><small>Positive Sentiment</small><strong><?= number_format(
+    $m["positive_rate"],
+    1,
+) ?>%</strong><span><?= $m[
+    "positive"
+] ?> positive comments</span></div><div class="stat-card"><small>Needs Review</small><strong><?= $m[
+     "review_count"
+ ] ?></strong><span><?= $m[
+    "fallback_count"
+] ?> fallback classification(s)</span></div><div class="stat-card"><small>Pending Approval</small><strong><?= $m[
+     "pending_approval"
+ ] ?></strong><span><?= number_format($m["completion_rate"], 1) ?>% action completion</span></div></div>
 <section class="overview-output-grid" aria-label="Pangkalahatang client output at ratings">
-  <div class="overview-kpi output"><small>Total Output</small><strong><?= (int) $output[
-      "total"
-  ] ?></strong><span>kabuuang naproseso</span></div>
   <div class="overview-kpi average"><small>Avg. Daily Output</small><strong><?= number_format(
       (float) $output["average"],
       1,
@@ -83,33 +91,11 @@ $clientTypes = demographic_counts(null, "client_type");
       2,
   ) ?></strong><span>kalidad ng serbisyo</span></div>
 </section>
-<?php if (
-    !$exportPdf
-): ?><div class="app-modal" id="dashboard-export-modal" aria-hidden="true"><section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard-export-title"><button type="button" class="modal-close" data-modal-close>&times;</button><h2 id="dashboard-export-title">Export Dashboard PDF</h2><p class="muted">Choose how much information to include.</p><form method="get" target="_blank" class="modal-form"><input type="hidden" name="export" value="pdf"><div class="scope-options"><label class="scope-option"><input type="radio" name="scope" value="summary" checked><span><strong>Dashboard summary</strong><br><small>Metrics, charts, comparisons, and recent feedback.</small></span></label><label class="scope-option"><input type="radio" name="scope" value="complete"><span><strong>Complete report</strong><br><small>Summary plus every non-void response from active offices.</small></span></label></div><div class="confirm-actions"><button type="button" class="btn secondary" data-modal-close>Cancel</button><button class="btn">Open PDF Preview</button></div></form></section></div><?php endif; ?>
 <?php if ($exportPdf): ?><section class="report-cover"><img src="<?= e(
     app_url("assets/images/241304413_194220316131017_8817860418863376271_n.jpg"),
 ) ?>" alt=""><div><h1>City Government of Pasig</h1><p>Consolidated Service Feedback Dashboard Report</p><small>All active offices · Generated <?= e(
     date("F d, Y h:i A"),
 ) ?></small></div></section><?php endif; ?>
-<div class="stats-grid"><div class="stat-card highlight"><small>Total Responses</small><strong><?= $m[
-    "total"
-] ?></strong><span>Non-void records from active offices</span></div><div class="stat-card"><small>Final Satisfaction</small><strong><?= number_format(
-    $m["avg_final"],
-    1,
-) ?>%</strong><span><?= e(
-    final_interpretation($m["avg_final"]),
-) ?></span></div><div class="stat-card"><small>Positive Sentiment</small><strong><?= number_format(
-    $m["positive_rate"],
-    1,
-) ?>%</strong><span><?= $m[
-    "positive"
-] ?> positive comments</span></div><div class="stat-card"><small>Needs Review</small><strong><?= $m[
-     "review_count"
- ] ?></strong><span><?= $m[
-    "fallback_count"
-] ?> fallback classification(s)</span></div><div class="stat-card"><small>Pending Approval</small><strong><?= $m[
-     "pending_approval"
- ] ?></strong><span><?= number_format($m["completion_rate"], 1) ?>% action completion</span></div></div>
 <div class="content-grid"><section class="card"><div class="card-head"><div><h2>Six-Month Satisfaction Trend</h2><p>Average final weighted score</p></div></div><div class="chart-box"><canvas data-chart='<?= e(
     json_encode($trend),
 ) ?>' data-type="line"></canvas></div></section><section class="card"><div class="card-head"><div><h2>Sentiment Distribution</h2><p>SVM/manual verified output</p></div></div><div class="sentiment-stack"><div class="sentiment-box positive"><strong><?= $m[
@@ -143,7 +129,7 @@ foreach ($ages as $r): ?><p><span><?= e($r["label"]) ?></span><strong><?= (int) 
 ] ?></strong></p><?php endforeach;
 if (!$ages): ?><p class="muted">Wala pang datos.</p><?php endif;
 ?></div></div></section>
-<section class="card"><div class="card-head"><div><h2>Action Timeliness</h2></div></div><div class="stats-grid mini"><div class="stat-card"><small>Average Open Age</small><strong><?= number_format(
+<section class="card action-timeliness-card"><div class="card-head"><div><h2>Action Timeliness</h2></div></div><div class="stats-grid mini"><div class="stat-card"><small>Average Open Age</small><strong><?= number_format(
     $m["avg_open_hours"] / 24,
     1,
 ) ?></strong><span>days</span></div><div class="stat-card"><small>Average Resolution</small><strong><?= number_format(
@@ -157,7 +143,7 @@ if (!$ages): ?><p class="muted">Wala pang datos.</p><?php endif;
 ] ?> responses · <?= number_format(
      (float) $s["avg_score"],
      1,
- ) ?>% score</span></div><?php endforeach; ?></div></section>
+) ?>% score</span></div><?php endforeach; ?></div></section>
 <?php if (
     $exportPdf
 ): ?><section class="card complete-responses"><div class="card-head"><div><h2>Complete Feedback Responses — All Active Offices</h2><p><?= count(

@@ -61,7 +61,7 @@ function office_nav(array $user): array
     }
     if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
     if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
-    if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) $nav[] = ['client_request','Request Client Count from Sir Uno','office/client-count-request.php','message'];
+    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count from Sir Uno','office/client-count-request.php','message'];
     if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
     if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
     $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
@@ -72,7 +72,7 @@ function office_nav(array $user): array
 function render_public_start(string $title, string $bodyClass = 'public-body'): void
 {
     $flash = consume_flash(); ?>
-<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=50"></head><body class="<?= e($bodyClass) ?>">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=62"></head><body class="<?= e($bodyClass) ?>">
 
 <?php if ($flash): ?><div class="toast <?= e($flash['type']) ?>" data-toast><?= e($flash['message']) ?></div><?php endif;
 }
@@ -92,7 +92,7 @@ function render_dashboard_start(string $title, string $active): array
     $unread = unread_notification_count((int)$user['id']);
     $notificationPreview = [];
     try {
-        $previewStmt = db()->prepare("SELECT n.title,n.message,n.type,n.read_at,n.created_at FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR recipient.username='uno') AND (n.expires_at IS NULL OR n.expires_at>NOW()) ORDER BY n.read_at IS NULL DESC,n.created_at DESC LIMIT 5");
+        $previewStmt = db()->prepare("SELECT n.title,n.message,n.type,n.read_at,n.created_at FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR recipient.username='admin') AND (n.expires_at IS NULL OR n.expires_at>NOW()) ORDER BY n.read_at IS NULL DESC,n.created_at DESC LIMIT 5");
         $previewStmt->execute([(int)$user['id']]);
         $notificationPreview = $previewStmt->fetchAll();
     } catch (Throwable) {}
@@ -100,7 +100,7 @@ function render_dashboard_start(string $title, string $active): array
     $workAlerts = $unread;
     $scopeLabel = $user['role'] === 'admin' ? 'SYSTEM ADMINISTRATOR' : strtoupper(status_label((string)$user['role']));
     ?>
-<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=49"></head><body class="dashboard-body <?= $active === 'reports' ? 'report-page' : '' ?>">
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e($title) ?> | <?= e(APP_SHORT_NAME) ?></title><link rel="icon" type="image/png" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="apple-touch-icon" href="<?= e(app_url('assets/images/pasig-favicon.png')) ?>?v=2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>?v=62"></head><body class="dashboard-body <?= $active === 'reports' ? 'report-page' : '' ?>">
 <div class="sidebar-overlay" data-sidebar-close></div><aside class="sidebar"><a class="brand" href="<?= e(app_url(dashboard_path($user))) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>Pasig City Hall</strong><small>Service Feedback</small></div></a><div class="role-card"><span><?= e(initials($user['full_name'])) ?></span><div><strong><?= e($user['full_name']) ?></strong><small><?= e(status_label($user['role'])) ?></small></div></div><nav>
 <?php foreach ($nav as [$key,$label,$path,$iconName]): ?><a class="nav-link <?= $active === $key ? 'active' : '' ?>" href="<?= e(app_url($path)) ?>"><?= icon($iconName) ?><span><?= e($label) ?></span><?php if ($key === 'actions' && $metrics['needs_action'] > 0): ?><b><?= (int)$metrics['needs_action'] ?></b><?php elseif ($key === 'notifications' && $workAlerts > 0): ?><b title="Unresolved work items"><?= $workAlerts ?></b><?php elseif ($key === 'review' && $review > 0): ?><b><?= $review ?></b><?php endif; ?></a><?php endforeach; ?>
 </nav><a class="nav-link logout-link" href="<?= e(app_url('logout.php')) ?>" data-confirm-logout><?= icon('logout') ?><span>Logout</span></a></aside>
@@ -117,8 +117,10 @@ function render_dashboard_end(): void
 
 function page_header(string $title, string $description, string $actions = ''): void
 {
-    $printHelp = $title === 'Reports & Export' ? '<small class="print-help">Para alisin ang URL, petsa, at browser page headers/footers, i-uncheck ang Headers and footers sa print settings.</small>' : '';
-    echo '<div class="page-header"><div><h1>' . e($title) . '</h1><p>' . e($description) . '</p></div><div class="header-actions">' . $actions . $printHelp . '</div></div>';
+    $isReports = str_contains($title, 'Reports & Export');
+    $printHelp = $isReports ? '<small class="print-help"><strong>Note:</strong> Para alisin ang URL, petsa, at browser page headers/footers, i-uncheck ang Headers and footers sa print settings.</small>' : '';
+    $actionsClass = $isReports ? 'header-actions report-header-actions' : 'header-actions';
+    echo '<div class="page-header"><div><h1>' . e($title) . '</h1><p>' . e($description) . '</p></div><div class="' . $actionsClass . '">' . $actions . $printHelp . '</div></div>';
 }
 
 function badge(string $text, string $type = 'neutral'): string

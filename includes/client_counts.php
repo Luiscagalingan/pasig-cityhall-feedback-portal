@@ -16,7 +16,7 @@ function client_count_actor(PDO $pdo, int $userId, string $role): array
 function client_count_requester(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare("SELECT u.*,o.status office_status FROM users u LEFT JOIN offices o ON o.id=u.office_id
-        WHERE u.id=? AND u.role IN ('office_head','office_staff') AND u.status='active'");
+        WHERE u.id=? AND u.role='office_staff' AND u.status='active'");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
     if (!$user || $user['office_status'] !== 'active') {
@@ -51,7 +51,7 @@ function create_client_count_request(PDO $pdo, int $staffId, int $year): int
     try {
         $staff = client_count_requester($pdo, $staffId);
         $stmt = $pdo->prepare("SELECT id FROM users WHERE username=? AND role='admin' AND status='active' LIMIT 1");
-        $stmt->execute(['uno']);
+        $stmt->execute(['admin']);
         $requestAdminId = $stmt->fetchColumn();
         if (!$requestAdminId) throw new DomainException('Sir Uno is not available to receive this request.');
         $pdo->prepare('INSERT INTO client_count_requests(staff_user_id,office_id,requested_year) VALUES(?,?,?)')
@@ -80,10 +80,8 @@ function answer_client_count_request(PDO $pdo, int $adminId, int $requestId): in
         $actorStmt = $pdo->prepare("SELECT u.*,o.status office_status FROM users u LEFT JOIN offices o ON o.id=u.office_id WHERE u.id=? AND u.status='active'");
         $actorStmt->execute([$adminId]);
         $admin = $actorStmt->fetch();
-        if (!$admin || !in_array($admin['role'], ['admin','office_head'], true)
-            || ($admin['role'] === 'office_head' && $admin['office_status'] !== 'active')
-            || ($admin['role'] === 'admin' && strcasecmp((string)$admin['username'], 'uno') !== 0)) {
-            throw new DomainException('Only Sir Uno or the assigned Office Head can answer client-count requests.');
+        if (!$admin || $admin['role'] !== 'admin' || strcasecmp((string)$admin['username'], 'admin') !== 0) {
+            throw new DomainException('Only the designated System Administrator can answer client-count requests.');
         }
         // Serialize competing administrators before calculating or notifying.
         $stmt = $pdo->prepare('SELECT * FROM client_count_requests WHERE id=? FOR UPDATE');
@@ -93,10 +91,6 @@ function answer_client_count_request(PDO $pdo, int $adminId, int $requestId): in
         if ($request['status'] !== 'pending') throw new DomainException('This request has already been answered.');
         if ($request['requested_year'] === null) throw new DomainException('This legacy request has no year. Ask the staff member to submit an annual request.');
         $staff = client_count_requester($pdo, (int)$request['staff_user_id']);
-        if ($admin['role'] === 'office_head'
-            && ((int)$admin['office_id'] !== (int)$request['office_id'] || $staff['role'] !== 'office_staff')) {
-            throw new DomainException('Office Heads can answer only Staff requests from their assigned office.');
-        }
         if ((int)$staff['office_id'] !== (int)$request['office_id']) {
             throw new DomainException('The staff office has changed. Ask the staff member to send a new request.');
         }
@@ -105,13 +99,11 @@ function answer_client_count_request(PDO $pdo, int $adminId, int $requestId): in
         $update = $pdo->prepare("UPDATE client_count_requests SET status='answered',answered_count=?,answered_at=NOW(),answered_by_user_id=? WHERE id=? AND status='pending'");
         $update->execute([$count, $adminId, $requestId]);
         if ($update->rowCount() !== 1) throw new DomainException('This request has already been answered.');
-        $responderLabel = $admin['role'] === 'office_head' ? 'Your Office Head' : 'An Administrator';
         $pdo->prepare("INSERT INTO notifications(user_id,office_id,sender_user_id,type,title,message,link_url) VALUES(?,?,?,'client_count',?,?,?)")
             ->execute([(int)$staff['id'], (int)$request['office_id'], $adminId, 'Annual client-count request answered',
-                $responderLabel . ' answered request #' . $requestId . '. Your verified annual count for ' . $year . ' is ' . $count . '. Status: Answered.',
+                'An Administrator answered request #' . $requestId . '. Your verified annual count for ' . $year . ' is ' . $count . '. Status: Answered.',
                 'office/client-count-request.php']);
-        $auditAction = $admin['role'] === 'office_head' ? 'office_head_client_count_sent' : 'admin_client_count_sent';
-        client_count_audit($pdo, $adminId, $auditAction, 'Answered annual request #' . $requestId . ' for staff #' . $staff['id'] . '; year=' . $year . '; count=' . $count);
+        client_count_audit($pdo, $adminId, 'admin_client_count_sent', 'Answered annual request #' . $requestId . ' for staff #' . $staff['id'] . '; year=' . $year . '; count=' . $count);
         $pdo->commit();
         return $count;
     } catch (Throwable $error) {
@@ -126,13 +118,8 @@ function client_count_requests(PDO $pdo, ?array $staff = null): array
     $where = '';
     $params = [];
     if ($staff !== null) {
-        if (($staff['role'] ?? '') === 'office_head') {
-            $where = ' WHERE r.office_id=?';
-            $params[] = (int)$staff['office_id'];
-        } else {
-            $where = ' WHERE r.staff_user_id=?';
-            $params[] = (int)$staff['id'];
-        }
+        $where = ' WHERE r.staff_user_id=?';
+        $params[] = (int)$staff['id'];
     }
     $stmt = $pdo->prepare("SELECT r.*,u.full_name,u.username,u.role staff_role,u.status staff_status,u.office_id current_office_id,o.name office_name,o.code office_code,o.status office_status,a.full_name administrator_name
         FROM client_count_requests r JOIN users u ON u.id=r.staff_user_id JOIN offices o ON o.id=r.office_id

@@ -141,7 +141,7 @@ if ($exportPdf) {
     }
 }
 $stmt = db()->prepare(
-    "SELECT a.*,CASE WHEN u.id IS NULL THEN 'Public / System' ELSE CONCAT(u.full_name,' — ',CASE u.role WHEN 'office_head' THEN 'Office Head' WHEN 'office_staff' THEN 'Office Staff' WHEN 'admin' THEN 'Admin' ELSE 'Legacy role (retired)' END,CASE WHEN o.code IS NULL THEN '' ELSE CONCAT(' — ',o.code) END) END full_name,u.username,u.role,o.name office_name,o.code office_code FROM audit_logs a{$auditJoins}WHERE {$whereSql} ORDER BY a.created_at DESC LIMIT " .
+    "SELECT a.*,CASE WHEN u.id IS NULL THEN 'Public / System' ELSE CONCAT(u.full_name,' — ',CASE u.role WHEN 'office_head' THEN 'Office Head' WHEN 'office_staff' THEN 'Office Staff' WHEN 'admin' THEN 'Admin' ELSE 'Legacy role (retired)' END,CASE WHEN o.code IS NULL THEN '' ELSE CONCAT(' — ',o.code) END) END full_name,u.username,u.role,o.name office_name,o.code office_code FROM audit_logs a{$auditJoins}WHERE {$whereSql} ORDER BY a.created_at DESC,a.id DESC LIMIT " .
         max(1, $limit) .
         " OFFSET " .
         $offset,

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
-render_public_start('Privacy and Data Governance');
+render_public_start('Privacy and Data Governance', 'public-body policy-page');
 ?>
 <nav class="public-nav"><a class="public-brand" href="<?= e(app_url()) ?>"><img class="seal" src="<?= e(app_url('assets/images/241304413_194220316131017_8817860418863376271_n.jpg')) ?>" alt="Pasig Public Information Office logo"><div><strong>City Government of Pasig</strong><small>Privacy and Data Governance</small></div></a><div class="public-actions"><a class="btn secondary public-back" href="<?= e(app_url()) ?>">&larr; Return to Portal</a></div></nav>
 <main class="survey-shell"><section class="survey-banner"><span class="eyebrow">PRIVACY NOTICE <?= e(PRIVACY_NOTICE_VERSION) ?></span><h1>How feedback data is protected</h1><p class="muted survey-intro">This policy explains the purpose, scope, safeguards, retention, and rights connected to the public service feedback portal.</p></section>

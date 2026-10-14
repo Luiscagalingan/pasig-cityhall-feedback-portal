@@ -123,7 +123,7 @@ if ($argv[1] === 'legacy_setup') {
     $pdo->exec("ALTER TABLE users MODIFY role ENUM('admin','office_head','office_staff','supervisor') NOT NULL");
     $password = password_hash('Workflow123!', PASSWORD_DEFAULT);
     $insert = $pdo->prepare('INSERT INTO users(id,office_id,full_name,username,email,password_hash,role,status,must_change_password) VALUES(?,?,?,?,?,?,?,?,0)');
-    foreach ([[1,null,'Sir Uno','uno','admin','active'],[2,null,'Another Administrator','other_admin','admin','active'],[3,1,'Office Head','head','office_head','active'],[4,1,'Test Staff','staff','office_staff','active'],[5,null,'Archived Administrator','inactive','admin','archived'],[6,1,'Historical Account','legacy','supervisor','active'],[7,2,'Other Staff','other_staff','office_staff','active']] as $u) {
+    foreach ([[1,null,'System Administrator','admin','admin','active'],[2,null,'Another Administrator','other_admin','admin','active'],[3,1,'Office Head','head','office_head','active'],[4,1,'Test Staff','staff','office_staff','active'],[5,null,'Archived Administrator','inactive','admin','archived'],[6,1,'Historical Account','legacy','supervisor','active'],[7,2,'Other Staff','other_staff','office_staff','active']] as $u) {
         $insert->execute([$u[0],$u[1],$u[2],$u[3],$u[3].'@test.invalid',$password,$u[4],$u[5]]);
     }
     $feedback = $pdo->prepare("INSERT INTO feedback(office_id,visit_date,sex,age,client_type,service_received,timeliness_rating,client_handling_rating,quality_rating,overall_rating,comment,assisted_by,sentiment,average_rating,rating_percent,comment_score,final_score,is_void) VALUES(?,CURRENT_DATE,'Female',30,'City Government Employee','Test',3,3,3,3,'Fixture only',?,'neutral',3,66.67,50,65,?)");
