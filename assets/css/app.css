@@ -176,6 +176,19 @@ svg {
   padding:26px;
   box-shadow:var(--shadow)
 }
+.hero-card:target {
+  scroll-margin-top:24px;
+  border-color:var(--blue);
+  box-shadow:0 0 0 4px rgba(23,111,189,.22),0 22px 55px rgba(8,47,91,.28);
+  animation:office-selector-highlight 1.4s ease-in-out 2
+}
+@keyframes office-selector-highlight {
+  0%,100% {transform:scale(1);background:linear-gradient(145deg,var(--panel),var(--panel2))}
+  50% {transform:scale(1.015);background:color-mix(in srgb,var(--blue) 12%,var(--panel))}
+}
+@media(prefers-reduced-motion:reduce) {
+  .hero-card:target {animation:none}
+}
 .hero-card h2 {
   margin:0 0 8px
 }
