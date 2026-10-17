@@ -1,5 +1,8 @@
 CSWDO PORTAL SETUP
 
+For the Filipino operator-friendly guide, including the recommended one-server setup
+where regular user PCs need only a browser, see NEW_PC_SETUP_GUIDE.md.
+
 1. Install XAMPP and Python. Place the project at:
    C:\xampp\htdocs\pasig-cityhall-feedback-portal
 2. Import database/schema.sql into MySQL.

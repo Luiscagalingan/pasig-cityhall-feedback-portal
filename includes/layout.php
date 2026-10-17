@@ -112,7 +112,7 @@ function render_dashboard_start(string $title, string $active): array
 
 function render_dashboard_end(): void
 { ?>
-</main></div><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script><script src="<?= e(app_url('assets/js/app.js')) ?>?v=37"></script></body></html>
+</main></div><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script><script src="<?= e(app_url('assets/js/app.js')) ?>?v=38"></script></body></html>
 <?php }
 
 function page_header(string $title, string $description, string $actions = ''): void

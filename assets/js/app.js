@@ -467,6 +467,30 @@
     form.querySelectorAll('button[type="submit"]:not([name="export"]),button:not([type]):not([name="export"])').forEach(button => button.classList.add('filter-submit-fallback'));
   });
 
+  document.querySelectorAll('[data-progressive-table]').forEach(section => {
+    const rows = [...section.querySelectorAll('tbody > tr')].filter(row => !row.querySelector('.empty-state'));
+    const button = section.querySelector('[data-progressive-more]');
+    const status = section.querySelector('[data-progressive-status]');
+    const batchSize = Math.max(1, Number.parseInt(section.dataset.batchSize || '20', 10) || 20);
+    let visibleCount = Math.min(batchSize, rows.length);
+
+    const render = () => {
+      rows.forEach((row, index) => row.classList.toggle('progressive-row-hidden', index >= visibleCount));
+      if (status) status.textContent = `Showing ${visibleCount} of ${rows.length} records`;
+      if (button) {
+        const remaining = rows.length - visibleCount;
+        button.hidden = remaining <= 0;
+        button.textContent = remaining > 0 ? `See more (${Math.min(batchSize, remaining)})` : 'All records shown';
+      }
+    };
+
+    button?.addEventListener('click', () => {
+      visibleCount = Math.min(visibleCount + batchSize, rows.length);
+      render();
+    });
+    render();
+  });
+
   const toast = document.querySelector('[data-toast]');
   if (toast) {
     const permissionDenied = toast.classList.contains('denied');

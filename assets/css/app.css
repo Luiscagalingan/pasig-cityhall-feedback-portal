@@ -735,6 +735,19 @@ textarea {
   border:1px solid var(--line);
   border-radius:14px
 }
+.progressive-row-hidden {
+  display:none
+}
+.progressive-table-footer {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding-top:16px
+}
+.progressive-table-footer p {
+  margin:0
+}
 table {
   width:100%;
   border-collapse:collapse;
@@ -1093,6 +1106,12 @@ tr:last-child td {
   }
 }
 @media print {
+  .progressive-row-hidden {
+    display:table-row!important
+  }
+  .progressive-table-footer {
+    display:none!important
+  }
   .print-excluded {
     display:none!important
   }

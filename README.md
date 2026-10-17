@@ -44,7 +44,7 @@ The included 300-comment model is a functional development/demo model. Final res
 
 Maintenance notes for the request lifecycle, role boundaries, scoring formula, dataset-import transaction, and ML pipeline are in `DEVELOPER_NOTES.md`. Model-specific assumptions and limitations are in `ml/MODEL_CARD.md`.
 
-The defense reviewer, difficult-code explanations, ML concepts, and suggested panel answers are in `SYSTEM_DEFENSE_REVIEWER.md`.
+A concise Filipino code reviewer and suggested panel answers are in `SYSTEM_CODE_REVIEWER.md`.
 
 ## Distribution scope
 

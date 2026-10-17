@@ -199,7 +199,7 @@ if ($includeVoid): ?><input type="hidden" name="include_void" value="1"><?php en
     (float) $s["avg_score"],
     2,
 ) ?>%</td><td><?= (int) $s["negative_count"] ?></td></tr><?php endforeach; ?></tbody></table></div></section></div>
-<section class="card" data-report-section="details"><div class="card-head"><div><h2>Filtered Report</h2><p><?= count(
+<section class="card" data-report-section="details" data-progressive-table data-batch-size="20"><div class="card-head"><div><h2>Filtered Report</h2><p><?= count(
     $rows,
 ) ?> detailed record(s)</p></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Office</th><th>Service</th><th>Client</th><th>Rating</th><th>Sentiment</th><th>Final</th><th>Comment</th></tr></thead><tbody><?php
  foreach ($rows as $r): ?><tr class="<?= $r["is_void"] ? "void-row" : "" ?>"><td><?= e(
@@ -215,7 +215,7 @@ if ($includeVoid): ?><input type="hidden" name="include_void" value="1"><?php en
     $r["comment"],
 ) ?></td></tr><?php endforeach;
  if (!$rows): ?><tr><td colspan="8" class="empty-state">No records for this report range.</td></tr><?php endif;
- ?></tbody></table></div></section>
+ ?></tbody></table></div><?php if (count($rows) > 20): ?><div class="progressive-table-footer"><p class="muted" data-progressive-status aria-live="polite"></p><button type="button" class="btn secondary" data-progressive-more>See more</button></div><?php endif; ?></section>
 <div class="content-grid" data-report-section="insights"><section class="card"><div class="card-head"><div><h2>Positive Feedback Insights</h2><p>Five most recent positive comments in the selected scope.</p></div></div><div class="notification-list"><?php
 foreach (
     $goodInsights
