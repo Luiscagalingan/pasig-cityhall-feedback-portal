@@ -56,6 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (db()->inTransaction()) {
             db()->rollBack();
         }
+        audit((int) $user["id"], "office_management_failed", "Office management action failed", "failed");
         set_flash("error", $e->getMessage());
     }
     redirect("admin/offices.php?status=" . urlencode($returnStatus));

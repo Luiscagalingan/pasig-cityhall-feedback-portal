@@ -89,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             set_flash("success", "Staff account archived.");
         }
     } catch (Throwable $e) {
+        audit((int) $admin["id"], "staff_management_failed", "Staff account management action failed", "failed");
         set_flash("error", "Unable to complete action: " . $e->getMessage());
     }
     $returnQuery = ["status" => $returnStatus];

@@ -120,6 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             set_flash("success", "Office Head account archived.");
         }
     } catch (Throwable $e) {
+        audit((int) $admin["id"], "head_management_failed", "Office Head management action failed", "failed");
         set_flash("error", "Unable to complete action: " . $e->getMessage());
     }
     redirect("admin/heads.php?status=" . urlencode($returnStatus));

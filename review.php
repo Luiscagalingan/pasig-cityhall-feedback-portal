@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Throwable $e) {
         if (db()->inTransaction()) db()->rollBack();
+        audit((int)$user['id'], 'feedback_admin_action_failed', 'Feedback review or administrative action failed', 'failed');
         set_flash('error', $e->getMessage());
     }
     redirect('review.php');

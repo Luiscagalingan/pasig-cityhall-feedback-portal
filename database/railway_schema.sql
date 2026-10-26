@@ -253,13 +253,20 @@ CREATE TABLE training_candidates (
 CREATE TABLE audit_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NULL,
+  username VARCHAR(80) NULL,
+  user_role VARCHAR(30) NULL,
+  assigned_office_id INT UNSIGNED NULL,
+  assigned_office_name VARCHAR(160) NULL,
   action VARCHAR(100) NOT NULL,
+  module VARCHAR(80) NOT NULL DEFAULT 'System',
   details TEXT NULL,
   ip_address VARCHAR(45) NULL,
+  result ENUM('success','failed') NOT NULL DEFAULT 'success',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
   INDEX idx_audit_date (created_at),
-  INDEX idx_audit_user (user_id)
+  INDEX idx_audit_user (user_id),
+  INDEX idx_audit_scope (user_role,assigned_office_id,module,result,created_at)
 ) ENGINE=InnoDB;
 
 DELIMITER $$

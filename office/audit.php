@@ -8,7 +8,7 @@ $q=trim((string)($_GET['q']??''));
 $actionFilter=trim((string)($_GET['action_filter']??''));
 $roleFilter=trim((string)($_GET['role_filter']??''));
 $validRoles=['office_head','office_staff'];
-$where=['u.office_id=?'];
+$where=['COALESCE(a.assigned_office_id,u.office_id)=?'];
 $params=[$officeId];
 
 if($q!==''){
@@ -16,16 +16,16 @@ if($q!==''){
     array_push($params,"%{$q}%","%{$q}%","%{$q}%","%{$q}%","%{$q}%");
 }
 if($actionFilter!==''){$where[]='a.action=?';$params[]=$actionFilter;}
-if(in_array($roleFilter,$validRoles,true)){$where[]='u.role=?';$params[]=$roleFilter;}
+if(in_array($roleFilter,$validRoles,true)){$where[]='COALESCE(a.user_role,u.role)=?';$params[]=$roleFilter;}
 
 $whereSql=implode(' AND ',$where);
-$count=db()->prepare('SELECT COUNT(*) FROM audit_logs a JOIN users u ON u.id=a.user_id WHERE '.$whereSql);
+$count=db()->prepare('SELECT COUNT(*) FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE '.$whereSql);
 $count->execute($params);
 $p=pagination((int)$count->fetchColumn(),30);
-$stmt=db()->prepare("SELECT a.*,u.full_name,u.username,u.role FROM audit_logs a JOIN users u ON u.id=a.user_id WHERE {$whereSql} ORDER BY a.created_at DESC LIMIT {$p['per_page']} OFFSET {$p['offset']}");
+$stmt=db()->prepare("SELECT a.*,COALESCE(u.full_name,a.username,'Unknown user') full_name,COALESCE(a.username,u.username) username,COALESCE(a.user_role,u.role,'public') role FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE {$whereSql} ORDER BY a.created_at DESC,a.id DESC LIMIT {$p['per_page']} OFFSET {$p['offset']}");
 $stmt->execute($params);
 $logs=$stmt->fetchAll();
-$actionStmt=db()->prepare('SELECT DISTINCT a.action FROM audit_logs a JOIN users u ON u.id=a.user_id WHERE u.office_id=? ORDER BY a.action');
+$actionStmt=db()->prepare('SELECT DISTINCT a.action FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE COALESCE(a.assigned_office_id,u.office_id)=? ORDER BY a.action');
 $actionStmt->execute([$officeId]);
 $actions=$actionStmt->fetchAll(PDO::FETCH_COLUMN);
 

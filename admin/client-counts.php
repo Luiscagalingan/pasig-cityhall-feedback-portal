@@ -4,7 +4,7 @@ require_once __DIR__ . "/../includes/bootstrap.php";
 require_once __DIR__ . "/../includes/client_counts.php";
 $user = require_login();
 if (!can_manage_client_count_requests($user)) {
-    audit((int)$user['id'], 'access_denied', 'Attempted to open requested client counts');
+    audit((int)$user['id'], 'access_denied', 'Attempted to open requested client counts', 'failed');
     set_flash('denied', "You don't have permission to open this page.");
     redirect(dashboard_path($user));
 }

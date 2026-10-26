@@ -27,6 +27,7 @@ function icon(string $name): string
 
 function admin_nav(array $user): array
 {
+    $isAdmin = ($user['role'] ?? '') === 'admin';
     $nav = [
         ['overview','Overview','admin/dashboard.php','grid'],['feedback','Feedback Records','admin/feedback.php','message'],
         ['review','Sentiment Review','review.php','shield'],['actions','Action Management','admin/actions.php','check'],
@@ -35,38 +36,52 @@ function admin_nav(array $user): array
         ['client_output','Client Output','admin/client-output.php','chart'],['feedback_insights','Feedback Insights','admin/feedback-insights.php','message'],
         ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],
     ];
-    if (can_manage_client_count_requests($user)) {
-        $nav[] = ['client_counts','Requested Client Counts','admin/client-counts.php','users'];
+    if ($isAdmin) {
+        if (can_manage_client_count_requests($user)) {
+            $nav[] = ['client_counts','Requested Client Counts','admin/client-counts.php','users'];
+        }
+        $nav[] = ['data','CSV Data Update','office/data.php','upload'];
+        $nav[] = ['system','System & Audit','admin/system.php','database'];
     }
     return array_merge($nav, [
-        ['data','CSV Data Update','office/data.php','upload'],
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
-        ['system','System & Audit','admin/system.php','database'],
     ]);
 }
 
 function office_nav(array $user): array
 {
-    $nav = [
-        ['overview','Overview','office/dashboard.php','grid'],['feedback','Feedback Records','office/feedback.php','message'],
-    ];
-    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['actions','Action Management','office/actions.php','check'];
-    if (($user['role'] ?? '') === 'office_head') {
-        $nav[] = ['review','Sentiment Review','review.php','shield'];
-        $nav[] = ['staff','View Team','office/staff.php','users'];
-        $nav[] = ['office_audit','System Audit','office/audit.php','database'];
+    $role = (string)($user['role'] ?? '');
+    if ($role === 'office_head') {
+        // One fixed menu for every Head. Office-specific scope comes from the
+        // authenticated user's office_id in each page query, never from nav order.
+        return [
+            ['overview','Overview','office/dashboard.php','grid'],
+            ['feedback','Feedback Records','office/feedback.php','message'],
+            ['actions','Action Management','office/actions.php','check'],
+            ['review','Sentiment Review','review.php','shield'],
+            ['staff','View Team','office/staff.php','users'],
+            ['office_audit','System Audit','office/audit.php','database'],
+            ['client_output','Client Output','office/client-output.php','chart'],
+            ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'],
+            ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],
+            ['reports','Reports & Export','office/reports.php','report'],
+            ['notifications','Announcements & Updates','notifications.php','bell'],
+            ['account','My Account','account.php','users'],
+        ];
     }
-    if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) {
-        $nav[] = ['client_output','Client Output','office/client-output.php','chart'];
+    if ($role === 'office_staff') {
+        return [
+            ['overview','Overview','office/dashboard.php','grid'],
+            ['feedback','Feedback Records','office/feedback.php','message'],
+            ['client_output','Client Output','office/client-output.php','chart'],
+            ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'],
+            ['client_request','Request Client Count from Sir Uno','office/client-count-request.php','message'],
+            ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'],
+            ['notifications','Announcements & Updates','notifications.php','bell'],
+            ['account','My Account','account.php','users'],
+        ];
     }
-    if (in_array(($user['role'] ?? ''), ['office_head','office_staff'], true)) $nav[] = ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'];
-    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['rating_distribution','Rating Distribution','rating-distribution.php','chart'];
-    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['client_request','Request Client Count from Sir Uno','office/client-count-request.php','message'];
-    if (($user['role'] ?? '') === 'office_staff') $nav[] = ['assisted_survey','Assisted Client Survey','office/assisted-survey.php','message'];
-    if (in_array(($user['role'] ?? ''), ['office_head'], true)) $nav[] = ['reports','Reports & Export','office/reports.php','report'];
-    $nav[] = ['notifications','Announcements & Updates','notifications.php','bell'];
-    $nav[] = ['account','My Account','account.php','users'];
-    return $nav;
+    return [];
 }
 
 function render_public_start(string $title, string $bodyClass = 'public-body'): void

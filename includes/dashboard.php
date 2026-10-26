@@ -346,3 +346,50 @@ function rating_distribution(?int $officeId, ?string $dateFrom = null, ?string $
     }
     return $result;
 }
+
+/** Monthly comparison metrics use visit_date, the system's reporting date, and exclude void feedback. */
+function monthly_rating_metrics(?int $officeId, string $month): array
+{
+    $start = $month . '-01';
+    $end = (new DateTimeImmutable($start))->modify('+1 month')->format('Y-m-d');
+    $where = ["f.is_void=0", "o.status='active'", 'f.visit_date>=?', 'f.visit_date<?'];
+    $params = [$start, $end];
+    if ($officeId !== null) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    $sql = "SELECT COUNT(*) total, AVG(f.overall_rating) overall_avg,
+                   AVG(f.timeliness_rating) timeliness_avg, AVG(f.client_handling_rating) handling_avg,
+                   AVG(f.quality_rating) quality_avg,
+                   SUM(f.overall_rating>=3) positive,
+                   SUM(f.overall_rating=4) overall_4, SUM(f.overall_rating=3) overall_3,
+                   SUM(f.overall_rating=2) overall_2, SUM(f.overall_rating=1) overall_1,
+                   SUM(f.timeliness_rating=4) timeliness_4, SUM(f.timeliness_rating=3) timeliness_3,
+                   SUM(f.timeliness_rating=2) timeliness_2, SUM(f.timeliness_rating=1) timeliness_1,
+                   SUM(f.client_handling_rating=4) handling_4, SUM(f.client_handling_rating=3) handling_3,
+                   SUM(f.client_handling_rating=2) handling_2, SUM(f.client_handling_rating=1) handling_1,
+                   SUM(f.quality_rating=4) quality_4, SUM(f.quality_rating=3) quality_3,
+                   SUM(f.quality_rating=2) quality_2, SUM(f.quality_rating=1) quality_1
+            FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where);
+    $stmt = db()->prepare($sql); $stmt->execute($params); $row = $stmt->fetch() ?: [];
+    $result = ['total'=>(int)($row['total'] ?? 0), 'positive_percent'=>null, 'averages'=>[], 'distribution'=>[]];
+    foreach (['overall','timeliness','handling','quality'] as $key) {
+        $avg = $row[$key . '_avg'] ?? null;
+        $result['averages'][$key] = $avg === null ? null : round((float)$avg, 2);
+        $result['distribution'][$key] = [];
+        foreach ([4,3,2,1] as $rating) $result['distribution'][$key][(string)$rating] = (int)($row[$key . '_' . $rating] ?? 0);
+    }
+    if ($result['total'] > 0) $result['positive_percent'] = round((int)$row['positive'] / $result['total'] * 100, 2);
+    return $result;
+}
+
+function monthly_rating_history(?int $officeId, int $year): array
+{
+    $where = ["f.is_void=0", "o.status='active'", 'f.visit_date>=?', 'f.visit_date<?'];
+    $params = [sprintf('%04d-01-01', $year), sprintf('%04d-01-01', $year + 1)];
+    if ($officeId !== null) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
+    $stmt = db()->prepare("SELECT DATE_FORMAT(f.visit_date,'%Y-%m') month_key, COUNT(*) total,
+             AVG(f.overall_rating) overall_avg, AVG(f.timeliness_rating) timeliness_avg,
+             AVG(f.client_handling_rating) handling_avg, AVG(f.quality_rating) quality_avg
+             FROM feedback f JOIN offices o ON o.id=f.office_id WHERE " . implode(' AND ', $where) .
+             " GROUP BY DATE_FORMAT(f.visit_date,'%Y-%m') ORDER BY month_key");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}

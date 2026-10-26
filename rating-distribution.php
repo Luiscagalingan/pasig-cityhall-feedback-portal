@@ -1,12 +1,76 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
-$user=require_login(['admin','office_head']);$officeId=$user['role']==='admin'?null:(int)$user['office_id'];
+$user=require_login(['admin','office_head']);
+$officeId=$user['role']==='admin'?null:(int)$user['office_id'];
+
+// AJAX comparison requests share the page's authenticated role and office scope.
+if (isset($_GET['monthly_data'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+        $selectedOffice = $officeId;
+        if ($user['role']==='admin' && isset($_GET['office_id']) && (int)$_GET['office_id']>0) {
+            $check=db()->prepare("SELECT id FROM offices WHERE id=? AND status='active'");
+            $check->execute([(int)$_GET['office_id']]);
+            if ($check->fetchColumn()) $selectedOffice=(int)$_GET['office_id'];
+        }
+        $monthA=(string)($_GET['month_a']??''); $monthB=(string)($_GET['month_b']??'');
+        foreach ([$monthA,$monthB] as $month) {
+            $date=DateTimeImmutable::createFromFormat('!Y-m', $month);
+            if (!$date || $date->format('Y-m')!==$month) throw new InvalidArgumentException('Choose valid comparison months.');
+        }
+        $year=filter_var($_GET['year']??date('Y'),FILTER_VALIDATE_INT);
+        if (!$year || $year<2000 || $year>(int)date('Y')+1) $year=(int)date('Y');
+        echo json_encode(['month_a'=>monthly_rating_metrics($selectedOffice,$monthA),
+            'month_b'=>monthly_rating_metrics($selectedOffice,$monthB),
+            'history'=>monthly_rating_history($selectedOffice,(int)$year)], JSON_THROW_ON_ERROR);
+    } catch (Throwable $error) {
+        http_response_code(400); echo json_encode(['error'=>'Unable to load the monthly comparison.']);
+    }
+    exit;
+}
+
 $from=trim((string)($_GET['from']??''));$to=trim((string)($_GET['to']??''));$selected=in_array($_GET['metric']??'',['overall','timeliness','handling','quality'],true)?(string)$_GET['metric']:'overall';
 $distribution=rating_distribution($officeId,$from?:null,$to?:null);$current=$distribution[$selected];
+$now=new DateTimeImmutable('first day of this month'); $defaultA=$now->format('Y-m'); $defaultB=$now->modify('-1 month')->format('Y-m');
+$boundsWhere=["f.is_void=0","o.status='active'"]; $boundsParams=[];
+if ($officeId!==null) {$boundsWhere[]='f.office_id=?';$boundsParams[]=$officeId;}
+$bounds=db()->prepare('SELECT MIN(f.visit_date) first_date FROM feedback f JOIN offices o ON o.id=f.office_id WHERE '.implode(' AND ',$boundsWhere));$bounds->execute($boundsParams);
+$first=$bounds->fetchColumn(); $firstMonth=$first?substr((string)$first,0,7):$defaultB;
+$quickStart=$now->modify('-2 months')->format('Y-m'); if ($firstMonth>$quickStart) $firstMonth=$quickStart;
+$months=[]; $cursor=new DateTimeImmutable($firstMonth.'-01');
+while ($cursor <= $now && count($months)<600) {$months[]=['value'=>$cursor->format('Y-m'),'label'=>$cursor->format('F Y')];$cursor=$cursor->modify('+1 month');}
+if (!$months) {$months=[['value'=>$defaultB,'label'=>$now->modify('-1 month')->format('F Y')],['value'=>$defaultA,'label'=>$now->format('F Y')]];}
+$officeOptions=$user['role']==='admin'?active_offices():[];
 render_dashboard_start('Rating Distribution','rating_distribution');page_header('Rating Distribution & Actual Numbers','Rating breakdown and actual response counts'.($officeId?' for '.$user['office_name']:' across active offices').'.');
 ?>
 <form class="filters wide" method="get"><label class="filter-field"><span>Start date</span><input type="date" name="from" value="<?= e($from) ?>"></label><label class="filter-field"><span>End date</span><input type="date" name="to" value="<?= e($to) ?>"></label><button class="btn">Apply Filters</button></form>
 <section class="card"><div class="card-head"><div><h2>Rating Distribution</h2><p><?= $current['total'] ?> response(s) in the selected range.</p></div></div><div class="tabs"><?php foreach($distribution as $key=>$item): ?><a class="tab <?= $selected===$key?'active':'' ?>" href="?<?= e(http_build_query(['from'=>$from,'to'=>$to,'metric'=>$key])) ?>"><?= e($item['label']) ?></a><?php endforeach; ?></div><div class="bar-list"><?php $labels=['4'=>['Strongly Agree','positive'],'3'=>['Agree','neutral'],'2'=>['Disagree','warning'],'1'=>['Strongly Disagree','negative']];foreach($labels as $rating=>[$label,$type]):$count=(int)$current[$rating];$percent=$current['total']?round($count/$current['total']*100):0;?><div class="bar-row"><span><?= $rating ?>. <?= e($label) ?></span><div class="bar-track"><div class="bar-fill <?= e($type) ?>" style="width:<?= $percent ?>%"></div></div><b><?= $count ?> · <?= $percent ?>%</b></div><?php endforeach; ?></div></section>
 <section class="card" style="margin-top:16px"><div class="card-head"><div><h2>Full Actual Response Count Matrix</h2></div></div><div class="table-wrap"><table><thead><tr><th>Criteria</th><th>4 (SA)</th><th>3 (A)</th><th>2 (D)</th><th>1 (SD)</th><th>Total</th></tr></thead><tbody><?php foreach($distribution as $item): ?><tr><td><strong><?= e($item['label']) ?></strong></td><td><?= badge((string)$item['4'],'positive') ?></td><td><?= badge((string)$item['3'],'neutral') ?></td><td><?= badge((string)$item['2'],'warning') ?></td><td><?= badge((string)$item['1'],'negative') ?></td><td><strong><?= (int)$item['total'] ?></strong></td></tr><?php endforeach; ?></tbody></table></div></section>
+
+<section class="card monthly-comparison" id="monthly-comparison" data-endpoint="<?= e(app_url('rating-distribution.php')) ?>" data-months="<?= e(json_encode($months,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)) ?>">
+<div class="card-head"><div><h2>Monthly Rating Comparison</h2><p>Compare real, non-void feedback by visit date. Month A minus Month B.</p></div></div>
+<div class="comparison-controls">
+<label><span>Comparison Month</span><select id="month-a"><?php foreach($months as $m): ?><option value="<?= e($m['value']) ?>" <?= $m['value']===$defaultA?'selected':'' ?>><?= e($m['label']) ?></option><?php endforeach; ?></select></label>
+<label><span>Compare With</span><select id="month-b"><?php foreach($months as $m): ?><option value="<?= e($m['value']) ?>" <?= $m['value']===$defaultB?'selected':'' ?>><?= e($m['label']) ?></option><?php endforeach; ?></select></label>
+<?php if($user['role']==='admin'): ?><label><span>Office</span><select id="comparison-office"><option value="0">All Offices</option><?php foreach($officeOptions as $office): ?><option value="<?= (int)$office['id'] ?>"><?= e($office['name']) ?></option><?php endforeach; ?></select></label><?php else: ?><p class="comparison-scope">Office: <?= e($user['office_name']) ?></p><?php endif; ?>
+<div class="quick-comparison"><span>Quick Comparison</span><div><button type="button" class="btn secondary" data-quick="this-last">This Month vs Last Month</button><button type="button" class="btn secondary" data-quick="last-two">Last Month vs Two Months Ago</button><button type="button" class="btn secondary" data-quick="custom">Custom Month Comparison</button></div></div>
+</div>
+<p class="comparison-status" id="comparison-status" role="status">Loading comparison…</p>
+<div class="comparison-summary" id="comparison-summary"></div>
+<div class="comparison-grid"><section class="comparison-panel"><div class="comparison-panel-head"><h3>Rating Distribution</h3><label><span>Evaluation criterion</span><select id="comparison-criterion"><option value="overall">Overall Satisfaction</option><option value="timeliness">Timeliness</option><option value="handling">Client Handling</option><option value="quality">Quality of Service</option></select></label></div><div id="comparison-bars" class="comparison-bars"></div></section>
+<section class="comparison-panel"><h3>Monthly Comparison Matrix</h3><div class="table-wrap"><table><thead><tr><th>Criteria</th><th>Month A Average</th><th>Month B Average</th><th>Difference</th><th>Trend</th></tr></thead><tbody id="comparison-matrix"></tbody></table></div></section></div>
+<section class="comparison-panel trend-panel"><div class="comparison-panel-head"><div><h3>Monthly Rating Trend</h3><p>Months without responses are omitted.</p></div><label><span>Year</span><select id="trend-year"><?php for($y=(int)date('Y');$y>=($first?(int)substr((string)$first,0,4):(int)date('Y'));$y--): ?><option value="<?= $y ?>"><?= $y ?></option><?php endfor; ?></select></label></div><div class="trend-legend"><span>Overall Satisfaction</span><span>Timeliness</span><span>Client Handling</span><span>Quality of Service</span></div><div class="trend-scroll"><canvas id="comparison-trend" height="250" aria-label="Monthly average rating trend"></canvas><div id="trend-tooltip" class="trend-tooltip" hidden></div></div></section>
+</section>
+<script>
+(()=>{const root=document.getElementById('monthly-comparison');if(!root)return;const months=JSON.parse(root.dataset.months),a=document.getElementById('month-a'),b=document.getElementById('month-b'),office=document.getElementById('comparison-office'),criterion=document.getElementById('comparison-criterion'),year=document.getElementById('trend-year'),status=document.getElementById('comparison-status');const names={overall:'Overall Satisfaction',timeliness:'Timeliness',handling:'Client Handling',quality:'Quality of Service'},colors=['#42a5f5','#31c48d','#f5a623','#ef6473'];
+const fmt=v=>v===null?'—':Number(v).toFixed(2),delta=(x,y)=>x===null||y===null?null:+(x-y).toFixed(2),trend=d=>d===null?'—':d===0?'Unchanged':(d>0?'↑ Improved':'↓ Declined'),monthLabel=k=>months.find(x=>x.value===k)?.label||k;
+function card(title,value,sub='',kind='neutral'){return `<article class="comparison-stat"><small>${title}</small><strong>${value}</strong><span class="trend-${kind}">${sub}</span></article>`}
+function paint(data){let A=data.month_a,B=data.month_b,vol=A.total-B.total,avgA=A.averages.overall,avgB=B.averages.overall,avgD=delta(avgA,avgB),posD=delta(A.positive_percent,B.positive_percent);document.getElementById('comparison-summary').innerHTML=[card(`Responses · ${monthLabel(a.value)}`,A.total,`${vol>=0?'+':''}${vol} vs Month B`),card(`Responses · ${monthLabel(b.value)}`,B.total),card('Response count difference',`${vol>=0?'+':''}${vol}`,'Volume change','neutral'),card('Average satisfaction',`${fmt(avgA)} / ${fmt(avgB)}`,`${monthLabel(a.value)} / ${monthLabel(b.value)}`),card('Average rating difference',avgD===null?'—':`${avgD>0?'+':''}${fmt(avgD)}`,trend(avgD),avgD===null||avgD===0?'neutral':avgD>0?'good':'bad'),card('Positive responses',`${A.positive_percent===null?'—':A.positive_percent+'%'} / ${B.positive_percent===null?'—':B.positive_percent+'%'}`,`${monthLabel(a.value)} / ${monthLabel(b.value)}`),card('Positive percentage-point change',posD===null?'—':`${posD>0?'+':''}${fmt(posD)} pp`,trend(posD),posD===null||posD===0?'neutral':posD>0?'good':'bad')].join('');
+document.getElementById('comparison-matrix').innerHTML=Object.keys(names).map(k=>{let d=delta(A.averages[k],B.averages[k]),kind=d===null||d===0?'neutral':d>0?'good':'bad';return `<tr><td>${names[k]}</td><td>${fmt(A.averages[k])}</td><td>${fmt(B.averages[k])}</td><td class="trend-${kind}">${d===null?'—':(d>0?'+':'')+fmt(d)}</td><td class="trend-${kind}">${trend(d)}</td></tr>`}).join('');
+let key=criterion.value,labels=['4 — Strongly Agree','3 — Agree','2 — Disagree','1 — Strongly Disagree'];document.getElementById('comparison-bars').innerHTML=labels.map((label,i)=>{let rating=String(4-i),ca=A.distribution[key][rating],cb=B.distribution[key][rating],pa=A.total?ca/A.total*100:0,pb=B.total?cb/B.total*100:0;return `<div class="comparison-bar-row"><b>${label}</b><div class="comparison-bar-pair"><div><span style="width:${pa}%;background:${colors[0]}"></span></div><small>${ca} (${pa.toFixed(1)}%)</small><div><span style="width:${pb}%;background:${colors[1]}"></span></div><small>${cb} (${pb.toFixed(1)}%)</small></div></div>`}).join('');document.getElementById('comparison-bars').insertAdjacentHTML('beforeend',`<div class="comparison-chart-legend"><span><i style="background:${colors[0]}"></i>${monthLabel(a.value)}</span><span><i style="background:${colors[1]}"></i>${monthLabel(b.value)}</span></div>`);drawTrend(data.history);}
+function drawTrend(rows){let c=document.getElementById('comparison-trend'),wrap=c.parentElement,w=wrap.clientWidth||700,h=250,dpr=window.devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;c.style.height=h+'px';let ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);let valid=rows||[],pad={l:38,r:15,t:14,b:34},iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;ctx.font='11px sans-serif';ctx.strokeStyle='rgba(128,148,170,.25)';ctx.fillStyle='#91a4bb';for(let n=1;n<=4;n++){let y=pad.t+ih-(n-1)/3*ih;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(n.toFixed(1),4,y+4)}if(!valid.length){ctx.fillText('No responses for this year',pad.l+8,h/2);return}valid.forEach((r,i)=>{let x=pad.l+(valid.length===1?iw/2:i*iw/(valid.length-1));ctx.fillText(r.month_key.slice(5),x-9,h-9)});['overall','timeliness','handling','quality'].forEach((k,ki)=>{ctx.beginPath();ctx.strokeStyle=colors[ki];ctx.lineWidth=2;let begun=false;valid.forEach((r,i)=>{let v=r[k+'_avg'];if(v===null)return;let x=pad.l+(valid.length===1?iw/2:i*iw/(valid.length-1)),y=pad.t+ih-(Number(v)-1)/3*ih;if(!begun){ctx.moveTo(x,y);begun=true}else ctx.lineTo(x,y);ctx.save();ctx.fillStyle=colors[ki];ctx.fillRect(x-3,y-3,6,6);ctx.restore()});ctx.stroke()});let tip=document.getElementById('trend-tooltip');c.onmousemove=e=>{let rect=c.getBoundingClientRect(),px=(e.clientX-rect.left)*w/rect.width,i=valid.length===1?0:Math.max(0,Math.min(valid.length-1,Math.round((px-pad.l)/iw*(valid.length-1)))),r=valid[i];if(!r||px<pad.l-8||px>w-pad.r+8){tip.hidden=true;return}tip.textContent=`${r.month_key} · ${r.total} responses · `+['overall','timeliness','handling','quality'].map(k=>`${names[k]}: ${fmt(r[k+'_avg'])}`).join(' · ');tip.hidden=false;tip.style.left=Math.min(Math.max(0,e.clientX-rect.left+10),rect.width-250)+'px';tip.style.top=Math.max(0,e.clientY-rect.top-42)+'px'};c.onmouseleave=()=>tip.hidden=true}
+async function load(){status.textContent='Loading comparison…';let q=new URLSearchParams({monthly_data:'1',month_a:a.value,month_b:b.value,year:year.value});if(office)q.set('office_id',office.value);try{let res=await fetch(root.dataset.endpoint+'?'+q,{headers:{Accept:'application/json'}}),data=await res.json();if(!res.ok)throw Error(data.error||'Could not load comparison');paint(data);status.textContent=`${monthLabel(a.value)} compared with ${monthLabel(b.value)}. Averages are based on non-void feedback.`}catch(e){status.textContent=e.message}}
+a.addEventListener('change',load);b.addEventListener('change',load);if(office)office.addEventListener('change',load);criterion.addEventListener('change',load);year.addEventListener('change',load);window.addEventListener('resize',()=>load());document.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{let now=new Date(),cur=new Date(now.getFullYear(),now.getMonth(),1),last=new Date(now.getFullYear(),now.getMonth()-1,1),two=new Date(now.getFullYear(),now.getMonth()-2,1),key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(btn.dataset.quick==='this-last'){a.value=key(cur);b.value=key(last)}else if(btn.dataset.quick==='last-two'){a.value=key(last);b.value=key(two)}else{a.focus();return}load()}));load()})();
+</script>
 <?php render_dashboard_end(); ?>

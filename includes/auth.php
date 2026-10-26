@@ -63,7 +63,7 @@ function login_user(string $identity, string $password): bool
         $ipCheck = db()->prepare("SELECT COUNT(*) FROM login_attempts WHERE ip_address=? AND successful=0 AND attempted_at >= DATE_SUB(NOW(), INTERVAL {$lockWindow} MINUTE)");
         $ipCheck->execute([$ip]);
         if ((int)$ipCheck->fetchColumn() >= LOGIN_IP_MAX_ATTEMPTS) {
-            audit(null, 'login_ip_blocked', 'Temporarily blocked excessive failed logins from ' . $ip);
+            audit(null, 'login_ip_blocked', 'Temporarily blocked excessive failed logins from this IP address', 'failed');
             $_SESSION['login_error'] = 'Too many failed attempts from this device or network. Try again later.';
             return false;
         }
@@ -77,7 +77,7 @@ function login_user(string $identity, string $password): bool
 
     if ($user && !empty($user['locked_until']) && strtotime((string)$user['locked_until']) > time()) {
         record_login_attempt($identity, false, (int)$user['id']);
-        audit((int)$user['id'], 'login_blocked', 'Attempt while account was temporarily locked');
+        audit((int)$user['id'], 'login_blocked', 'Attempt while account was temporarily locked', 'failed');
         $_SESSION['login_error'] = 'Too many failed attempts. Try again after ' . date('h:i A', strtotime((string)$user['locked_until'])) . '.';
         return false;
     }
@@ -93,9 +93,9 @@ function login_user(string $identity, string $password): bool
             $attempts = (int)$user['failed_login_attempts'] + 1;
             $lockedUntil = $attempts >= LOGIN_MAX_ATTEMPTS ? date('Y-m-d H:i:s', strtotime('+' . LOGIN_LOCK_MINUTES . ' minutes')) : null;
             db()->prepare('UPDATE users SET failed_login_attempts=?, locked_until=? WHERE id=?')->execute([$attempts, $lockedUntil, (int)$user['id']]);
-            audit((int)$user['id'], 'login_failed', 'Failed login attempt ' . $attempts . ($lockedUntil ? '; account temporarily locked' : ''));
+            audit((int)$user['id'], 'login_failed', 'Failed login attempt ' . $attempts . ($lockedUntil ? '; account temporarily locked' : ''), 'failed');
         } else {
-            audit(null, 'login_failed', 'Unknown identity: ' . mb_substr($identity, 0, 100));
+            audit(null, 'login_failed', 'Failed login attempt for an unrecognized identity', 'failed');
         }
         record_login_attempt($identity, false, $user ? (int)$user['id'] : null);
         $_SESSION['login_error'] = 'Invalid credentials, archived account, inactive office, or temporarily locked account.';
@@ -153,6 +153,7 @@ function require_login(array $roles = []): array
     }
     send_private_no_store_headers();
     if ($roles && !in_array($user['role'], $roles, true)) {
+        audit((int)$user['id'], 'access_denied', 'Unauthorized role attempted to access ' . audit_module_label(), 'failed');
         http_response_code(403);
         exit('You do not have permission to access this page.');
     }
@@ -161,6 +162,7 @@ function require_login(array $roles = []): array
     // retain their own CSRF and ownership checks. Announcements are admin-only.
     if ($user['role'] === 'office_head' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
         && !in_array($script, ['account.php', 'notifications.php', 'notification-read.php', 'logout.php'], true)) {
+        audit((int)$user['id'], 'access_denied', 'Office Head POST request blocked on ' . audit_module_label(), 'failed');
         http_response_code(403);
         exit('Office Head access is view-only.');
     }
@@ -168,10 +170,11 @@ function require_login(array $roles = []): array
         set_flash('info', 'Change your temporary password before continuing.');
         redirect('account.php');
     }
-    if (!$accessLogged) {
-        $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? $_SERVER['SCRIPT_NAME'] ?? ''), PHP_URL_PATH) ?: $script;
-        $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-        audit((int)$user['id'], 'page_access', "Binuksan ang {$path} gamit ang {$method}");
+    if (!$accessLogged && strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'GET'
+        && !isset($_GET['monthly_data'])
+        && !in_array($script, ['notification-read.php','notification-read'], true)) {
+        $module = audit_module_label();
+        if ($module !== 'System') audit((int)$user['id'], 'page_access', 'Opened ' . $module);
         $accessLogged = true;
     }
     return $user;

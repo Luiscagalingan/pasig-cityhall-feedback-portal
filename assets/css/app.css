@@ -2245,9 +2245,34 @@ html[data-theme="light"] :is(input,select,textarea,.custom-select-trigger):focus
   box-shadow:0 0 0 3px rgba(23,111,189,.2)
 }
 
+.monthly-comparison {margin-top:16px}
+.comparison-controls {display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:14px;align-items:end;margin:18px 0}
+.comparison-controls label,.comparison-panel-head label {display:grid;gap:6px;color:var(--muted);font-size:.84rem}
+.comparison-controls select,.comparison-panel-head select {width:100%;min-width:0}
+.quick-comparison {grid-column:1/-1;display:grid;gap:8px;color:var(--muted);font-size:.84rem}
+.quick-comparison>div {display:flex;gap:8px;flex-wrap:wrap}
+.comparison-scope {margin:0;padding:12px;color:var(--muted)}
+.comparison-status {min-height:1.3em;color:var(--muted);font-size:.85rem}
+.comparison-summary {display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:12px 0 18px}
+.comparison-stat {min-width:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;gap:7px}
+.comparison-stat small {color:var(--muted);line-height:1.35}.comparison-stat strong {font-size:1.28rem;overflow-wrap:anywhere}.comparison-stat span {font-size:.8rem}
+.trend-good {color:#31c48d!important}.trend-bad {color:#ef6473!important}.trend-neutral {color:var(--muted)!important}
+.comparison-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.comparison-panel {min-width:0;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.comparison-panel h3 {margin:0 0 12px;font-size:1rem}.comparison-panel-head {display:flex;justify-content:space-between;align-items:start;gap:14px;margin-bottom:12px}.comparison-panel-head h3 {margin-bottom:4px}.comparison-panel-head p {margin:0;color:var(--muted);font-size:.82rem}.comparison-panel-head label {min-width:180px}
+.comparison-bars {display:grid;gap:13px}.comparison-bar-row {display:grid;gap:6px;font-size:.82rem}.comparison-bar-pair {display:grid;grid-template-columns:minmax(30px,1fr) 76px;gap:5px 9px;align-items:center}.comparison-bar-pair>div {height:9px;background:rgba(128,148,170,.15);border-radius:8px;overflow:hidden}.comparison-bar-pair>div span {display:block;height:100%;border-radius:8px}.comparison-bar-pair small {color:var(--muted);white-space:nowrap}.comparison-chart-legend,.trend-legend {display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;color:var(--muted);font-size:.8rem}.comparison-chart-legend span,.trend-legend span {display:inline-flex;align-items:center;gap:6px}.comparison-chart-legend i {width:10px;height:10px;border-radius:50%}
+.comparison-panel .table-wrap {overflow-x:auto}.comparison-panel table {min-width:570px}.trend-panel {margin-top:14px}.trend-scroll {width:100%;overflow-x:auto;position:relative}.trend-scroll canvas {display:block;width:100%;min-width:420px}.trend-tooltip {position:absolute;z-index:2;max-width:240px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:.76rem;color:var(--text);pointer-events:none}
+.trend-legend span:nth-child(1)::before,.trend-legend span:nth-child(2)::before,.trend-legend span:nth-child(3)::before,.trend-legend span:nth-child(4)::before {content:"";width:14px;height:3px;border-radius:3px;background:#42a5f5}.trend-legend span:nth-child(2)::before {background:#31c48d}.trend-legend span:nth-child(3)::before {background:#f5a623}.trend-legend span:nth-child(4)::before {background:#ef6473}
+@media(max-width:900px){.comparison-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.comparison-controls{grid-template-columns:1fr}.quick-comparison{grid-column:auto}.quick-comparison .btn{flex:1 1 100%}.comparison-panel{padding:12px}.comparison-panel-head{display:grid}.comparison-panel-head label{min-width:0;width:100%}.comparison-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 /* Clean blue-to-white background for the public landing and survey pages. */
 .public-body,
 html[data-theme="light"] body.public-body {
   background-image:linear-gradient(145deg,#ffffff 0%,#e4f0fa 24%,#8bb2d4 50%,#2f6699 68%,#082f5b 100%);
   background-attachment:fixed
 }
+
+.filters.audit-filters {grid-template-columns:repeat(auto-fit,minmax(175px,1fr));align-items:end}
+.filters.audit-filters input[name="q"] {min-width:0}
+@media(max-width:620px){.filters.audit-filters {grid-template-columns:minmax(0,1fr)}}

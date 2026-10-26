@@ -95,13 +95,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 $q = trim((string) ($_GET["q"] ?? ""));
 $actionFilter = trim((string) ($_GET["action_filter"] ?? ""));
 $roleFilter = trim((string) ($_GET["role_filter"] ?? ""));
+$moduleFilter = trim((string) ($_GET["module_filter"] ?? ""));
+$resultFilter = trim((string) ($_GET["result_filter"] ?? ""));
+$userFilter = max(0, (int) ($_GET["user_filter"] ?? 0));
+$officeFilter = max(0, (int) ($_GET["office_filter"] ?? 0));
+$dateFrom = trim((string) ($_GET["date_from"] ?? ""));
+$dateTo = trim((string) ($_GET["date_to"] ?? ""));
 $validRoles = ["admin", "office_head", "office_staff", "public"];
 $where = ["1=1"];
 $params = [];
 if ($q !== "") {
     $where[] =
-        "(a.details LIKE ? OR a.ip_address LIKE ? OR u.full_name LIKE ? OR u.username LIKE ? OR o.name LIKE ? OR o.code LIKE ?)";
-    array_push($params, "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%");
+        "(a.details LIKE ? OR a.ip_address LIKE ? OR COALESCE(a.username,u.username) LIKE ? OR u.full_name LIKE ? OR a.module LIKE ? OR a.action LIKE ? OR COALESCE(a.assigned_office_name,o.name) LIKE ?)";
+    array_push($params, "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%", "%{$q}%");
 }
 if ($actionFilter !== "") {
     $where[] = "a.action=?";
@@ -111,13 +117,19 @@ if (in_array($roleFilter, $validRoles, true)) {
     if ($roleFilter === "public") {
         $where[] = "a.user_id IS NULL";
     } else {
-        $where[] = "u.role=?";
+        $where[] = "COALESCE(a.user_role,u.role)=?";
         $params[] = $roleFilter;
     }
 }
+if ($userFilter > 0) { $where[] = 'a.user_id=?'; $params[] = $userFilter; }
+if ($officeFilter > 0) { $where[] = 'COALESCE(a.assigned_office_id,u.office_id)=?'; $params[] = $officeFilter; }
+if ($moduleFilter !== '') { $where[] = 'a.module=?'; $params[] = $moduleFilter; }
+if (in_array($resultFilter, ['success','failed'], true)) { $where[] = 'a.result=?'; $params[] = $resultFilter; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) { $where[] = 'a.created_at>=?'; $params[] = $dateFrom . ' 00:00:00'; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) { $where[] = 'a.created_at<DATE_ADD(?,INTERVAL 1 DAY)'; $params[] = $dateTo; }
 $whereSql = implode(" AND ", $where);
 $perPage = 30;
-$auditJoins = " LEFT JOIN users u ON u.id=a.user_id LEFT JOIN offices o ON o.id=u.office_id ";
+$auditJoins = " LEFT JOIN users u ON u.id=a.user_id LEFT JOIN offices o ON o.id=COALESCE(a.assigned_office_id,u.office_id) ";
 $count = db()->prepare("SELECT COUNT(*) FROM audit_logs a" . $auditJoins . "WHERE " . $whereSql);
 $count->execute($params);
 $p = pagination((int) $count->fetchColumn(), $perPage);
@@ -141,11 +153,12 @@ if ($exportPdf) {
     }
 }
 $stmt = db()->prepare(
-    "SELECT a.*,CASE WHEN u.id IS NULL THEN 'Public / System' ELSE CONCAT(u.full_name,' — ',CASE u.role WHEN 'office_head' THEN 'Office Head' WHEN 'office_staff' THEN 'Office Staff' WHEN 'admin' THEN 'Admin' ELSE 'Legacy role (retired)' END,CASE WHEN o.code IS NULL THEN '' ELSE CONCAT(' — ',o.code) END) END full_name,u.username,u.role,o.name office_name,o.code office_code FROM audit_logs a{$auditJoins}WHERE {$whereSql} ORDER BY a.created_at DESC,a.id DESC LIMIT " .
-        max(1, $limit) .
-        " OFFSET " .
-        $offset,
-);
+     "SELECT a.*,COALESCE(NULLIF(u.full_name,'') ,a.username,'Public / System') actor_name,
+      COALESCE(a.username,u.username) actor_username,COALESCE(a.user_role,u.role,'public') actor_role,
+      COALESCE(a.assigned_office_name,o.name,'System') actor_office,COALESCE(o.code,'') office_code
+      FROM audit_logs a{$auditJoins}WHERE {$whereSql} ORDER BY a.created_at DESC,a.id DESC LIMIT " .
+         max(1, $limit) . " OFFSET " . $offset,
+ );
 $stmt->execute($params);
 $logs = $stmt->fetchAll();
 $eligiblePurge = (int) db()
@@ -174,6 +187,9 @@ $counts = [
     "locked" => (int) db()->query("SELECT COUNT(*) FROM users WHERE locked_until>NOW()")->fetchColumn(),
 ];
 $actions = db()->query("SELECT DISTINCT action FROM audit_logs ORDER BY action")->fetchAll(PDO::FETCH_COLUMN);
+$modules = db()->query("SELECT DISTINCT module FROM audit_logs ORDER BY module")->fetchAll(PDO::FETCH_COLUMN);
+$users = db()->query("SELECT id,username,full_name FROM users ORDER BY username")->fetchAll();
+$offices = db()->query("SELECT id,name,status FROM offices ORDER BY name")->fetchAll();
 render_dashboard_start($exportPdf ? "Ulat ng Audit Log" : "System & Audit", "system");
 page_header(
     "System Health & Audit",
@@ -194,7 +210,7 @@ page_header(
     ]
     as $roleKey => $roleLabel
 ): ?><a class="tab <?= $roleFilter === $roleKey ? "active" : "" ?>" href="?<?= e(
-    http_build_query(array_filter(["q" => $q, "action_filter" => $actionFilter, "role_filter" => $roleKey])),
+    http_build_query(array_filter(["q"=>$q,"action_filter"=>$actionFilter,"role_filter"=>$roleKey,"user_filter"=>$userFilter ?: null,"office_filter"=>$officeFilter ?: null,"date_from"=>$dateFrom,"date_to"=>$dateTo,"module_filter"=>$moduleFilter,"result_filter"=>$resultFilter])),
 ) ?>"><?= e($roleLabel) ?></a><?php endforeach; ?></div><?php endif; ?>
 <?php if (!$exportPdf): ?>
 <div class="app-modal" id="backup-modal" aria-hidden="true"><section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="backup-title"><button type="button" class="modal-close" data-modal-close>&times;</button><h2 id="backup-title">Create Encrypted Backup</h2><p class="muted">Encrypted with AES-256-GCM and never stored on the web server. Keep the passphrase separately; it cannot be recovered.</p><form method="post" action="<?= e(
@@ -211,8 +227,7 @@ page_header(
 <?php if (
     !$exportPdf
 ): ?><div class="app-modal" id="audit-export-modal" aria-hidden="true"><section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="audit-export-title"><button type="button" class="modal-close" data-modal-close>&times;</button><h2 id="audit-export-title">Export Audit Log PDF</h2><p class="muted">Active search and action filters will be preserved.</p><form method="get" target="_blank" class="modal-form"><input type="hidden" name="export" value="pdf"><?php
-if ($q !== ""): ?><input type="hidden" name="q" value="<?= e($q) ?>"><?php endif;
-if ($actionFilter !== ""): ?><input type="hidden" name="action_filter" value="<?= e($actionFilter) ?>"><?php endif;
+foreach (["q"=>$q,"action_filter"=>$actionFilter,"role_filter"=>$roleFilter,"user_filter"=>$userFilter,"office_filter"=>$officeFilter,"date_from"=>$dateFrom,"date_to"=>$dateTo,"module_filter"=>$moduleFilter,"result_filter"=>$resultFilter] as $filterName=>$filterValue): if ($filterValue!=="" && $filterValue!==0): ?><input type="hidden" name="<?= e($filterName) ?>" value="<?= e((string)$filterValue) ?>"><?php endif; endforeach;
 ?><div class="scope-options"><label class="scope-option"><input type="radio" name="scope" value="current" checked><span><strong>Current page</strong><br><small>Page <?= $p[
     "page"
 ] ?> only.</small></span></label><label class="scope-option"><input type="radio" name="scope" value="custom"><span><strong>Custom page range</strong><br><small>Choose the first and last page below.</small></span></label><label class="scope-option"><input type="radio" name="scope" value="all"><span><strong>All filtered pages</strong><br><small>All <?= $p[
@@ -272,29 +287,17 @@ null
     ? "disabled"
     : "" ?>>Purge Old Logs (<?= $eligiblePurge ?>)</button></div><?php endif; ?></div><?php if (
     !$exportPdf
-): ?><form class="filters compact" method="get"><input name="q" value="<?= e(
-    $q,
-) ?>" placeholder="Search user, detail, IP"><select name="action_filter"><option value="">All actions</option><?php foreach (
-    $actions
-    as $a
-): ?><option value="<?= e($a) ?>" <?= $actionFilter === $a ? "selected" : "" ?>><?= e(
-    status_label($a),
-) ?></option><?php endforeach; ?></select><button class="btn">Apply</button></form><?php endif; ?><div class="table-wrap"><table><thead><tr><th>Date</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody><?php
-foreach ($logs as $l): ?><tr><td><?= e(date("M d, Y h:i A", strtotime($l["created_at"]))) ?></td><td><?= e(
-    $l["full_name"] ?: "Public/System",
-) ?></td><td><?= e(status_label($l["action"])) ?></td><td><?= e($l["details"]) ?></td><td><?= e(
-    $l["ip_address"],
-) ?></td></tr><?php endforeach;
-if (!$logs): ?><tr><td colspan="5" class="empty-state">No audit records match the filters.</td></tr><?php endif;
-?></tbody></table></div><?php if (!$exportPdf): ?>
+): ?><form class="filters compact audit-filters" method="get">
+<label><span>From</span><input type="date" name="date_from" value="<?= e($dateFrom) ?>"></label><label><span>To</span><input type="date" name="date_to" value="<?= e($dateTo) ?>"></label>
+<input name="q" value="<?= e($q) ?>" placeholder="Search user, activity, module, IP">
+<select name="user_filter"><option value="0">All users</option><?php foreach ($users as $auditUser): ?><option value="<?= (int)$auditUser['id'] ?>" <?= $userFilter===(int)$auditUser['id']?'selected':'' ?>><?= e($auditUser['full_name'].' (@'.$auditUser['username'].')') ?></option><?php endforeach; ?></select>
+<select name="role_filter"><option value="">All roles</option><?php foreach ($validRoles as $role): ?><option value="<?= e($role) ?>" <?= $roleFilter===$role?'selected':'' ?>><?= e(status_label($role)) ?></option><?php endforeach; ?></select>
+<select name="office_filter"><option value="0">All offices</option><?php foreach ($offices as $office): ?><option value="<?= (int)$office['id'] ?>" <?= $officeFilter===(int)$office['id']?'selected':'' ?>><?= e($office['name'].($office['status']==='archived'?' (Archived)':'')) ?></option><?php endforeach; ?></select>
+<select name="action_filter"><option value="">All activities</option><?php foreach ($actions as $activity): ?><option value="<?= e($activity) ?>" <?= $actionFilter===$activity?'selected':'' ?>><?= e(status_label($activity)) ?></option><?php endforeach; ?></select>
+<select name="module_filter"><option value="">All modules</option><?php foreach ($modules as $module): ?><option value="<?= e($module) ?>" <?= $moduleFilter===$module?'selected':'' ?>><?= e($module) ?></option><?php endforeach; ?></select>
+<select name="result_filter"><option value="">All results</option><option value="success" <?= $resultFilter==='success'?'selected':'' ?>>Success</option><option value="failed" <?= $resultFilter==='failed'?'selected':'' ?>>Failed</option></select><button class="btn">Apply Filters</button></form><?php endif; ?><div class="table-wrap"><table><thead><tr><th>Date &amp; Time</th><th>User</th><th>Role</th><th>Office</th><th>Activity</th><th>Module</th><th>Description</th><th>Result</th><th>IP Address</th></tr></thead><tbody><?php foreach ($logs as $l): ?><tr><td><?= e(date("M d, Y h:i A",strtotime($l['created_at']))) ?></td><td><?= e($l['actor_name']) ?><?php if (!empty($l['actor_username'])): ?><br><small class="muted"><?php if ($l['user_id']): ?>#<?= (int)$l['user_id'] ?> · <?php endif; ?>@<?= e($l['actor_username']) ?></small><?php endif; ?></td><td><?= e(status_label($l['actor_role'])) ?></td><td><?= e($l['actor_office']) ?></td><td><?= e(status_label($l['action'])) ?></td><td><?= e($l['module']) ?></td><td><?= e($l['details']) ?></td><td><?= badge(ucfirst($l['result']),$l['result']==='failed'?'negative':'positive') ?></td><td><?= e($l['ip_address']) ?></td></tr><?php endforeach; ?><?php if (!$logs): ?><tr><td colspan="9" class="empty-state">No audit records match the filters.</td></tr><?php endif; ?></tbody></table></div><?php if (!$exportPdf): ?>
     <?= pagination_links($p) ?>
 <?php endif; ?></section>
-<?php if (
-    !$exportPdf &&
-    $roleFilter !== ""
-): ?><script>document.querySelector('#audit-export-modal form')?.insertAdjacentHTML('afterbegin',<?= json_encode(
-    '<input type="hidden" name="role_filter" value="' . e($roleFilter) . '">',
-) ?>);</script><?php endif; ?>
 <?php if (
     $exportPdf
 ): ?><script>history.replaceState({},document.title,location.pathname);window.addEventListener('load',()=>setTimeout(()=>window.print(),400));</script><?php endif; ?>

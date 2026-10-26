@@ -61,11 +61,53 @@ function consume_flash(): ?array
     return is_array($flash) ? $flash : null;
 }
 
-function audit(?int $userId, string $action, string $details = ''): void
+function audit_module_label(): string
+{
+    $path = strtolower(str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '')));
+    $modules = [
+        'admin/dashboard.php'=>'Overview', 'office/dashboard.php'=>'Overview',
+        'admin/feedback.php'=>'Feedback Records', 'office/feedback.php'=>'Feedback Records',
+        'review.php'=>'Sentiment Review', 'admin/actions.php'=>'Action Management', 'office/actions.php'=>'Action Management',
+        'rating-distribution.php'=>'Rating Distribution', 'admin/system.php'=>'System & Audit',
+        'admin/client-counts.php'=>'Requested Client Counts', 'office/client-counts.php'=>'Requested Client Counts',
+        'office/data.php'=>'CSV Data Update', 'admin/reports.php'=>'Reports & Export', 'office/reports.php'=>'Reports & Export',
+        'admin/offices.php'=>'Office Management', 'admin/heads.php'=>'Head Accounts', 'admin/staff.php'=>'Staff Accounts',
+        'admin/backup.php'=>'System & Audit', 'office/audit.php'=>'Office Audit', 'office/staff.php'=>'View Team',
+        'admin/client-output.php'=>'Client Output', 'office/client-output.php'=>'Client Output',
+        'admin/feedback-insights.php'=>'Feedback Insights', 'office/feedback-insights.php'=>'Feedback Insights',
+        'notifications.php'=>'Announcements & Updates', 'account.php'=>'My Account',
+        'login.php'=>'Authentication', 'logout.php'=>'Authentication',
+        'office/client-count-request.php'=>'Client Count Request', 'office/assisted-survey.php'=>'Assisted Client Survey',
+        'office/rejected_rows.php'=>'Rejected Import Rows', 'survey.php'=>'Public Survey',
+    ];
+    foreach ($modules as $suffix=>$label) if (str_ends_with($path, '/'.$suffix) || $path==='/'.$suffix) return $label;
+    return 'System';
+}
+
+function audit(?int $userId, string $action, string $details = '', string $result = 'success'): void
 {
     try {
-        $stmt = db()->prepare('INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$userId, $action, $details, $_SERVER['REMOTE_ADDR'] ?? null]);
+        $actor = null;
+        if ($userId !== null && $userId > 0) {
+            $stmt = db()->prepare('SELECT u.username,u.role,u.office_id,o.name office_name FROM users u LEFT JOIN offices o ON o.id=u.office_id WHERE u.id=? LIMIT 1');
+            $stmt->execute([$userId]); $actor = $stmt->fetch() ?: null;
+        }
+        $status = $result === 'failed' ? 'failed' : 'success';
+        $stmt = db()->prepare('INSERT INTO audit_logs (user_id,username,user_role,assigned_office_id,assigned_office_name,action,module,details,ip_address,result) VALUES (?,?,?,?,?,?,?,?,?,?)');
+        $stmt->execute([
+            $userId && $userId > 0 ? $userId : null,
+            $actor['username'] ?? null,
+            $actor['role'] ?? 'public',
+            $actor['office_id'] ?? null,
+            $actor['office_name'] ?? null,
+            $action,
+            in_array($action, ['login','login_failed','login_blocked','login_ip_blocked','logout','session_timeout'], true)
+                ? 'Authentication'
+                : audit_module_label(),
+            $details,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+            $status,
+        ]);
     } catch (Throwable) {
         // Audit failure must not interrupt the requested operation.
     }

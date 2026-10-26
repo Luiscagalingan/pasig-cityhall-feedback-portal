@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $identity = trim((string)($_POST['identity'] ?? ''));
     $password = (string)($_POST['password'] ?? '');
     if ($identity === '' || $password === '') {
+        audit(null, 'login_failed', 'Failed login attempt with missing credentials', 'failed');
         $error = 'Enter your username/email and password.';
     } elseif (login_user($identity, $password)) {
         $user = current_user();
