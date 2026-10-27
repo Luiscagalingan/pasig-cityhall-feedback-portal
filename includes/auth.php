@@ -174,7 +174,12 @@ function require_login(array $roles = []): array
         && !isset($_GET['monthly_data'])
         && !in_array($script, ['notification-read.php','notification-read'], true)) {
         $module = audit_module_label();
-        if ($module !== 'System') audit((int)$user['id'], 'page_access', 'Opened ' . $module);
+        if ($module !== 'System') {
+            $pageName = $module === 'Overview'
+                ? (($user['role'] ?? '') === 'admin' ? 'Admin Dashboard' : 'Office Dashboard')
+                : $module;
+            audit((int)$user['id'], 'page_access', 'Opened ' . $pageName);
+        }
         $accessLogged = true;
     }
     return $user;

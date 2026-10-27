@@ -6,6 +6,11 @@ where regular user PCs need only a browser, see NEW_PC_SETUP_GUIDE.md.
 1. Install XAMPP and Python. Place the project at:
    C:\xampp\htdocs\pasig-cityhall-feedback-portal
 2. Import database/schema.sql into MySQL.
+   For an existing database, run database/migrations/2026_10_26_audit_context.sql once
+   before deploying this version. System & Audit needs the actor and office snapshot
+   columns added by this migration; importing schema.sql already includes them.
+   To replace older raw page URLs in audit descriptions with readable page names,
+   optionally run database/migrations/2026_10_27_friendly_page_access.sql once.
 3. In CMD, run:
    cd C:\xampp\htdocs\pasig-cityhall-feedback-portal
    python -m venv ml\.venv

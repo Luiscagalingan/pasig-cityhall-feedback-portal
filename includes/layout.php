@@ -41,11 +41,15 @@ function admin_nav(array $user): array
             $nav[] = ['client_counts','Requested Client Counts','admin/client-counts.php','users'];
         }
         $nav[] = ['data','CSV Data Update','office/data.php','upload'];
-        $nav[] = ['system','System & Audit','admin/system.php','database'];
     }
-    return array_merge($nav, [
+    $nav = array_merge($nav, [
         ['notifications','Announcements & Updates','notifications.php','bell'],['account','My Account','account.php','users'],
     ]);
+    if ($isAdmin) {
+        // Keep the administrator-only system controls immediately above Logout.
+        $nav[] = ['system','System & Audit','admin/system.php','database'];
+    }
+    return $nav;
 }
 
 function office_nav(array $user): array
