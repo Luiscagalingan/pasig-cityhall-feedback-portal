@@ -64,7 +64,6 @@ function office_nav(array $user): array
             ['actions','Action Management','office/actions.php','check'],
             ['review','Sentiment Review','review.php','shield'],
             ['staff','View Team','office/staff.php','users'],
-            ['office_audit','System Audit','office/audit.php','database'],
             ['client_output','Client Output','office/client-output.php','chart'],
             ['feedback_insights','Feedback Insights','office/feedback-insights.php','message'],
             ['rating_distribution','Rating Distribution','rating-distribution.php','chart'],
