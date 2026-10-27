@@ -33,7 +33,7 @@ const LOW_CONFIDENCE_THRESHOLD = 0.60;
 // Authentication protection.
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_IP_MAX_ATTEMPTS = 20;
-const LOGIN_LOCK_MINUTES = 15;
+const LOGIN_LOCK_MINUTES = 2;
 const SESSION_IDLE_TIMEOUT = 1800; // 30 minutes
 
 const PRIVACY_NOTICE_VERSION = '2026-07-29';
