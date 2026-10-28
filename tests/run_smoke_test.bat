@@ -11,6 +11,7 @@ for %%T in (
     tests\output_periods_test.php
     tests\dataset_import_test.php
     tests\survey_rate_limit_test.php
+    tests\email_verification_unit_test.php
     tests\svm_bridge_test.php
     tests\smoke_test.php
 ) do (

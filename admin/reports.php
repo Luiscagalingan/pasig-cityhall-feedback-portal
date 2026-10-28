@@ -96,8 +96,8 @@ $offices = db()->query('SELECT * FROM offices ORDER BY status=\'active\' DESC,na
 $m = dashboard_metrics($officeId ?: null, $dateFrom ?: null, $dateTo ?: null, !$includeArchived, $includeVoid);
 $ages = age_group_counts($officeId ?: null, $dateFrom ?: null, $dateTo ?: null, !$includeArchived, $includeVoid);
 $services = service_summary($officeId ?: null, 10, $dateFrom ?: null, $dateTo ?: null, !$includeArchived, $includeVoid);
-$ratingDistribution = rating_distribution($officeId ?: null, $dateFrom ?: null, $dateTo ?: null);
-$clientRows = client_output_rows($officeId ?: null, $dateFrom ?: null, $dateTo ?: null);
+$ratingDistribution = rating_distribution($officeId ?: null, $dateFrom ?: null, $dateTo ?: null, !$includeArchived, $includeVoid);
+$clientRows = client_output_rows($officeId ?: null, $dateFrom ?: null, $dateTo ?: null, "", !$includeArchived, $includeVoid);
 $clientTotal = array_sum(array_column($clientRows, "client_count"));
 $clientDays = count($clientRows);
 $clientPeak = $clientRows ? max(array_column($clientRows, "client_count")) : 0;
@@ -198,7 +198,7 @@ if ($includeVoid): ?><input type="hidden" name="include_void" value="1"><?php en
 ): ?><tr><td><?= e($s["label"]) ?></td><td><?= (int) $s["responses"] ?></td><td><?= number_format(
     (float) $s["avg_score"],
     2,
-) ?>%</td><td><?= (int) $s["negative_count"] ?></td></tr><?php endforeach; ?></tbody></table></div></section></div>
+) ?>%</td><td><?= (int) $s["negative_count"] ?></td></tr><?php endforeach; ?><?php if (!$services): ?><tr><td colspan="4" class="empty-state">No service records for this report range.</td></tr><?php endif; ?></tbody></table></div></section></div>
 <section class="card" data-report-section="details" data-progressive-table data-batch-size="20"><div class="card-head"><div><h2>Filtered Report</h2><p><?= count(
     $rows,
 ) ?> detailed record(s)</p></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Office</th><th>Service</th><th>Client</th><th>Rating</th><th>Sentiment</th><th>Final</th><th>Comment</th></tr></thead><tbody><?php

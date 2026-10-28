@@ -7,6 +7,7 @@ require_once __DIR__ . '/request_security.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/email_verification.php';
 require_once __DIR__ . '/sentiment.php';
 require_once __DIR__ . '/dashboard.php';
 require_once __DIR__ . '/layout.php';

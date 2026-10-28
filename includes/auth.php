@@ -32,7 +32,10 @@ function current_user(): ?array
     );
     $stmt->execute([$id]);
     $user = $stmt->fetch();
-    if (!$user || !active_application_role((string)$user['role']) || $user['status'] !== 'active' || (($user['role'] !== 'admin') && $user['office_status'] !== 'active')) {
+
+    if (!$user || !active_application_role((string)$user['role']) || $user['status'] !== 'active'
+        || (!empty($user['email_verification_required']) && $user['email_verified_at'] === null)
+        || (($user['role'] !== 'admin') && $user['office_status'] !== 'active')) {
         logout_user();
         return null;
     }
@@ -75,6 +78,13 @@ function login_user(string $identity, string $password): bool
     $stmt->execute([$identity, $identity]);
     $user = $stmt->fetch();
 
+    if ($user && !empty($user['email_verification_required']) && $user['email_verified_at'] === null
+        && password_verify($password, (string)$user['password_hash'])) {
+        record_login_attempt($identity, false, (int)$user['id']);
+        $_SESSION['login_error'] = 'Verify your email address before signing in. Ask your administrator to resend the verification message if it has expired.';
+        return false;
+    }
+
     if ($user && !empty($user['locked_until']) && strtotime((string)$user['locked_until']) > time()) {
         record_login_attempt($identity, false, (int)$user['id']);
         audit((int)$user['id'], 'login_blocked', 'Attempt while account was temporarily locked', 'failed');
@@ -85,6 +95,7 @@ function login_user(string $identity, string $password): bool
     $valid = $user
         && active_application_role((string)$user['role'])
         && $user['status'] === 'active'
+        && (empty($user['email_verification_required']) || $user['email_verified_at'] !== null)
         && ($user['role'] === 'admin' || $user['office_status'] === 'active')
         && password_verify($password, (string)$user['password_hash']);
 

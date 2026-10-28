@@ -42,18 +42,25 @@ CREATE TABLE users (
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin','office_head','office_staff') NOT NULL,
-  status ENUM('active','archived') NOT NULL DEFAULT 'active',
+  status ENUM('active','archived','pending') NOT NULL DEFAULT 'active',
   created_by_user_id INT UNSIGNED NULL,
   last_login_at DATETIME NULL,
   failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
   must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+  email_verification_required TINYINT(1) NOT NULL DEFAULT 0,
+  email_verified_at DATETIME NULL,
+  verification_token_hash CHAR(64) NULL UNIQUE,
+  verification_expires_at DATETIME NULL,
+  verification_sent_at DATETIME NULL,
+  verification_send_count TINYINT UNSIGNED NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_users_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE SET NULL,
   CONSTRAINT fk_users_creator FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
   INDEX idx_user_scope (office_id, role, status),
-  INDEX idx_user_lock (locked_until)
+  INDEX idx_user_lock (locked_until),
+  INDEX idx_user_verification_state (status,email_verification_required,email_verified_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE import_batches (

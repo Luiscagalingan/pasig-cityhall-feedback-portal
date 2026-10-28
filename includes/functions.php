@@ -466,7 +466,7 @@ function notify_office_users(int $officeId, string $type, string $title, string 
 function unread_notification_count(int $userId): int
 {
     try {
-        $stmt = db()->prepare("SELECT COUNT(*) FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR recipient.username='uno') AND n.read_at IS NULL AND (n.expires_at IS NULL OR n.expires_at>NOW())");
+        $stmt = db()->prepare("SELECT COUNT(*) FROM notifications n JOIN users recipient ON recipient.id=n.user_id WHERE n.user_id=? AND (n.type<>'client_count_request' OR (recipient.role='admin' AND LOWER(recipient.username)='admin')) AND n.read_at IS NULL AND (n.expires_at IS NULL OR n.expires_at>NOW())");
         $stmt->execute([$userId]);
         return (int)$stmt->fetchColumn();
     } catch (Throwable) {

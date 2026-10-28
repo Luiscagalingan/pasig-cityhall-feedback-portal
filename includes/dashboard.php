@@ -29,7 +29,7 @@ function dashboard_metrics(?int $officeId = null, ?string $dateFrom = null, ?str
     $stmt->execute($params);
     $m = $stmt->fetch() ?: [];
 
-    $actionWhere = ['(a.feedback_id IS NULL OR af.is_void=0)'];
+    $actionWhere = $includeVoid ? ['1=1'] : ['(a.feedback_id IS NULL OR af.is_void=0)'];
     $actionParams = [];
     if ($officeId) { $actionWhere[] = 'a.office_id=?'; $actionParams[] = $officeId; }
     if ($dateFrom) { $actionWhere[] = 'COALESCE(af.visit_date,DATE(a.created_at))>=?'; $actionParams[] = $dateFrom; }
@@ -232,9 +232,10 @@ function staff_client_output_rows(array $user, ?string $dateFrom = null, ?string
     return $stmt->fetchAll();
 }
 
-function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null, string $assistedBy = ''): array
+function client_output_rows(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null, string $assistedBy = '', bool $activeOnly = true, bool $includeVoid = false): array
 {
-    $where = ["f.is_void=0", "o.status='active'"];
+    $where = $includeVoid ? ['1=1'] : ["f.is_void=0"];
+    if ($activeOnly) $where[] = "o.status='active'";
     $params = [];
     if ($officeId) { $where[] = 'f.office_id=?'; $params[] = $officeId; }
     if ($dateFrom) { $where[] = 'f.visit_date>=?'; $params[] = $dateFrom; }
@@ -328,9 +329,9 @@ function feedback_highlights(?int $officeId, ?string $month = null, int $limit =
     return ['good'=>$good->fetchAll(), 'critical'=>$critical->fetchAll()];
 }
 
-function rating_distribution(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null): array
+function rating_distribution(?int $officeId, ?string $dateFrom = null, ?string $dateTo = null, bool $activeOnly = true, bool $includeVoid = false): array
 {
-    [$where, $params] = feedback_where($officeId, $dateFrom, $dateTo, true, false);
+    [$where, $params] = feedback_where($officeId, $dateFrom, $dateTo, $activeOnly, $includeVoid);
     $fields = [
         'overall' => ['Overall Satisfaction', 'overall_rating'],
         'timeliness' => ['Timeliness', 'timeliness_rating'],

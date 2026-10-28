@@ -1001,6 +1001,9 @@ tr:last-child td {
 .toast.info {
   background:#194e82
 }
+.toast.warning {
+  background:#76510b
+}
 .mobile-only {
   display:none
 }
@@ -2276,3 +2279,10 @@ html[data-theme="light"] body.public-body {
 .filters.audit-filters {grid-template-columns:repeat(auto-fit,minmax(175px,1fr));align-items:end}
 .filters.audit-filters input[name="q"] {min-width:0}
 @media(max-width:620px){.filters.audit-filters {grid-template-columns:minmax(0,1fr)}}
+.report-page .filters.wide {grid-template-columns:minmax(220px,1.5fr) repeat(2,minmax(135px,1fr)) repeat(2,minmax(max-content,max-content)) auto;align-items:end}
+.report-page .filters.wide select,.report-page .filters.wide input {min-width:0;max-width:100%}
+.report-page .filters.wide .checkbox-inline {min-width:max-content;white-space:normal}
+.report-page .export-csv-form {display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+.report-page .app-modal-dialog,.report-page .app-modal-dialog form {min-width:0}
+@media(max-width:1100px){.report-page .filters.wide {grid-template-columns:repeat(3,minmax(0,1fr))}.report-page .filters.wide select {grid-column:1/-1}}
+@media(max-width:620px){.report-page .filters.wide {grid-template-columns:minmax(0,1fr)}.report-page .filters.wide select {grid-column:auto}.report-page .filters.wide .checkbox-inline {min-width:0}.report-page .app-modal-dialog .confirm-actions {flex-wrap:wrap}.report-page .app-modal-dialog .confirm-actions .btn {flex:1 1 140px}}

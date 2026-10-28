@@ -9,6 +9,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libonig-dev \
         libzip-dev \
+        ca-certificates \
+        msmtp-mta \
         python3 \
         python3-venv \
     && docker-php-ext-install -j"$(nproc)" mbstring pdo_mysql zip \
@@ -36,6 +38,9 @@ RUN mkdir -p storage/import_previews storage/sessions storage/logs uploads \
 # Fail the image build if either runtime or the real production model is broken.
 RUN php -m \
     && php -r "foreach (['PDO', 'pdo_mysql', 'mbstring', 'zip', 'dom', 'fileinfo', 'iconv', 'json', 'libxml', 'openssl'] as \$extension) { if (!extension_loaded(\$extension)) { fwrite(STDERR, \"Missing PHP extension: {\$extension}\\n\"); exit(1); } }" \
+    && find . -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null \
+    && echo 'All PHP files passed syntax checks.' \
+    && php tests/email_verification_unit_test.php \
     && apache2ctl -M \
     && test "$(apache2ctl -M 2>/dev/null | grep -c 'mpm_.*_module')" -eq 1 \
     && apache2ctl configtest \
