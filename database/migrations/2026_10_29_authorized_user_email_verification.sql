@@ -1,6 +1,7 @@
 ALTER TABLE users
   MODIFY status ENUM('active','archived','pending') NOT NULL DEFAULT 'active',
   ADD COLUMN email_verification_required TINYINT(1) NOT NULL DEFAULT 0 AFTER must_change_password,
+  ADD COLUMN password_changed_at DATETIME NULL AFTER must_change_password,
   ADD COLUMN email_verified_at DATETIME NULL AFTER email_verification_required,
   ADD COLUMN verification_token_hash CHAR(64) NULL AFTER email_verified_at,
   ADD COLUMN verification_expires_at DATETIME NULL AFTER verification_token_hash,

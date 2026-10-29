@@ -47,6 +47,7 @@ CREATE TABLE users (
   failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
   must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+  password_changed_at DATETIME NULL,
   email_verification_required TINYINT(1) NOT NULL DEFAULT 0,
   email_verified_at DATETIME NULL,
   verification_token_hash CHAR(64) NULL UNIQUE,

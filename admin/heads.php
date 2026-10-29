@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $name = trim((string) ($_POST["full_name"] ?? ""));
             $username = trim((string) ($_POST["username"] ?? ""));
             $email = normalized_government_email((string) ($_POST["email"] ?? ""));
-            $password = (string) ($_POST["password"] ?? "");
+            $password = 'password123!';
             if (!approved_government_email_domains()) throw new RuntimeException("Account invitations are unavailable until PASIG_GOV_EMAIL_DOMAINS is configured with the approved government email domain.");
             if (
                 !$officeId ||
@@ -23,16 +23,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $name === "" ||
                 $username === "" ||
                 !preg_match('/^[A-Za-z0-9._-]{3,80}$/', $username) ||
-                strlen($password) < 8 ||
-                !preg_match("/[A-Za-z]/", $password) ||
-                !preg_match("/\d/", $password)
+                mb_strlen($name) > 160 ||
+                mb_strlen($username) > 80
             ) {
                 throw new RuntimeException(
-                    "Complete all fields with a valid email at an approved Pasig City Government domain. Password must be at least 8 characters with a letter and a number.",
+                    "Complete all fields with a valid email at an approved Pasig City Government domain and a valid username.",
                 );
             }
             $pdo = db();
             $pdo->beginTransaction();
+            $duplicate = $pdo->prepare('SELECT id FROM users WHERE username=? OR email=? LIMIT 1 FOR UPDATE');
+            $duplicate->execute([$username, $email]);
+            if ($duplicate->fetchColumn()) throw new RuntimeException('That username or email address is already in use.');
             $officeCheck = $pdo->prepare("SELECT id FROM offices WHERE id=? AND status='active' FOR UPDATE");
             $officeCheck->execute([$officeId]);
             if (!$officeCheck->fetchColumn()) throw new RuntimeException("Select an active office.");
@@ -73,6 +75,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $current = $currentStmt->fetch();
             if (!$current) {
                 throw new RuntimeException("Office Head account not found.");
+            }
+            if (normalized_government_email((string)$current["email"]) !== $email
+                && !is_approved_government_email($email)) {
+                throw new RuntimeException("A changed Office Head email must use a valid address at an approved government or organization domain.");
             }
             if ($current["status"] === "pending" && normalized_government_email((string)$current["email"]) !== $email) {
                 throw new RuntimeException("A pending account's email cannot be changed because its invitation is tied to that address. Archive it and create a new invitation.");
@@ -172,14 +178,14 @@ page_header(
     '<button type="button" class="btn" data-modal-open="add-head-modal">Add Office Head</button>',
 );
 ?>
-<div class="app-modal" id="add-head-modal" aria-hidden="true"><section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="add-head-title"><button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button><h2 id="add-head-title">Add Office Head</h2><p class="muted">Assign the account to an active office. Only one active Office Head is allowed per office.</p><form method="post" class="modal-form"><input type="hidden" name="csrf_token" value="<?= e(
+<div class="app-modal" id="add-head-modal" aria-hidden="true"><section class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="add-head-title"><button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button><h2 id="add-head-title">Add Office Head</h2><p class="muted">Assign the account to an active office. Only one active Office Head is allowed per office.</p><form method="post" class="modal-form" autocomplete="off"><input type="hidden" name="csrf_token" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="return_status" value="pending"><div class="form-group"><label>Assigned Office</label><select name="office_id" required><option value="">Select office</option><?php foreach (
     $offices
     as $o
 ): ?><option value="<?= (int) $o["id"] ?>"><?= e($o["name"]) ?> (<?= e(
      $o["code"],
- ) ?>)</option><?php endforeach; ?></select></div><div class="form-group"><label>Full Name</label><input name="full_name" required></div><div class="form-row"><div class="form-group"><label>Username</label><input name="username" required></div><div class="form-group"><label>Email</label><input type="email" name="email" required <?= $domainPattern ? 'pattern="^[A-Za-z0-9._%+-]+@(' . e($domainPattern) . ')$"' : 'disabled' ?>><div class="help">Use an approved Pasig City Government email address<?= $domainPattern ? ': ' . e(implode(', ', approved_government_email_domains())) : '. Domain configuration is required.' ?>.</div></div></div><div class="form-group"><label>Temporary Password</label><input type="password" name="password" minlength="8" required><div class="help">At least 8 characters with a letter and number.</div></div><div class="confirm-actions"><button type="button" class="btn secondary" data-modal-close>Cancel</button><button class="btn">Create Head Account</button></div></form></section></div>
+ ) ?>)</option><?php endforeach; ?></select></div><div class="form-group"><label>Full Name</label><input name="full_name" required></div><div class="form-row"><div class="form-group"><label>Username</label><input name="username" autocomplete="new-username" data-lpignore="true" data-1p-ignore="true" required></div><div class="form-group"><label>Email</label><input type="email" name="email" required <?= $domainPattern ? 'pattern="^[A-Za-z0-9._%+-]+@(' . e($domainPattern) . ')$"' : 'disabled' ?>><div class="help">Use an approved Pasig City Government email address<?= $domainPattern ? ': ' . e(implode(', ', approved_government_email_domains())) : '. Domain configuration is required.' ?>.</div></div></div><div class="form-group"><label>Temporary Password</label><input type="text" value="password123!" readonly><div class="help">This temporary password will be emailed with the verification link and must be changed after first sign-in.</div></div><div class="confirm-actions"><button type="button" class="btn secondary" data-modal-close>Cancel</button><button class="btn">Create Head Account</button></div></form></section></div>
 <div class="tabs"><a class="tab <?= $viewStatus === "active"
     ? "active"
     : "" ?>" href="?status=active">Active Heads <b><?= $headCounts["active"] ?></b></a><a class="tab <?= $viewStatus ===
