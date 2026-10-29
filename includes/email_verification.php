@@ -9,12 +9,7 @@ function approved_government_email_domains(): array
     $domains = array_values(array_unique(array_filter($domains, static fn(string $domain): bool =>
         $domain !== '' && preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/', $domain) === 1
     )));
-    return array_values(array_diff($domains, personal_email_domains()));
-}
-
-function personal_email_domains(): array
-{
-    return ['gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.com.ph', 'yahoo.com.au', 'yahoo.ca', 'yahoo.fr', 'yahoo.de', 'yahoo.co.in', 'yahoo.co.jp', 'outlook.com', 'outlook.co.uk', 'hotmail.com', 'hotmail.co.uk', 'live.com', 'live.co.uk', 'msn.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'yandex.com'];
+    return $domains;
 }
 
 function normalized_government_email(string $email): string

@@ -21,7 +21,7 @@ Apply `database/migrations/2026_10_29_authorized_user_email_verification.sql` to
 
 Also apply `database/migrations/2026_10_29_office_head_email_codes.sql` to enable the admin-side six-digit email confirmation before creating an Office Head. Codes are stored as password hashes, expire after 10 minutes, allow five attempts, and are limited to one send per minute and five sends per email per day. Fresh installs include the challenge table.
 
-Office Head creation now requires the admin to send and verify this six-digit code before submitting the account. The code challenge is tied to the admin session and exact email address, stored as hashes, and consumed during account creation. Common personal mailbox domains (including Gmail, Yahoo, and Outlook) are rejected even if accidentally included in `PASIG_GOV_EMAIL_DOMAINS`; keep only domains explicitly approved by the organization. This recipient allowlist is separate from the SMTP sender account.
+Office Head creation now requires the admin to send and verify this six-digit code before submitting the account. The code challenge is tied to the admin session and exact email address, stored as hashes, and consumed during account creation. Recipient domains are accepted only when explicitly listed in `PASIG_GOV_EMAIL_DOMAINS`, including personal providers if explicitly configured. This recipient allowlist is separate from the SMTP sender account.
 
 The existing post-creation account verification email remains in place; the six-digit code confirms the recipient before the admin creates the account, while the existing link activation and mandatory password-change flow continue unchanged.
 
