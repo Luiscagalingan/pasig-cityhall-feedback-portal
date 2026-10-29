@@ -43,13 +43,21 @@ try {
         if ($dupe->fetchColumn()) throw new HeadEmailCodeValidationException('duplicate_email', 'That email address is already in use.');
         $stage = 'challenge_send';
         $ref = begin_head_email_code((int)$admin['id'], $email, $name, $requestId);
-        echo json_encode(['ok' => true, 'challenge' => $ref, 'message' => 'Code sent. Check the email inbox and enter the six-digit code.', 'request_id' => $requestId]);
+        $sentUtc = office_head_otp_utc_sql('sent_at');
+        $expiresUtc = office_head_otp_utc_sql('expires_at');
+        $timers = db()->prepare("SELECT GREATEST(0,TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),{$expiresUtc})) expires_in_seconds,GREATEST(0,60-TIMESTAMPDIFF(SECOND,{$sentUtc},UTC_TIMESTAMP())) resend_in_seconds FROM office_head_email_codes WHERE challenge_hash=? AND consumed_at IS NULL");
+        $timers->execute([hash('sha256', $ref)]);
+        $remaining = $timers->fetch() ?: ['expires_in_seconds' => 600, 'resend_in_seconds' => 60];
+        echo json_encode(['ok' => true, 'challenge' => $ref, 'expires_in_seconds' => (int)$remaining['expires_in_seconds'], 'resend_in_seconds' => (int)$remaining['resend_in_seconds'], 'message' => 'Verification code sent successfully.', 'request_id' => $requestId]);
         exit;
     }
     if ($action === 'verify_email_code') {
         $stage = 'otp_verification';
-        $ok = verify_head_email_code((int)$admin['id'], $email, (string)($_POST['challenge'] ?? ''), trim((string)($_POST['code'] ?? '')));
-        if (!$ok) throw new HeadEmailCodeValidationException('code_invalid_expired_or_locked', 'That code is invalid, expired, or has reached its attempt limit. Request a new code and try again.');
+        $result = verify_head_email_code((int)$admin['id'], $email, (string)($_POST['challenge'] ?? ''), trim((string)($_POST['code'] ?? '')), $requestId);
+        if ($result === 'expired') throw new HeadEmailCodeValidationException('code_expired', 'That verification code has expired. Request a new code.');
+        if ($result === 'incorrect') throw new HeadEmailCodeValidationException('code_incorrect', 'That code is incorrect. Check the email and try again.');
+        if ($result === 'locked') throw new HeadEmailCodeValidationException('code_attempt_limit', 'That code has reached its five-attempt limit. Request a new code.');
+        if ($result !== 'verified') throw new HeadEmailCodeValidationException('code_invalid', 'That code is invalid. Request a new code and try again.');
         echo json_encode(['ok' => true, 'message' => 'Code confirmed. You can now create the Office Head account.', 'request_id' => $requestId]);
         exit;
     }
@@ -77,5 +85,10 @@ try {
         http_response_code(503);
         $message = 'The verification service is temporarily unavailable. Try again later.';
     }
-    echo json_encode(['ok' => false, 'message' => $message, 'request_id' => $requestId], JSON_INVALID_UTF8_SUBSTITUTE);
+        $payload = ['ok' => false, 'message' => $message, 'request_id' => $requestId];
+        if ($e instanceof HeadEmailCodeValidationException) {
+            $payload['reason'] = $e->reason;
+            if ($e->retryAfterSeconds !== null) $payload['retry_after_seconds'] = $e->retryAfterSeconds;
+        }
+        echo json_encode($payload, JSON_INVALID_UTF8_SUBSTITUTE);
 }

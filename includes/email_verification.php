@@ -11,7 +11,7 @@ final class VerificationEmailDeliveryException extends RuntimeException
 
 final class HeadEmailCodeValidationException extends RuntimeException
 {
-    public function __construct(public readonly string $reason, string $message)
+    public function __construct(public readonly string $reason, string $message, public readonly ?int $retryAfterSeconds = null)
     {
         parent::__construct($message);
     }
@@ -41,6 +41,22 @@ function is_approved_government_email(string $email): bool
     if (!$domains) return false;
     $domain = strtolower(substr(strrchr($email, '@') ?: '', 1));
     return in_array($domain, $domains, true);
+}
+
+/**
+ * OTP rows created before UTC timestamps were adopted used the database session
+ * timezone (currently Asia/Manila). created_at is a TIMESTAMP, so a legacy
+ * sent_at matches its session-local value; new sent_at values are UTC DATETIMEs.
+ * Normalize legacy values on read without changing any stored records.
+ */
+function office_head_otp_utc_sql(string $column): string
+{
+    if (!in_array($column, ['sent_at', 'expires_at'], true)) {
+        throw new InvalidArgumentException('Unsupported OTP timestamp column.');
+    }
+    $legacyRow = 'ABS(TIMESTAMPDIFF(SECOND,sent_at,created_at))<=2';
+    $sessionOffsetMinutes = 'TIMESTAMPDIFF(MINUTE,UTC_TIMESTAMP(),NOW())';
+    return "(CASE WHEN {$legacyRow} THEN DATE_SUB({$column},INTERVAL {$sessionOffsetMinutes} MINUTE) ELSE {$column} END)";
 }
 
 function configured_verification_mailer(?string $requestId = null): ?\PHPMailer\PHPMailer\PHPMailer
@@ -218,23 +234,39 @@ function begin_head_email_code(int $adminId, string $email, string $name, ?strin
         $lock = $pdo->prepare('SELECT id FROM users WHERE id=? AND role=\'admin\' AND status=\'active\' FOR UPDATE');
         $lock->execute([$adminId]);
         if (!$lock->fetchColumn()) throw new HeadEmailCodeValidationException('admin_inactive', 'Your admin session is no longer active.');
-        $rate = $pdo->prepare('SELECT MAX(sent_at) last_sent,COUNT(*) send_count FROM office_head_email_codes WHERE admin_user_id=? AND email=? AND sent_at>=DATE_SUB(NOW(),INTERVAL 24 HOUR)');
+        $sentUtc = office_head_otp_utc_sql('sent_at');
+        $rate = $pdo->prepare("SELECT MAX({$sentUtc}) last_sent,COUNT(*) send_count,GREATEST(0,60-TIMESTAMPDIFF(SECOND,MAX({$sentUtc}),UTC_TIMESTAMP())) cooldown_remaining FROM office_head_email_codes WHERE admin_user_id=? AND email=? AND {$sentUtc}>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 24 HOUR)");
         $rate->execute([$adminId, $email]);
         $limits = $rate->fetch() ?: [];
-        if (!empty($limits['last_sent']) && strtotime((string)$limits['last_sent']) > time() - 60) throw new HeadEmailCodeValidationException('resend_cooldown', 'Wait one minute before requesting another code.');
-        if ((int)($limits['send_count'] ?? 0) >= 5) throw new HeadEmailCodeValidationException('daily_send_limit', 'The code resend limit is five per email address per day. Try again later.');
-        $pdo->prepare('UPDATE office_head_email_codes SET consumed_at=NOW() WHERE admin_user_id=? AND email=? AND consumed_at IS NULL')->execute([$adminId, $email]);
+        $cooldownRemaining = (int)($limits['cooldown_remaining'] ?? 0);
+        if (!empty($limits['last_sent']) && $cooldownRemaining > 0) {
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=resend_cooldown category=blocked remaining_seconds=' . $cooldownRemaining);
+            throw new HeadEmailCodeValidationException('resend_cooldown', 'A new code can be requested after the resend cooldown.', $cooldownRemaining);
+        }
+        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=resend_cooldown category=allowed remaining_seconds=0');
+        if ((int)($limits['send_count'] ?? 0) >= 5) {
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=rate_limit category=daily_limit_reached');
+            throw new HeadEmailCodeValidationException('daily_send_limit', 'The code resend limit is five per email address per day. Try again later.');
+        }
+        $pdo->prepare('UPDATE office_head_email_codes SET consumed_at=UTC_TIMESTAMP() WHERE admin_user_id=? AND email=? AND consumed_at IS NULL')->execute([$adminId, $email]);
         $reference = bin2hex(random_bytes(32));
         $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $insert = $pdo->prepare('INSERT INTO office_head_email_codes(challenge_hash,admin_user_id,email,code_hash,sent_at,expires_at) VALUES(?,?,?,?,NOW(),DATE_ADD(NOW(),INTERVAL 10 MINUTE))');
+        $insert = $pdo->prepare('INSERT INTO office_head_email_codes(challenge_hash,admin_user_id,email,code_hash,sent_at,expires_at) VALUES(?,?,?,?,UTC_TIMESTAMP(),DATE_ADD(UTC_TIMESTAMP(),INTERVAL 10 MINUTE))');
         $insert->execute([hash('sha256', $reference), $adminId, $email, password_hash($code, PASSWORD_DEFAULT)]);
         $pdo->commit();
-        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_generated category=challenge_stored');
+        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_generated category=challenge_stored valid_for_seconds=600 created_at_utc=' . gmdate('Y-m-d\\TH:i:s\\Z'));
         try {
             send_head_email_code($email, $name, $code, $requestId);
+            $activate = $pdo->prepare('UPDATE office_head_email_codes SET sent_at=UTC_TIMESTAMP(),expires_at=DATE_ADD(UTC_TIMESTAMP(),INTERVAL 10 MINUTE) WHERE challenge_hash=? AND consumed_at IS NULL');
+            $activate->execute([hash('sha256', $reference)]);
+            $expiresUtc = office_head_otp_utc_sql('expires_at');
+            $activeCheck = $pdo->prepare("SELECT id FROM office_head_email_codes WHERE challenge_hash=? AND code_hash IS NOT NULL AND consumed_at IS NULL AND {$expiresUtc}>UTC_TIMESTAMP()");
+            $activeCheck->execute([hash('sha256', $reference)]);
+            if (!$activeCheck->fetchColumn()) throw new VerificationEmailDeliveryException('challenge_activation_failed', 'The code could not be activated. Please request a new code.', 503);
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_activated category=delivery_accepted valid_for_seconds=600 created_at_utc=' . gmdate('Y-m-d\\TH:i:s\\Z'));
             return $reference;
         } catch (VerificationEmailDeliveryException $e) {
-            $pdo->prepare('UPDATE office_head_email_codes SET code_hash=NULL,consumed_at=NOW() WHERE challenge_hash=?')->execute([hash('sha256', $reference)]);
+            $pdo->prepare('UPDATE office_head_email_codes SET code_hash=NULL,consumed_at=UTC_TIMESTAMP() WHERE challenge_hash=?')->execute([hash('sha256', $reference)]);
             throw $e;
         }
     } catch (Throwable $e) {
@@ -243,28 +275,51 @@ function begin_head_email_code(int $adminId, string $email, string $name, ?strin
     }
 }
 
-function verify_head_email_code(int $adminId, string $email, string $reference, string $code): bool
+function verify_head_email_code(int $adminId, string $email, string $reference, string $code, ?string $requestId = null): string
 {
-    if (preg_match('/^[a-f0-9]{64}$/', $reference) !== 1 || preg_match('/^\d{6}$/', $code) !== 1) return false;
+    if (preg_match('/^[a-f0-9]{64}$/', $reference) !== 1 || preg_match('/^\d{6}$/', $code) !== 1) {
+        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=malformed_request');
+        return 'invalid';
+    }
     $pdo = db();
     $pdo->beginTransaction();
     try {
-        $stmt = $pdo->prepare('SELECT id,code_hash,attempts,expires_at,verified_at FROM office_head_email_codes WHERE challenge_hash=? AND admin_user_id=? AND email=? AND consumed_at IS NULL FOR UPDATE');
+        $expiresUtc = office_head_otp_utc_sql('expires_at');
+        $stmt = $pdo->prepare("SELECT id,code_hash,attempts,expires_at,verified_at,TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),{$expiresUtc}) seconds_remaining FROM office_head_email_codes WHERE challenge_hash=? AND admin_user_id=? AND email=? AND consumed_at IS NULL FOR UPDATE");
         $stmt->execute([hash('sha256', $reference), $adminId, $email]);
         $challenge = $stmt->fetch();
-        if (!$challenge || strtotime((string)$challenge['expires_at']) <= time() || (int)$challenge['attempts'] >= 5 || empty($challenge['code_hash'])) {
+        if (!$challenge) {
             $pdo->commit();
-            return false;
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=challenge_missing_consumed_or_invalid');
+            return 'invalid';
         }
-        if ($challenge['verified_at'] !== null) { $pdo->commit(); return true; }
+        $remaining = (int)$challenge['seconds_remaining'];
+        if ($remaining <= 0) {
+            $pdo->commit();
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_expiration category=expired remaining_seconds=' . $remaining . ' checked_at_utc=' . gmdate('Y-m-d\\TH:i:s\\Z'));
+            return 'expired';
+        }
+        if ((int)$challenge['attempts'] >= 5 || empty($challenge['code_hash'])) {
+            $pdo->commit();
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=attempt_limit_reached');
+            return 'locked';
+        }
+        if ($challenge['verified_at'] !== null) {
+            $pdo->commit();
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=already_verified otp_seconds_remaining=' . $remaining);
+            return 'verified';
+        }
         if (!password_verify($code, (string)$challenge['code_hash'])) {
-            $pdo->prepare('UPDATE office_head_email_codes SET attempts=attempts+1,consumed_at=IF(attempts+1>=5,NOW(),consumed_at) WHERE id=?')->execute([(int)$challenge['id']]);
+            $pdo->prepare('UPDATE office_head_email_codes SET attempts=attempts+1,consumed_at=IF(attempts+1>=5,UTC_TIMESTAMP(),consumed_at) WHERE id=?')->execute([(int)$challenge['id']]);
             $pdo->commit();
-            return false;
+            $remainingAttempts = max(0, 4 - (int)$challenge['attempts']);
+            error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=incorrect_code attempts_remaining=' . $remainingAttempts . ' otp_seconds_remaining=' . $remaining);
+            return $remainingAttempts === 0 ? 'locked' : 'incorrect';
         }
-        $pdo->prepare('UPDATE office_head_email_codes SET verified_at=NOW() WHERE id=? AND verified_at IS NULL')->execute([(int)$challenge['id']]);
+        $pdo->prepare('UPDATE office_head_email_codes SET verified_at=UTC_TIMESTAMP() WHERE id=? AND verified_at IS NULL')->execute([(int)$challenge['id']]);
         $pdo->commit();
-        return true;
+        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_verification category=verified otp_seconds_remaining=' . $remaining . ' checked_at_utc=' . gmdate('Y-m-d\\TH:i:s\\Z'));
+        return 'verified';
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
@@ -274,7 +329,8 @@ function verify_head_email_code(int $adminId, string $email, string $reference, 
 function consume_head_email_code(PDO $pdo, int $adminId, string $email, string $reference): bool
 {
     if (preg_match('/^[a-f0-9]{64}$/', $reference) !== 1) return false;
-    $stmt = $pdo->prepare('UPDATE office_head_email_codes SET consumed_at=NOW() WHERE challenge_hash=? AND admin_user_id=? AND email=? AND verified_at IS NOT NULL AND expires_at>NOW() AND consumed_at IS NULL');
+    $expiresUtc = office_head_otp_utc_sql('expires_at');
+    $stmt = $pdo->prepare("UPDATE office_head_email_codes SET consumed_at=UTC_TIMESTAMP() WHERE challenge_hash=? AND admin_user_id=? AND email=? AND verified_at IS NOT NULL AND {$expiresUtc}>UTC_TIMESTAMP() AND consumed_at IS NULL");
     $stmt->execute([hash('sha256', $reference), $adminId, $email]);
     return $stmt->rowCount() === 1;
 }
