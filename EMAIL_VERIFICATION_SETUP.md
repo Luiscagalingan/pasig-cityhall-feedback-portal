@@ -19,4 +19,10 @@ Ensure that `PASIG_PUBLIC_BASE_URL` and the existing `APP_BASE_URL` point to the
 
 Apply `database/migrations/2026_10_29_authorized_user_email_verification.sql` to an existing database. It adds verification state and `password_changed_at` without changing existing account records. Fresh installs using `database/schema.sql` or `database/railway_schema.sql` include these columns.
 
+Also apply `database/migrations/2026_10_29_office_head_email_codes.sql` to enable the admin-side six-digit email confirmation before creating an Office Head. Codes are stored as password hashes, expire after 10 minutes, allow five attempts, and are limited to one send per minute and five sends per email per day. Fresh installs include the challenge table.
+
+Office Head creation now requires the admin to send and verify this six-digit code before submitting the account. The code challenge is tied to the admin session and exact email address, stored as hashes, and consumed during account creation. Common personal mailbox domains (including Gmail, Yahoo, and Outlook) are rejected even if accidentally included in `PASIG_GOV_EMAIL_DOMAINS`; keep only domains explicitly approved by the organization. This recipient allowlist is separate from the SMTP sender account.
+
+The existing post-creation account verification email remains in place; the six-digit code confirms the recipient before the admin creates the account, while the existing link activation and mandatory password-change flow continue unchanged.
+
 Administrators can retry invitations from the Pending Verification tab on the Staff and Office Heads pages. A failed mail handoff leaves the account pending and cannot activate it.

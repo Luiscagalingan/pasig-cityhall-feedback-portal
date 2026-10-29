@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS actions;
 DROP TABLE IF EXISTS feedback;
 DROP TABLE IF EXISTS feedback_duplicate_claims;
 DROP TABLE IF EXISTS import_batches;
+DROP TABLE IF EXISTS office_head_email_codes;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS offices;
 SET FOREIGN_KEY_CHECKS=1;
@@ -61,6 +62,23 @@ CREATE TABLE users (
   INDEX idx_user_scope (office_id, role, status),
   INDEX idx_user_lock (locked_until),
   INDEX idx_user_verification_state (status,email_verification_required,email_verified_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE office_head_email_codes (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  challenge_hash CHAR(64) NOT NULL UNIQUE,
+  admin_user_id INT UNSIGNED NOT NULL,
+  email VARCHAR(160) NOT NULL,
+  code_hash VARCHAR(255) NULL,
+  attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  sent_at DATETIME NOT NULL,
+  expires_at DATETIME NOT NULL,
+  verified_at DATETIME NULL,
+  consumed_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_head_email_code_admin FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_head_email_code_rate (admin_user_id,email,sent_at),
+  INDEX idx_head_email_code_expiry (expires_at,consumed_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE import_batches (
