@@ -1,6 +1,22 @@
 <?php
 declare(strict_types=1);
 
+final class VerificationEmailDeliveryException extends RuntimeException
+{
+    public function __construct(public readonly string $reason, string $message, public readonly int $httpStatus = 502)
+    {
+        parent::__construct($message);
+    }
+}
+
+final class HeadEmailCodeValidationException extends RuntimeException
+{
+    public function __construct(public readonly string $reason, string $message)
+    {
+        parent::__construct($message);
+    }
+}
+
 function approved_government_email_domains(): array
 {
     $configured = trim((string) getenv('PASIG_GOV_EMAIL_DOMAINS'));
@@ -27,8 +43,9 @@ function is_approved_government_email(string $email): bool
     return in_array($domain, $domains, true);
 }
 
-function configured_verification_mailer(): ?\PHPMailer\PHPMailer\PHPMailer
+function configured_verification_mailer(?string $requestId = null): ?\PHPMailer\PHPMailer\PHPMailer
 {
+    $logContext = '[email-transport]' . ($requestId ? ' request=' . $requestId : '');
     $smtpHost = trim((string)getenv('PASIG_SMTP_HOST'));
     $smtpUser = trim((string)getenv('PASIG_SMTP_USER'));
     $smtpPassword = (string)getenv('PASIG_SMTP_PASSWORD');
@@ -36,7 +53,20 @@ function configured_verification_mailer(): ?\PHPMailer\PHPMailer\PHPMailer
     $tlsMode = strtolower(trim((string)(getenv('PASIG_SMTP_TLS_MODE') ?: 'starttls')));
     $from = trim((string)getenv('PASIG_MAIL_FROM'));
     if ($smtpHost === '' || $smtpUser === '' || $smtpPassword === '' || $smtpPort < 1 || $smtpPort > 65535
-        || !in_array($tlsMode, ['starttls', 'tls'], true) || !filter_var($from, FILTER_VALIDATE_EMAIL)) return null;
+        || !in_array($tlsMode, ['starttls', 'tls'], true) || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+        error_log($logContext . ' stage=smtp_config category=missing_or_invalid_configuration');
+        return null;
+    }
+    // Port 587 is message submission with STARTTLS. Accept the common generic
+    // value "tls" on that port, but never send in cleartext.
+    if ($smtpPort === 587 && $tlsMode === 'tls') {
+        $tlsMode = 'starttls';
+        error_log($logContext . ' stage=smtp_config category=587_normalized_to_starttls');
+    }
+    if ($smtpPort === 465 && $tlsMode !== 'tls') {
+        error_log($logContext . ' stage=smtp_config category=465_requires_implicit_tls');
+        return null;
+    }
     try {
         require_once dirname(__DIR__) . '/PHPMailer-master/src/Exception.php';
         require_once dirname(__DIR__) . '/PHPMailer-master/src/PHPMailer.php';
@@ -51,28 +81,135 @@ function configured_verification_mailer(): ?\PHPMailer\PHPMailer\PHPMailer
         $mailer->SMTPSecure = $tlsMode === 'tls'
             ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
             : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mailer->Timeout = 10;
+        $mailer->SMTPKeepAlive = false;
+        $mailer->SMTPDebug = 0;
+        $mailer->getSMTPInstance()->Timelimit = 12;
         $mailer->CharSet = 'UTF-8';
-        $mailer->setFrom($from, 'Pasig City Hall Feedback Portal');
+        $mailer->setFrom($from, 'Service Satisfaction System');
         return $mailer;
     } catch (Throwable) {
+        error_log($logContext . ' stage=smtp_config category=mailer_initialization_failure');
         return null;
     }
 }
 
-function send_head_email_code(string $email, string $name, string $code): bool
+function verification_email_transport(): string
 {
-    $mailer = configured_verification_mailer();
-    if (!$mailer) return false;
-    $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $mailer->addAddress($email, $name);
-    $mailer->Subject = 'Verify Office Head Email Address';
-    $mailer->isHTML(true);
-    $mailer->Body = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1b2638;line-height:1.6"><main style="max-width:560px;margin:24px auto;padding:24px;background:#fff;border:1px solid #dbe3ef;border-radius:10px"><h2>Verify your email address</h2><p>Hello ' . $safeName . ',</p><p>Enter this code in the Office Head account form to confirm this email address:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px">' . $code . '</p><p>This code expires in 10 minutes and can be used once. If you did not expect this message, you can ignore it.</p><p>Pasig City Hall Feedback Portal</p></main></body></html>';
-    $mailer->AltBody = "Hello {$name},\n\nYour Office Head email verification code is {$code}. It expires in 10 minutes and can be used once.\n\nPasig City Hall Feedback Portal";
-    try { return $mailer->send(); } catch (Throwable) { return false; }
+    $transport = strtolower(trim((string)(getenv('PASIG_EMAIL_TRANSPORT') ?: 'resend')));
+    return in_array($transport, ['resend', 'smtp'], true) ? $transport : 'invalid';
 }
 
-function begin_head_email_code(int $adminId, string $email, string $name): string
+/** Send one transactional message; Resend is the default and SMTP is opt-in only. */
+function deliver_verification_email(string $email, string $name, string $subject, string $html, string $text, ?string $requestId = null): bool
+{
+    $context = '[email-transport]' . ($requestId ? ' request=' . $requestId : '');
+    $transport = verification_email_transport();
+    if ($transport === 'invalid') {
+        error_log($context . ' stage=transport_config category=unsupported_transport');
+        throw new VerificationEmailDeliveryException('unsupported_transport', 'Email delivery is not configured correctly. Set PASIG_EMAIL_TRANSPORT to resend or smtp.', 503);
+    }
+    if ($transport === 'resend') {
+        $apiKey = trim((string)getenv('RESEND_API_KEY'));
+        $from = trim((string)getenv('RESEND_FROM_EMAIL'));
+        $fromAddress = $from;
+        if (preg_match('/^.{1,100}\s+<([^<>\s]+)>$/u', $from, $fromMatch) === 1) $fromAddress = $fromMatch[1];
+        if ($apiKey === '' || preg_match('/[\r\n]/', $apiKey) || $from === '' || strlen($from) > 254 || !filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
+            error_log($context . ' stage=resend_config category=missing_or_invalid_configuration');
+            throw new VerificationEmailDeliveryException('resend_configuration', 'Email delivery is not configured. Set RESEND_API_KEY and a valid RESEND_FROM_EMAIL that belongs to a verified Resend domain.', 503);
+        }
+        $resendFrom = 'Service Satisfaction System <' . $fromAddress . '>';
+        $payload = json_encode(['from' => $resendFrom, 'to' => [$email], 'subject' => $subject, 'html' => $html, 'text' => $text], JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        if ($payload === false) {
+            error_log($context . ' stage=resend_request category=payload_encoding_failure');
+            throw new VerificationEmailDeliveryException('request_encoding', 'The email could not be prepared. Please try again later.', 503);
+        }
+        $httpContext = stream_context_create([
+            'http' => ['method' => 'POST', 'header' => "Authorization: Bearer {$apiKey}\r\nContent-Type: application/json\r\nAccept: application/json\r\n", 'content' => $payload, 'timeout' => 12, 'ignore_errors' => true, 'protocol_version' => 1.1],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false],
+        ]);
+        $response = @file_get_contents('https://api.resend.com/emails', false, $httpContext);
+        $status = 0;
+        foreach (($http_response_header ?? []) as $header) {
+            if (preg_match('/^HTTP\/\S+\s+(\d{3})\b/i', $header, $match)) $status = (int)$match[1];
+        }
+        if ($status >= 200 && $status < 300 && $response !== false) {
+            error_log($context . ' stage=resend_send category=accepted_by_api');
+            return true;
+        }
+        $category = 'api_request_failed';
+        $message = 'The email service could not accept the message. Please try again later.';
+        $httpStatus = 502;
+        if ($status === 401 || $status === 403) {
+            $category = 'api_authentication_failed';
+            $message = 'The email service rejected its API credentials. Check RESEND_API_KEY in Railway.';
+            $httpStatus = 503;
+        } elseif ($status === 422) {
+            $category = 'sender_or_recipient_rejected';
+            $message = 'The email service rejected the sender or recipient. Verify RESEND_FROM_EMAIL in Resend and confirm the sender domain is verified.';
+        } elseif ($status === 429) {
+            $category = 'api_rate_limited';
+            $message = 'The email service is temporarily rate limiting requests. Please wait and try again.';
+        } elseif ($status >= 500) {
+            $category = 'api_provider_failure';
+        } elseif ($status === 0) {
+            $lastError = error_get_last();
+            $details = strtolower((string)($lastError['message'] ?? ''));
+            if (str_contains($details, 'timed out')) {
+                $category = 'https_timeout';
+                $message = 'The email service did not respond in time. Please try again shortly.';
+            } elseif (preg_match('/ssl|tls|certificate|crypto|handshake/', $details)) {
+                $category = 'https_tls_failure';
+                $message = 'A secure connection to the email service failed. Please try again later.';
+            } else {
+                $category = 'https_connection_failure';
+                $message = 'Could not connect securely to the email service. Please try again later.';
+            }
+        }
+        error_log($context . ' stage=resend_send category=' . $category . ($status ? ' http_status=' . $status : ''));
+        throw new VerificationEmailDeliveryException($category, $message, $httpStatus);
+    }
+
+    $mailer = configured_verification_mailer($requestId);
+    if (!$mailer) {
+        throw new VerificationEmailDeliveryException('smtp_configuration', 'SMTP email delivery is not configured. Check the SMTP settings.', 503);
+    }
+    try {
+        $mailer->addAddress($email, $name);
+        $mailer->Subject = $subject;
+        $mailer->isHTML(true);
+        $mailer->Body = $html;
+        $mailer->AltBody = $text;
+        $sent = $mailer->send();
+        if (!$sent) throw new RuntimeException((string)$mailer->ErrorInfo);
+        error_log($context . ' stage=smtp_send category=accepted_by_smtp');
+        return true;
+    } catch (Throwable $e) {
+        $category = smtp_failure_category($e->getMessage());
+        error_log($context . ' stage=smtp_send category=' . $category);
+        throw new VerificationEmailDeliveryException($category, 'SMTP could not send the email. Check the SMTP settings and try again.', 502);
+    }
+}
+
+function send_head_email_code(string $email, string $name, string $code, ?string $requestId = null): bool
+{
+    $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $html = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1b2638;line-height:1.6"><main style="max-width:560px;margin:24px auto;padding:24px;background:#fff;border:1px solid #dbe3ef;border-radius:10px"><h2>Service Satisfaction System</h2><p>Hello ' . $safeName . ',</p><p>Enter this code in the Office Head account form to verify your email address:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px">' . $code . '</p><p>This code expires in 10 minutes and can be used once. If you did not expect this message, you can ignore it.</p><p>Regards,<br>Service Satisfaction System</p></main></body></html>';
+    $text = "Hello {$name},\n\nYour Office Head email verification code is {$code}. It expires in 10 minutes and can be used once. If you did not request it, you can ignore this email.\n\nRegards,\nService Satisfaction System";
+    return deliver_verification_email($email, $name, 'Service Satisfaction System - Verify Office Head Email', str_replace(['Verify your email address', 'Enter this code in the Office Head account form to verify your email address:', 'Pasig City Hall Feedback Portal'], ['Service Satisfaction System', 'Enter this code in the Office Head account form to verify your email address:', 'Regards,<br>Service Satisfaction System'], $html), $text, $requestId);
+}
+
+function smtp_failure_category(string $details): string
+{
+    $details = strtolower($details);
+    if (preg_match('/authenticat|authentication|\bauth\b|\b535\b|5\.7\.8/', $details)) return 'authentication_failure';
+    if (preg_match('/timed?\s*out|timeout|deadline exceeded/', $details)) return 'connection_timeout';
+    if (preg_match('/starttls|\btls\b|\bssl\b|certificate|handshake|crypto/', $details)) return 'tls_failure';
+    if (preg_match('/could not connect|connection refused|network is unreachable|failed to connect|connect\(\).*failed|smtp connect|socket/', $details)) return 'connection_failure';
+    return 'smtp_send_failure';
+}
+
+function begin_head_email_code(int $adminId, string $email, string $name, ?string $requestId = null): string
 {
     $pdo = db();
     $pdo->beginTransaction();
@@ -80,21 +217,26 @@ function begin_head_email_code(int $adminId, string $email, string $name): strin
         $pdo->exec('DELETE FROM office_head_email_codes WHERE created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)');
         $lock = $pdo->prepare('SELECT id FROM users WHERE id=? AND role=\'admin\' AND status=\'active\' FOR UPDATE');
         $lock->execute([$adminId]);
-        if (!$lock->fetchColumn()) throw new RuntimeException('Your admin session is no longer active.');
+        if (!$lock->fetchColumn()) throw new HeadEmailCodeValidationException('admin_inactive', 'Your admin session is no longer active.');
         $rate = $pdo->prepare('SELECT MAX(sent_at) last_sent,COUNT(*) send_count FROM office_head_email_codes WHERE admin_user_id=? AND email=? AND sent_at>=DATE_SUB(NOW(),INTERVAL 24 HOUR)');
         $rate->execute([$adminId, $email]);
         $limits = $rate->fetch() ?: [];
-        if (!empty($limits['last_sent']) && strtotime((string)$limits['last_sent']) > time() - 60) throw new RuntimeException('Wait one minute before requesting another code.');
-        if ((int)($limits['send_count'] ?? 0) >= 5) throw new RuntimeException('The code resend limit is five per email address per day. Try again later.');
+        if (!empty($limits['last_sent']) && strtotime((string)$limits['last_sent']) > time() - 60) throw new HeadEmailCodeValidationException('resend_cooldown', 'Wait one minute before requesting another code.');
+        if ((int)($limits['send_count'] ?? 0) >= 5) throw new HeadEmailCodeValidationException('daily_send_limit', 'The code resend limit is five per email address per day. Try again later.');
         $pdo->prepare('UPDATE office_head_email_codes SET consumed_at=NOW() WHERE admin_user_id=? AND email=? AND consumed_at IS NULL')->execute([$adminId, $email]);
         $reference = bin2hex(random_bytes(32));
         $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $insert = $pdo->prepare('INSERT INTO office_head_email_codes(challenge_hash,admin_user_id,email,code_hash,sent_at,expires_at) VALUES(?,?,?,?,NOW(),DATE_ADD(NOW(),INTERVAL 10 MINUTE))');
         $insert->execute([hash('sha256', $reference), $adminId, $email, password_hash($code, PASSWORD_DEFAULT)]);
         $pdo->commit();
-        if (send_head_email_code($email, $name, $code)) return $reference;
-        $pdo->prepare('UPDATE office_head_email_codes SET code_hash=NULL,consumed_at=NOW() WHERE challenge_hash=?')->execute([hash('sha256', $reference)]);
-        throw new RuntimeException('Could not send the code. Check SMTP configuration and try again later.');
+        error_log('[office-head-otp]' . ($requestId ? ' request=' . $requestId : '') . ' stage=otp_generated category=challenge_stored');
+        try {
+            send_head_email_code($email, $name, $code, $requestId);
+            return $reference;
+        } catch (VerificationEmailDeliveryException $e) {
+            $pdo->prepare('UPDATE office_head_email_codes SET code_hash=NULL,consumed_at=NOW() WHERE challenge_hash=?')->execute([hash('sha256', $reference)]);
+            throw $e;
+        }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
@@ -148,7 +290,7 @@ function send_account_verification_email(string $email, string $name, string $to
         || isset($publicParts['query']) || isset($publicParts['fragment'])
         || (strtolower((string)$publicParts['scheme']) !== 'https' && !in_array($publicHost, ['localhost', '127.0.0.1'], true))) return false;
     $link = $publicBase . app_url('verify-email.php') . '#' . rawurlencode($token);
-    $subject = 'Office Head Account Created – Verify Your Email';
+    $subject = 'Service Satisfaction System - Verify Your Email';
     $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeOffice = htmlspecialchars((string)($GLOBALS['verification_mail_office_name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeUsername = htmlspecialchars((string)($GLOBALS['verification_mail_username'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -157,21 +299,19 @@ function send_account_verification_email(string $email, string $name, string $to
     $credentialBlock = $isHead ? '<br><b>Temporary Password:</b> password123!' : '';
     $plainPassword = $isHead ? "Temporary Password: password123!\n" : '';
     $safeLink = htmlspecialchars($link, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $body = '<!doctype html><html><body style="margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#1b2638;line-height:1.6"><main style="max-width:600px;margin:24px auto;padding:28px;background:#fff;border-radius:10px"><h2>Pasig City Hall Feedback Portal</h2><p>Hello ' . $safeName . ',</p><p>Your ' . $roleLabel . ' account has been created.</p><p><b>Assigned Office:</b> ' . $safeOffice . '<br><b>Username:</b> ' . $safeUsername . $credentialBlock . '</p><p>Verify your email before signing in.</p><p><a href="' . $safeLink . '" style="display:inline-block;padding:12px 18px;background:#1769d2;color:#fff;text-decoration:none;border-radius:6px">Verify Email Address</a></p><p>After verification, sign in with your account credentials. ' . ($isHead ? 'You must change the temporary password before accessing your dashboard. ' : '') . 'This single-use link expires in 24 hours.</p><p>Regards,<br>System Administration</p></main></body></html>';
-    $plain = "Hello {$name},\n\nYour {$roleLabel} account has been created.\nAssigned Office: " . ($GLOBALS['verification_mail_office_name'] ?? '') . "\nUsername: " . ($GLOBALS['verification_mail_username'] ?? '') . "\n" . $plainPassword . "\nVerify your email: {$link}\n\n" . ($isHead ? "After verification, sign in and change your temporary password before accessing your dashboard.\n\n" : '') . "This link expires in 24 hours.\n\nRegards,\nSystem Administration";
+    $body = '<!doctype html><html><body style="margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#1b2638;line-height:1.6"><main style="max-width:600px;margin:24px auto;padding:28px;background:#fff;border-radius:10px"><h2>Service Satisfaction System</h2><p>Hello ' . $safeName . ',</p><p>Your ' . $roleLabel . ' account has been created.</p><p><b>Assigned Office:</b> ' . $safeOffice . '<br><b>Username:</b> ' . $safeUsername . $credentialBlock . '</p><p>Verify your email before signing in.</p><p><a href="' . $safeLink . '" style="display:inline-block;padding:12px 18px;background:#1769d2;color:#fff;text-decoration:none;border-radius:6px">Verify Email Address</a></p><p>After verification, sign in with your account credentials. ' . ($isHead ? 'You must change the temporary password before accessing your dashboard. ' : '') . 'This single-use link expires in 24 hours.</p><p>Regards,<br>Service Satisfaction System</p></main></body></html>';
+    $plain = "Hello {$name},\n\nYour {$roleLabel} account has been created.\nAssigned Office: " . ($GLOBALS['verification_mail_office_name'] ?? '') . "\nUsername: " . ($GLOBALS['verification_mail_username'] ?? '') . "\n" . $plainPassword . "\nVerify your email: {$link}\n\n" . ($isHead ? "After verification, sign in and change your temporary password before accessing your dashboard.\n\n" : '') . "This link expires in 24 hours.\n\nRegards,\nService Satisfaction System";
     try {
-        $mailer = configured_verification_mailer();
-        if (!$mailer) return false;
-        $mailer->addAddress($email, $name); $mailer->Subject = $subject; $mailer->isHTML(true);
-        $mailer->Body = $body; $mailer->AltBody = $plain;
-        return $mailer->send();
-    } catch (Throwable) {
+        return deliver_verification_email($email, $name, $subject, $body, $plain);
+    } catch (VerificationEmailDeliveryException $e) {
+        $GLOBALS['verification_email_delivery_error'] = $e->getMessage();
         return false;
     }
 }
 
 function issue_verification_email(int $userId): bool
 {
+    $GLOBALS['verification_email_delivery_error'] = '';
     $pdo = db();
     $stmt = $pdo->prepare("SELECT u.id,u.email,u.full_name,u.username,u.role,u.status,u.email_verification_required,u.email_verified_at,u.verification_sent_at,u.verification_send_count,o.name AS office_name FROM users u LEFT JOIN offices o ON o.id=u.office_id WHERE u.id=? LIMIT 1");
     $stmt->execute([$userId]);
